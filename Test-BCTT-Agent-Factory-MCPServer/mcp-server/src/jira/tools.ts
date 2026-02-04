@@ -230,6 +230,137 @@ export const jiraTools: Tool[] = [
       },
       required: ["jql"]
     }
+  },
+  {
+    name: "jira_link_issues",
+    description: "Cria um link entre duas issues no Jira. Útil para definir dependências (blocks, relates to).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        from_issue_key: {
+          type: "string",
+          description: "Key da issue de origem (ex: 'BCTT-123')"
+        },
+        to_issue_key: {
+          type: "string",
+          description: "Key da issue de destino (ex: 'BCTT-124')"
+        },
+        link_type: {
+          type: "string",
+          enum: ["Blocks", "Relates"],
+          description: "Tipo de link: 'Blocks' (A bloqueia B) ou 'Relates' (A relaciona-se com B)"
+        }
+      },
+      required: ["from_issue_key", "to_issue_key", "link_type"]
+    }
+  },
+  {
+    name: "jira_add_attachment",
+    description: "Adiciona um ficheiro em anexo a uma issue no Jira. Aceita documento em base64.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Key da issue (ex: 'BCTT-123')"
+        },
+        file_name: {
+          type: "string",
+          description: "Nome do ficheiro (ex: 'documento.docx')"
+        },
+        file_base64: {
+          type: "string",
+          description: "Conteúdo do ficheiro em base64"
+        }
+      },
+      required: ["issue_key", "file_name", "file_base64"]
+    }
+  },
+  {
+    name: "jira_bulk_create_with_document",
+    description: "FA Agent: Cria toda a estrutura no Jira (BDEV + Features + User Stories) e anexa o documento 'Informação Adicional' ao Epic.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        functionality_name: {
+          type: "string",
+          description: "Nome da funcionalidade"
+        },
+        description: {
+          type: "string",
+          description: "Descrição/resumo executivo"
+        },
+        stakeholder: {
+          type: "string",
+          description: "Stakeholder principal"
+        },
+        document_base64: {
+          type: "string",
+          description: "Documento 'Informação Adicional' em base64"
+        },
+        document_name: {
+          type: "string",
+          description: "Nome do ficheiro do documento"
+        },
+        epics: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              features: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    user_stories: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          narrative: { type: "string" },
+                          screen: { type: "string" },
+                          mvp: { type: "string" },
+                          acceptance_criteria: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                scenario: { type: "string" },
+                                given: { type: "string" },
+                                when: { type: "string" },
+                                then: { type: "string" }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          description: "Estrutura completa: Epics > Features > User Stories"
+        },
+        functional_flow: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              from_story_id: { type: "string" },
+              to_story_id: { type: "string" },
+              link_type: { type: "string" }
+            }
+          },
+          description: "Fluxo funcional: links entre user stories"
+        }
+      },
+      required: ["functionality_name", "description", "epics"]
+    }
   }
 ];
 
@@ -510,6 +641,188 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
           labels: issue.fields.labels,
           url: `${process.env.JIRA_BASE_URL}/browse/${issue.key}`,
         })),
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  jira_link_issues: async (args) => {
+    try {
+      const { from_issue_key, to_issue_key, link_type } = args as {
+        from_issue_key: string;
+        to_issue_key: string;
+        link_type: string;
+      };
+
+      const client = getJiraClient();
+      await client.createIssueLink(from_issue_key, to_issue_key, link_type);
+
+      return JSON.stringify({
+        success: true,
+        message: `Link criado: ${from_issue_key} ${link_type.toLowerCase()} ${to_issue_key}`,
+        from: from_issue_key,
+        to: to_issue_key,
+        link_type,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  jira_add_attachment: async (args) => {
+    try {
+      const { issue_key, file_name, file_base64 } = args as {
+        issue_key: string;
+        file_name: string;
+        file_base64: string;
+      };
+
+      const client = getJiraClient();
+      const fileBuffer = Buffer.from(file_base64, 'base64');
+      const result = await client.addAttachment(issue_key, file_name, fileBuffer);
+
+      return JSON.stringify({
+        success: true,
+        message: `Ficheiro '${file_name}' anexado a ${issue_key}`,
+        issue_key,
+        attachment: result[0] || { filename: file_name },
+        issue_url: `${process.env.JIRA_BASE_URL}/browse/${issue_key}`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  jira_bulk_create_with_document: async (args) => {
+    try {
+      const {
+        functionality_name,
+        description,
+        stakeholder,
+        document_base64,
+        document_name,
+        epics,
+        functional_flow,
+      } = args as {
+        functionality_name: string;
+        description: string;
+        stakeholder?: string;
+        document_base64?: string;
+        document_name?: string;
+        epics: Array<{
+          name: string;
+          features: Array<{
+            name: string;
+            description?: string;
+            user_stories: Array<{
+              id: string;
+              narrative: string;
+              screen?: string;
+              mvp?: string;
+              acceptance_criteria: AcceptanceCriterion[];
+            }>;
+          }>;
+        }>;
+        functional_flow?: Array<{
+          from_story_id: string;
+          to_story_id: string;
+          link_type: string;
+        }>;
+      };
+
+      // Convert to FAStructure format
+      const structure: FAStructure = {
+        functionalityName: functionality_name,
+        description,
+        stakeholder,
+        epics: epics.map(epic => ({
+          name: epic.name,
+          features: epic.features.map(feature => ({
+            name: feature.name,
+            description: feature.description,
+            userStories: feature.user_stories.map(us => ({
+              id: us.id,
+              narrative: us.narrative,
+              screen: us.screen,
+              acceptanceCriteria: us.acceptance_criteria,
+              mvp: us.mvp === 'true' || us.mvp === 'MVP1',
+              priority: 'Must Have' as const,
+            })),
+          })),
+        })),
+      };
+
+      const client = getJiraClient();
+      const result = await client.createFromFAStructure(structure);
+
+      // Attach document to Epic if provided
+      let attachmentResult = null;
+      if (document_base64 && document_name) {
+        const fileBuffer = Buffer.from(document_base64, 'base64');
+        attachmentResult = await client.addAttachment(result.epicKey, document_name, fileBuffer);
+      }
+
+      // Create functional flow links
+      const linkResults: Array<{ from: string; to: string; success: boolean }> = [];
+      if (functional_flow && functional_flow.length > 0) {
+        // Map story IDs to Jira keys
+        const storyIdToKey: Record<string, string> = {};
+        result.features.forEach(f => {
+          f.userStories.forEach(us => {
+            storyIdToKey[us.storyId] = us.storyKey;
+          });
+        });
+
+        for (const link of functional_flow) {
+          const fromKey = storyIdToKey[link.from_story_id];
+          const toKey = storyIdToKey[link.to_story_id];
+
+          if (fromKey && toKey) {
+            try {
+              await client.createIssueLink(fromKey, toKey, link.link_type);
+              linkResults.push({ from: fromKey, to: toKey, success: true });
+            } catch (e) {
+              linkResults.push({ from: fromKey, to: toKey, success: false });
+            }
+          }
+        }
+      }
+
+      return JSON.stringify({
+        success: true,
+        bdev_code: result.bdevCode,
+        epic_key: result.epicKey,
+        epic_url: result.epicUrl,
+        summary: {
+          total_features: result.summary.totalFeatures,
+          total_user_stories: result.summary.totalUserStories,
+        },
+        features: result.features.map(f => ({
+          key: f.featureKey,
+          name: f.featureName,
+          url: f.featureUrl,
+          user_stories: f.userStories.map(us => ({
+            key: us.storyKey,
+            id: us.storyId,
+            url: us.storyUrl,
+          })),
+        })),
+        document_attached: attachmentResult ? {
+          success: true,
+          filename: document_name,
+        } : null,
+        functional_flow_links: linkResults,
+        message: `Criados com sucesso: 1 Epic (${result.bdevCode}), ${result.summary.totalFeatures} Features, ${result.summary.totalUserStories} User Stories${attachmentResult ? ', documento anexado' : ''}${linkResults.length > 0 ? `, ${linkResults.filter(l => l.success).length} links de fluxo` : ''}`,
       }, null, 2);
     } catch (error) {
       return JSON.stringify({

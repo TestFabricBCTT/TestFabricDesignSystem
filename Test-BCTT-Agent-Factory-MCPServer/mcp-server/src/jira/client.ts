@@ -120,6 +120,79 @@ export class JiraClient {
   }
 
   // ============================================
+  // ATTACHMENT OPERATIONS
+  // ============================================
+
+  async addAttachment(issueKey: string, fileName: string, fileBuffer: Buffer): Promise<{ id: string; filename: string }[]> {
+    const url = `${this.config.baseUrl}/rest/api/3/issue/${issueKey}/attachments`;
+
+    // Create form data boundary
+    const boundary = '----FormBoundary' + Math.random().toString(36).substring(2);
+
+    // Build multipart form data manually
+    const formDataParts = [
+      `--${boundary}`,
+      `Content-Disposition: form-data; name="file"; filename="${fileName}"`,
+      'Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '',
+      '', // Will be replaced with buffer
+    ];
+
+    const header = formDataParts.join('\r\n');
+    const footer = `\r\n--${boundary}--\r\n`;
+
+    const headerBuffer = Buffer.from(header);
+    const footerBuffer = Buffer.from(footer);
+    const bodyBuffer = Buffer.concat([headerBuffer, fileBuffer, footerBuffer]);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': this.authHeader,
+        'X-Atlassian-Token': 'no-check',
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      },
+      body: bodyBuffer,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Jira Attachment Error (${response.status}): ${errorText}`);
+    }
+
+    const result = await response.json();
+    return result as { id: string; filename: string }[];
+  }
+
+  // ============================================
+  // LINK TYPES
+  // ============================================
+
+  async getLinkTypes(): Promise<{ linkTypes: Array<{ id: string; name: string; inward: string; outward: string }> }> {
+    return this.get('/issueLinkType');
+  }
+
+  async createIssueLink(
+    inwardIssueKey: string,
+    outwardIssueKey: string,
+    linkType: string
+  ): Promise<void> {
+    const payload: LinkIssuesPayload = {
+      type: {
+        name: linkType,
+      },
+      inwardIssue: {
+        key: inwardIssueKey,
+      },
+      outwardIssue: {
+        key: outwardIssueKey,
+      },
+    };
+
+    await this.linkIssues(payload);
+  }
+
+  // ============================================
   // BDEV OPERATIONS
   // ============================================
 

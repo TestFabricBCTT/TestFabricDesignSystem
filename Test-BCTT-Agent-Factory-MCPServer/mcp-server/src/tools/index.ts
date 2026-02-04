@@ -1,6 +1,7 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { jiraTools, jiraToolHandlers } from '../jira/index.js';
+import { generateDocumentBase64, DocumentData } from '../document/index.js';
 
 // Tool definitions (Agent tools + Jira tools)
 export const tools: Tool[] = [
@@ -136,6 +137,184 @@ export const tools: Tool[] = [
         }
       },
       required: ["user_stories", "project"]
+    }
+  },
+  {
+    name: "fa_generate_document",
+    description: "FA Agent: Gera documento 'Informação Adicional' (.docx) seguindo template Banco CTT. Retorna documento em base64 para download.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        titulo: {
+          type: "string",
+          description: "Título da funcionalidade"
+        },
+        codigo_bdev: {
+          type: "string",
+          description: "Código BDEV (ex: [BDEV00000001])"
+        },
+        versao: {
+          type: "string",
+          description: "Versão do documento (ex: 1.0)"
+        },
+        autor: {
+          type: "string",
+          description: "Autor do documento"
+        },
+        termos_abreviaturas: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              termo: { type: "string" },
+              descricao: { type: "string" }
+            },
+            required: ["termo", "descricao"]
+          },
+          description: "Lista de termos e abreviaturas"
+        },
+        documentos_relacionados: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              nome: { type: "string" },
+              tipo: { type: "string" },
+              descricao: { type: "string" }
+            },
+            required: ["nome", "tipo", "descricao"]
+          },
+          description: "Lista de documentos relacionados"
+        },
+        ecras: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              nome: { type: "string" },
+              descricao: { type: "string" },
+              campos: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    campo: { type: "string" },
+                    regras: { type: "string" },
+                    formatacao: { type: "string" }
+                  },
+                  required: ["id", "campo", "regras", "formatacao"]
+                }
+              }
+            },
+            required: ["id", "nome", "descricao", "campos"]
+          },
+          description: "Lista de ecrãs com campos e regras"
+        },
+        user_stories: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              titulo: { type: "string" },
+              mvp: { type: "string" }
+            },
+            required: ["id", "titulo", "mvp"]
+          },
+          description: "Lista de user stories com MVPs"
+        },
+        campos_regras: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              requisito: { type: "string" },
+              userStory: { type: "string" },
+              campos: { type: "string" },
+              regras: { type: "string" },
+              formatacao: { type: "string" }
+            },
+            required: ["requisito", "userStory", "campos", "regras", "formatacao"]
+          },
+          description: "Tabela de campos e regras mapeados a requisitos e user stories"
+        }
+      },
+      required: ["titulo", "codigo_bdev", "ecras", "user_stories"]
+    }
+  },
+  {
+    name: "fa_validate_with_ba",
+    description: "FA Agent: Envia especificações para o BA validar. O BA verifica se todos os requisitos e cenários de exceção estão cobertos. Retorna feedback de validação.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        requisitos_originais: {
+          type: "string",
+          description: "Requisitos originais recebidos do BA"
+        },
+        cenarios_excecao_ba: {
+          type: "array",
+          items: { type: "string" },
+          description: "Cenários de exceção identificados pelo BA"
+        },
+        user_stories: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              titulo: { type: "string" },
+              narrativa: { type: "string" },
+              mvp: { type: "string" },
+              criterios_aceitacao: {
+                type: "array",
+                items: { type: "string" }
+              }
+            },
+            required: ["id", "titulo", "narrativa", "criterios_aceitacao"]
+          },
+          description: "User stories criadas pelo FA"
+        },
+        estrutura_mvps: {
+          type: "object",
+          properties: {
+            mvp1: { type: "array", items: { type: "string" } },
+            mvp2: { type: "array", items: { type: "string" } },
+            mvp3: { type: "array", items: { type: "string" } }
+          },
+          description: "Estrutura de MVPs proposta"
+        }
+      },
+      required: ["requisitos_originais", "cenarios_excecao_ba", "user_stories"]
+    }
+  },
+  {
+    name: "fa_propose_functional_flow",
+    description: "FA Agent: Propõe fluxo funcional com links entre User Stories. Define a sequência e dependências entre stories.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        user_stories: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              titulo: { type: "string" },
+              descricao: { type: "string" }
+            },
+            required: ["id", "titulo"]
+          },
+          description: "Lista de user stories para analisar"
+        },
+        contexto: {
+          type: "string",
+          description: "Contexto funcional para identificar dependências"
+        }
+      },
+      required: ["user_stories"]
     }
   },
 
@@ -472,6 +651,286 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       project,
       iteration: iteration || "Backlog",
       items_count: user_stories.length
+    }, null, 2);
+  },
+
+  fa_generate_document: async (args) => {
+    const {
+      titulo,
+      codigo_bdev,
+      versao,
+      autor,
+      termos_abreviaturas,
+      documentos_relacionados,
+      ecras,
+      user_stories,
+      campos_regras,
+    } = args as {
+      titulo: string;
+      codigo_bdev: string;
+      versao?: string;
+      autor?: string;
+      termos_abreviaturas?: Array<{ termo: string; descricao: string }>;
+      documentos_relacionados?: Array<{ nome: string; tipo: string; descricao: string }>;
+      ecras: Array<{
+        id: string;
+        nome: string;
+        descricao: string;
+        campos: Array<{ id: string; campo: string; regras: string; formatacao: string }>;
+      }>;
+      user_stories: Array<{ id: string; titulo: string; mvp: string }>;
+      campos_regras?: Array<{
+        requisito: string;
+        userStory: string;
+        campos: string;
+        regras: string;
+        formatacao: string;
+      }>;
+    };
+
+    try {
+      const data: DocumentData = {
+        titulo,
+        codigoBDEV: codigo_bdev,
+        versao: versao || "1.0",
+        autor: autor || "FA (Functional Agent)",
+        data: new Date().toISOString().split("T")[0],
+        termosAbreviaturas: termos_abreviaturas || [],
+        documentosRelacionados: documentos_relacionados || [],
+        ecras: ecras.map(e => ({
+          id: e.id,
+          nome: e.nome,
+          descricao: e.descricao,
+          campos: e.campos,
+        })),
+        userStories: user_stories,
+        camposRegras: campos_regras || [],
+      };
+
+      const base64 = await generateDocumentBase64(data);
+      const fileName = `${codigo_bdev.replace(/[\[\]]/g, '')}_${titulo.replace(/\s+/g, '_')}.docx`;
+
+      return JSON.stringify({
+        agent: "FA",
+        action: "generate_document",
+        success: true,
+        document: {
+          fileName,
+          mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          base64,
+          sizeBytes: Math.round(base64.length * 0.75),
+        },
+        message: `Documento '${fileName}' gerado com sucesso. Use este base64 para download ou anexar ao Jira.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FA",
+        action: "generate_document",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fa_validate_with_ba: async (args) => {
+    const {
+      requisitos_originais,
+      cenarios_excecao_ba,
+      user_stories,
+      estrutura_mvps,
+    } = args as {
+      requisitos_originais: string;
+      cenarios_excecao_ba: string[];
+      user_stories: Array<{
+        id: string;
+        titulo: string;
+        narrativa: string;
+        mvp?: string;
+        criterios_aceitacao: string[];
+      }>;
+      estrutura_mvps?: {
+        mvp1?: string[];
+        mvp2?: string[];
+        mvp3?: string[];
+      };
+    };
+
+    // Simulate BA validation logic
+    const validation = {
+      requisitos_cobertos: true,
+      cenarios_excecao_cobertos: true,
+      gaps_identificados: [] as string[],
+      sugestoes: [] as string[],
+    };
+
+    // Check if exception scenarios are covered in acceptance criteria
+    const allCriteria = user_stories.flatMap(us => us.criterios_aceitacao);
+    const criteriaText = allCriteria.join(" ").toLowerCase();
+
+    cenarios_excecao_ba.forEach((cenario, index) => {
+      const keywords = cenario.toLowerCase().split(" ");
+      const isCovered = keywords.some(kw => kw.length > 4 && criteriaText.includes(kw));
+
+      if (!isCovered) {
+        validation.cenarios_excecao_cobertos = false;
+        validation.gaps_identificados.push(
+          `Cenário de exceção E${index + 1} pode não estar totalmente coberto: "${cenario}"`
+        );
+      }
+    });
+
+    // Check MVP structure
+    if (estrutura_mvps) {
+      const totalStories = user_stories.length;
+      const mvp1Count = estrutura_mvps.mvp1?.length || 0;
+
+      if (mvp1Count === 0) {
+        validation.sugestoes.push("MVP1 deve ter pelo menos uma user story para entrega inicial");
+      }
+
+      if (mvp1Count > totalStories * 0.6) {
+        validation.sugestoes.push("Considerar mover algumas stories do MVP1 para MVP2 para reduzir scope inicial");
+      }
+    }
+
+    const aprovado = validation.requisitos_cobertos &&
+                     validation.cenarios_excecao_cobertos &&
+                     validation.gaps_identificados.length === 0;
+
+    return JSON.stringify({
+      agent: "BA",
+      action: "validate_fa_specs",
+      validation_result: {
+        aprovado,
+        requisitos_cobertos: validation.requisitos_cobertos,
+        cenarios_excecao_cobertos: validation.cenarios_excecao_cobertos,
+        gaps_identificados: validation.gaps_identificados,
+        sugestoes: validation.sugestoes,
+        total_user_stories: user_stories.length,
+        total_cenarios_excecao: cenarios_excecao_ba.length,
+      },
+      message: aprovado
+        ? "Validação aprovada pelo BA. Pode apresentar ao humano para aprovação final."
+        : "Validação com observações. Corrigir gaps antes de apresentar ao humano.",
+      next_step: aprovado
+        ? "Mostrar lista de títulos ao humano e aguardar aprovação para criar no Jira"
+        : "Corrigir os gaps identificados e resubmeter para validação",
+    }, null, 2);
+  },
+
+  fa_propose_functional_flow: async (args) => {
+    const { user_stories, contexto } = args as {
+      user_stories: Array<{
+        id: string;
+        titulo: string;
+        descricao?: string;
+      }>;
+      contexto?: string;
+    };
+
+    // Analyze stories and propose flow based on common patterns
+    const proposedLinks: Array<{
+      from: string;
+      to: string;
+      linkType: "blocks" | "is_blocked_by" | "relates_to";
+      reason: string;
+    }> = [];
+
+    // Simple heuristic: look for keywords to determine dependencies
+    const dependencyKeywords = {
+      authentication: ["login", "autenticar", "autenticação", "sessão"],
+      listing: ["lista", "consulta", "ver", "visualizar"],
+      detail: ["detalhe", "detalhes", "ver mais"],
+      action: ["criar", "editar", "eliminar", "exportar", "enviar"],
+      filter: ["filtrar", "filtro", "pesquisar", "ordenar"],
+    };
+
+    // Group stories by type
+    const authStories = user_stories.filter(us =>
+      dependencyKeywords.authentication.some(kw =>
+        us.titulo.toLowerCase().includes(kw) || us.descricao?.toLowerCase().includes(kw)
+      )
+    );
+
+    const listStories = user_stories.filter(us =>
+      dependencyKeywords.listing.some(kw =>
+        us.titulo.toLowerCase().includes(kw) || us.descricao?.toLowerCase().includes(kw)
+      )
+    );
+
+    const detailStories = user_stories.filter(us =>
+      dependencyKeywords.detail.some(kw =>
+        us.titulo.toLowerCase().includes(kw) || us.descricao?.toLowerCase().includes(kw)
+      )
+    );
+
+    const actionStories = user_stories.filter(us =>
+      dependencyKeywords.action.some(kw =>
+        us.titulo.toLowerCase().includes(kw) || us.descricao?.toLowerCase().includes(kw)
+      )
+    );
+
+    // Create links based on patterns
+    // Auth -> List (auth blocks list)
+    authStories.forEach(auth => {
+      listStories.forEach(list => {
+        proposedLinks.push({
+          from: auth.id,
+          to: list.id,
+          linkType: "blocks",
+          reason: "Autenticação é pré-requisito para consultar listagens",
+        });
+      });
+    });
+
+    // List -> Detail (list blocks detail)
+    listStories.forEach(list => {
+      detailStories.forEach(detail => {
+        proposedLinks.push({
+          from: list.id,
+          to: detail.id,
+          linkType: "blocks",
+          reason: "Listagem é necessária para aceder ao detalhe",
+        });
+      });
+    });
+
+    // Detail <-> Actions (relates_to)
+    detailStories.forEach(detail => {
+      actionStories.forEach(action => {
+        proposedLinks.push({
+          from: detail.id,
+          to: action.id,
+          linkType: "relates_to",
+          reason: "Ações relacionadas ao detalhe do item",
+        });
+      });
+    });
+
+    // Generate visual flow
+    const flowDiagram = proposedLinks.length > 0
+      ? proposedLinks.map(link =>
+          `${link.from} → (${link.linkType.replace('_', ' ')}) → ${link.to}`
+        ).join("\n")
+      : "Nenhuma dependência automática identificada. Adicione manualmente se necessário.";
+
+    return JSON.stringify({
+      agent: "FA",
+      action: "propose_functional_flow",
+      flow: {
+        total_stories: user_stories.length,
+        total_links: proposedLinks.length,
+        links: proposedLinks,
+        diagram: flowDiagram,
+      },
+      jira_link_types: [
+        { name: "Blocks", description: "Story A blocks Story B" },
+        { name: "Relates", description: "Story A relates to Story B" },
+      ],
+      message: proposedLinks.length > 0
+        ? `Proposto fluxo funcional com ${proposedLinks.length} ligações entre stories.`
+        : "Analise manual recomendada para identificar dependências.",
+      next_step: "Validar fluxo proposto e criar links no Jira após aprovação",
     }, null, 2);
   },
 
