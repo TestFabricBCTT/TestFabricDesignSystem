@@ -139,7 +139,7 @@ export async function sendMessageToClaude(
   try {
     // Call Claude API with tools
     let response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-3-5-haiku-20241022",
       max_tokens: 4096,
       system: conversation.systemPrompt,
       tools: agentTools.length > 0 ? agentTools : undefined,
@@ -194,7 +194,7 @@ export async function sendMessageToClaude(
       ];
 
       response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-3-5-haiku-20241022",
         max_tokens: 4096,
         system: conversation.systemPrompt,
         tools: agentTools.length > 0 ? agentTools : undefined,
