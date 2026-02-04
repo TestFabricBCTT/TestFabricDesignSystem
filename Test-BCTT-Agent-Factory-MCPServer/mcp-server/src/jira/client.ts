@@ -106,9 +106,13 @@ export class JiraClient {
   }
 
   async searchIssues(jql: string, maxResults: number = 50): Promise<JiraSearchResult> {
-    return this.get<JiraSearchResult>(
-      `/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}`
-    );
+    // Updated to use new Jira Cloud API endpoint (POST /search/jql)
+    // Old endpoint /search?jql=... was deprecated (HTTP 410 Gone)
+    return this.post<JiraSearchResult>('/search/jql', {
+      jql,
+      maxResults,
+      fields: ['summary', 'status', 'issuetype', 'parent', 'labels', 'assignee', 'description']
+    });
   }
 
   async createIssue(payload: CreateIssuePayload): Promise<JiraIssue> {

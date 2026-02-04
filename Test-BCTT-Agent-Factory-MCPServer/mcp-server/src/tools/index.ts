@@ -10,7 +10,7 @@ export const tools: Tool[] = [
   // ============================================
   {
     name: "ba_analyze_requirements",
-    description: "BA Agent: Analisa requisitos iniciais de uma funcionalidade. Extrai objetivos, impacto no negócio, utilizadores afetados e restrições técnicas.",
+    description: "BA Agent: Analisa requisitos iniciais. IMPORTANTE: Ler TODA a mensagem do utilizador antes de usar. Extrair objetivos, utilizadores e restrições. NÃO criar documentos - apenas consolidar.",
     inputSchema: {
       type: "object",
       properties: {
@@ -32,7 +32,7 @@ export const tools: Tool[] = [
   },
   {
     name: "ba_generate_questions",
-    description: "BA Agent: Gera perguntas de clarificação para detalhar requisitos. Usa metodologia SMART para garantir completude.",
+    description: "BA Agent: Gera perguntas de clarificação. REGRA: Máximo 2-3 perguntas. NÃO repetir perguntas sobre informação já fornecida. Se info suficiente, NÃO usar esta ferramenta - consolidar directamente.",
     inputSchema: {
       type: "object",
       properties: {
@@ -49,58 +49,35 @@ export const tools: Tool[] = [
       required: ["requirements"]
     }
   },
-  {
-    name: "ba_create_brd",
-    description: "BA Agent: Cria documento BRD (Business Requirements Document) estruturado.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        functionality_name: {
-          type: "string",
-          description: "Nome da funcionalidade"
-        },
-        requirements: {
-          type: "string",
-          description: "Requisitos consolidados"
-        },
-        stakeholders: {
-          type: "array",
-          items: { type: "string" },
-          description: "Lista de stakeholders"
-        }
-      },
-      required: ["functionality_name", "requirements"]
-    }
-  },
 
   // ============================================
   // FA - FUNCTIONAL AGENT TOOLS
   // ============================================
   {
     name: "fa_create_user_stories",
-    description: "FA Agent: Cria user stories estruturadas a partir de requisitos. Formato: Como [persona], quero [ação], para [benefício].",
+    description: "FA Agent: Cria user stories estruturadas a partir de requisitos. OBRIGATÓRIO: Cada US deve ter MVP atribuído (MVP1=core essencial, MVP2=complementar, MVP3=nice-to-have). Formato: Como [persona], quero [ação], para [benefício].",
     inputSchema: {
       type: "object",
       properties: {
         requirements: {
           type: "string",
-          description: "Requisitos ou BRD para converter em user stories"
+          description: "Requisitos consolidados pelo BA para converter em user stories"
         },
         persona: {
           type: "string",
           description: "Persona principal (ex: Cliente, Gestor, Admin)"
         },
-        mvp_scope: {
-          type: "boolean",
-          description: "Filtrar apenas user stories MVP"
+        functional_context: {
+          type: "string",
+          description: "Contexto funcional para determinar priorização de MVPs (fluxos principais vs secundários)"
         }
       },
-      required: ["requirements"]
+      required: ["requirements", "functional_context"]
     }
   },
   {
     name: "fa_define_acceptance_criteria",
-    description: "FA Agent: Define critérios de aceitação para user stories usando formato Gherkin (Given/When/Then).",
+    description: "FA Agent: Define critérios de aceitação em Gherkin (Given/When/Then). OBRIGATÓRIO: Incluir cenários de exceção identificados pelo BA. Cada US deve ter cenário principal + cenários de erro.",
     inputSchema: {
       type: "object",
       properties: {
@@ -141,10 +118,14 @@ export const tools: Tool[] = [
   },
   {
     name: "fa_generate_document",
-    description: "FA Agent: Gera documento 'Informação Adicional' (.docx) seguindo template Banco CTT. Retorna documento em base64 para download.",
+    description: "FA Agent: Gera documento 'Informação Adicional' (.docx) seguindo template Banco CTT. OBRIGATÓRIO: Só usar APÓS fa_validate_with_ba aprovar. Inclui ecrãs, campos, regras e user stories com MVPs.",
     inputSchema: {
       type: "object",
       properties: {
+        ba_validation_approved: {
+          type: "boolean",
+          description: "OBRIGATÓRIO: Confirmar que fa_validate_with_ba foi executado e aprovou. Se false, a ferramenta recusa."
+        },
         titulo: {
           type: "string",
           description: "Título da funcionalidade"
@@ -241,12 +222,12 @@ export const tools: Tool[] = [
           description: "Tabela de campos e regras mapeados a requisitos e user stories"
         }
       },
-      required: ["titulo", "codigo_bdev", "ecras", "user_stories"]
+      required: ["ba_validation_approved", "titulo", "codigo_bdev", "ecras", "user_stories"]
     }
   },
   {
     name: "fa_validate_with_ba",
-    description: "FA Agent: Envia especificações para o BA validar. O BA verifica se todos os requisitos e cenários de exceção estão cobertos. Retorna feedback de validação.",
+    description: "FA Agent: OBRIGATÓRIO antes de fa_generate_document. Envia especificações ao BA para validar cobertura de requisitos e cenários de exceção. Só gerar documento após aprovação.",
     inputSchema: {
       type: "object",
       properties: {
@@ -537,65 +518,59 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
     }, null, 2);
   },
 
-  ba_create_brd: async (args) => {
-    const { functionality_name, requirements, stakeholders } = args as {
-      functionality_name: string;
-      requirements: string;
-      stakeholders?: string[];
-    };
-
-    return JSON.stringify({
-      agent: "BA",
-      action: "create_brd",
-      document: {
-        title: `BRD - ${functionality_name}`,
-        version: "1.0",
-        date: new Date().toISOString().split("T")[0],
-        sections: {
-          executive_summary: `Documento de requisitos para ${functionality_name}`,
-          business_context: requirements,
-          stakeholders: stakeholders || ["Product Owner", "Tech Lead", "UX Designer"],
-          functional_requirements: ["FR1: Requisito funcional 1", "FR2: Requisito funcional 2"],
-          non_functional_requirements: ["NFR1: Performance", "NFR2: Segurança"],
-          success_criteria: ["KPI1: Taxa de conversão", "KPI2: Satisfação do utilizador"]
-        }
-      }
-    }, null, 2);
-  },
 
   // FA Tools
   fa_create_user_stories: async (args) => {
-    const { requirements, persona, mvp_scope } = args as {
+    const { requirements, persona, functional_context } = args as {
       requirements: string;
       persona?: string;
-      mvp_scope?: boolean;
+      functional_context?: string;
     };
 
     const userPersona = persona || "Cliente";
+    const context = functional_context || "";
 
+    // MVP categorization rules:
+    // MVP1: Core functionality - authentication, main flow, mandatory validations
+    // MVP2: Complementary - notifications, filters, exports, secondary flows
+    // MVP3: Nice-to-have - customizations, advanced analytics, optimizations
+
+    const mvpRules = {
+      mvp1Keywords: ["autenticar", "login", "principal", "obrigatório", "validar", "criar", "submeter", "core", "essencial"],
+      mvp2Keywords: ["notificar", "email", "filtrar", "exportar", "secundário", "complementar", "histórico"],
+      mvp3Keywords: ["personalizar", "analytics", "otimizar", "preferências", "avançado", "nice-to-have"]
+    };
+
+    const categorizeMVP = (storyText: string): string => {
+      const text = storyText.toLowerCase();
+      if (mvpRules.mvp1Keywords.some(kw => text.includes(kw))) return "MVP1";
+      if (mvpRules.mvp2Keywords.some(kw => text.includes(kw))) return "MVP2";
+      if (mvpRules.mvp3Keywords.some(kw => text.includes(kw))) return "MVP3";
+      return "MVP1"; // Default to MVP1 if unclear
+    };
+
+    // This is a template response - the actual stories should be generated based on requirements
+    // The Claude model will use this structure but generate real content
     return JSON.stringify({
       agent: "FA",
       action: "create_user_stories",
-      user_stories: [
-        {
-          id: "US001",
-          mvp: true,
-          story: `Como ${userPersona}, quero visualizar a funcionalidade, para poder utilizá-la facilmente.`,
-          priority: "Must Have"
-        },
-        {
-          id: "US002",
-          mvp: true,
-          story: `Como ${userPersona}, quero receber feedback das minhas ações, para saber que foram processadas.`,
-          priority: "Must Have"
-        },
-        {
-          id: "US003",
-          mvp: mvp_scope ? false : true,
-          story: `Como ${userPersona}, quero poder reverter ações, para corrigir erros.`,
-          priority: "Should Have"
-        }
-      ].filter(us => !mvp_scope || us.mvp)
+      instructions: "IMPORTANTE: Gerar user stories reais baseadas nos requisitos. Cada US DEVE ter mvp_phase atribuído.",
+      mvp_categorization_rules: {
+        MVP1: "Funcionalidades core essenciais - fluxo principal, autenticação, validações obrigatórias",
+        MVP2: "Funcionalidades complementares - notificações, filtros, exportações, fluxos secundários",
+        MVP3: "Nice-to-have - personalizações, analytics avançado, otimizações"
+      },
+      template: {
+        id: "USXXX",
+        mvp_phase: "MVP1 | MVP2 | MVP3",
+        title: "Título descritivo",
+        narrative: `Como ${userPersona}, quero [ação], para [benefício].`,
+        acceptance_criteria: [
+          "Given [contexto] When [ação] Then [resultado]"
+        ]
+      },
+      context_received: context,
+      requirements_received: requirements.substring(0, 500) + "..."
     }, null, 2);
   },
 
@@ -656,6 +631,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
 
   fa_generate_document: async (args) => {
     const {
+      ba_validation_approved,
       titulo,
       codigo_bdev,
       versao,
@@ -666,6 +642,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       user_stories,
       campos_regras,
     } = args as {
+      ba_validation_approved: boolean;
       titulo: string;
       codigo_bdev: string;
       versao?: string;
@@ -687,6 +664,18 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         formatacao: string;
       }>;
     };
+
+    // Check if BA validation was approved
+    if (!ba_validation_approved) {
+      return JSON.stringify({
+        agent: "FA",
+        action: "generate_document",
+        success: false,
+        error: "VALIDAÇÃO BA OBRIGATÓRIA",
+        message: "Não é possível gerar o documento sem validação do BA. Execute primeiro 'fa_validate_with_ba' e obtenha aprovação antes de gerar o documento.",
+        next_step: "Chamar fa_validate_with_ba com os requisitos e user stories para validação"
+      }, null, 2);
+    }
 
     try {
       const data: DocumentData = {
