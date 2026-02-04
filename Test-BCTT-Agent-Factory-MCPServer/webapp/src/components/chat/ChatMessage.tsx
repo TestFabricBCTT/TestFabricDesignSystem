@@ -57,22 +57,6 @@ export const ChatMessage = ({ message, agentId }: ChatMessageProps) => {
         >
           {message.content}
         </Typography>
-        {message.timestamp && (
-          <Typography
-            variant="caption"
-            sx={{
-              display: 'block',
-              mt: 1,
-              color: 'text.disabled',
-              fontSize: '0.65rem',
-            }}
-          >
-            {new Date(message.timestamp).toLocaleTimeString('pt-PT', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Typography>
-        )}
       </Paper>
     </Box>
   );

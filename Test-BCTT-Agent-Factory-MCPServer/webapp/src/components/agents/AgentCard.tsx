@@ -43,10 +43,12 @@ export const AgentCard = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.5rem',
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: agentColor,
             }}
           >
-            {agent.icon}
+            {agent.sigla}
           </Box>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             {hasConversations && onHistoryClick && (
@@ -77,10 +79,10 @@ export const AgentCard = ({
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              {agent.name}
+              {agent.nome}
             </Typography>
             <Chip
-              label={agent.id.toUpperCase()}
+              label={agent.sigla}
               size="small"
               sx={{
                 height: 20,
@@ -92,15 +94,15 @@ export const AgentCard = ({
             />
           </Box>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            {agent.description}
+            {agent.missao}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-          {agent.capabilities.slice(0, 3).map((capability, index) => (
+          {agent.responsabilidades.slice(0, 3).map((responsabilidade, index) => (
             <Chip
               key={index}
-              label={capability}
+              label={responsabilidade}
               size="small"
               sx={{
                 height: 24,
@@ -111,9 +113,9 @@ export const AgentCard = ({
               }}
             />
           ))}
-          {agent.capabilities.length > 3 && (
+          {agent.responsabilidades.length > 3 && (
             <Chip
-              label={`+${agent.capabilities.length - 3}`}
+              label={`+${agent.responsabilidades.length - 3}`}
               size="small"
               sx={{
                 height: 24,

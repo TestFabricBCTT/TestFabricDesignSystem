@@ -83,18 +83,20 @@ export const ChatModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.25rem',
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: agentColor,
             }}
           >
-            {agent.icon}
+            {agent.sigla}
           </Box>
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {agent.name}
+                {agent.nome}
               </Typography>
               <Chip
-                label={agent.id.toUpperCase()}
+                label={agent.sigla}
                 size="small"
                 sx={{
                   height: 20,
@@ -106,7 +108,7 @@ export const ChatModal = ({
               />
             </Box>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {agent.description}
+              {agent.missao}
             </Typography>
           </Box>
         </Box>
@@ -172,7 +174,7 @@ export const ChatModal = ({
                 variant="body1"
                 sx={{ color: 'text.secondary', textAlign: 'center' }}
               >
-                Inicie uma conversa com o {agent.name}
+                Inicie uma conversa com o {agent.nome}
               </Typography>
               <Typography
                 variant="caption"
@@ -195,7 +197,7 @@ export const ChatModal = ({
           agentId={agent.id}
           onSend={onSend}
           isLoading={isLoading}
-          placeholder={`Pergunte ao ${agent.name}...`}
+          placeholder={`Pergunte ao ${agent.nome}...`}
         />
       </DialogContent>
     </Dialog>

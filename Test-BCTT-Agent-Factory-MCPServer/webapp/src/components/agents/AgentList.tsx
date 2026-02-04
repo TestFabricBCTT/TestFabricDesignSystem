@@ -15,10 +15,10 @@ export const AgentList = ({ phase, agents, onChatClick, onHistoryClick }: AgentL
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-          {phase.icon} {phase.name}
+          {phase.numero} {phase.nome}
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {phase.description}
+          {phase.descricao}
         </Typography>
       </Box>
 

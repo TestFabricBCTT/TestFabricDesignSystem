@@ -67,13 +67,15 @@ export const ConversationHistory = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1rem',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              color: agentColor,
             }}
           >
-            {agent.icon}
+            {agent.sigla}
           </Box>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Histórico - {agent.name}
+            Histórico - {agent.nome}
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small">
@@ -111,10 +113,10 @@ export const ConversationHistory = ({
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          {conversation.title}
+                          {conversation.titulo}
                         </Typography>
                         <Chip
-                          label={`${conversation.messages.length} msgs`}
+                          label={`${conversation.mensagens.length} msgs`}
                           size="small"
                           sx={{
                             height: 18,
@@ -135,7 +137,7 @@ export const ConversationHistory = ({
                           overflow: 'hidden',
                         }}
                       >
-                        {conversation.messages[0]?.content || 'Sem mensagens'}
+                        {conversation.mensagens[0]?.content || 'Sem mensagens'}
                       </Typography>
                     }
                   />

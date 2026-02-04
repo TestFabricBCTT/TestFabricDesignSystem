@@ -3,7 +3,7 @@ import { PhaseId } from '@/types';
 import { phases, getAgentsByPhase } from '@/data/agents';
 
 export const useAgents = () => {
-  const [activePhaseId, setActivePhaseId] = useState<PhaseId>('concecao');
+  const [activePhaseId, setActivePhaseId] = useState<PhaseId>('concepcao');
 
   const activePhase = useMemo(() => {
     return phases.find((p) => p.id === activePhaseId) || phases[0];

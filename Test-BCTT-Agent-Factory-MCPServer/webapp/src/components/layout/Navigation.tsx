@@ -42,7 +42,7 @@ export const Navigation = ({ phases, activePhase, onPhaseChange }: NavigationPro
           <Tab
             key={phase.id}
             value={phase.id}
-            label={`${phase.icon} ${phase.name}`}
+            label={`${phase.numero} ${phase.nome}`}
             sx={{ minHeight: 48 }}
           />
         ))}

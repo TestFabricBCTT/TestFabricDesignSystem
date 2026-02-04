@@ -40,7 +40,6 @@ export const useChat = (): UseChatReturn => {
     const userMessage: ChatMessage = {
       role: 'user',
       content,
-      timestamp: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -53,7 +52,6 @@ export const useChat = (): UseChatReturn => {
         const assistantMessage: ChatMessage = {
           role: 'assistant',
           content: `[${currentAgent.id.toUpperCase()}] Esta é uma resposta simulada. Para respostas reais, configure a API key do Claude no ficheiro .env`,
-          timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
         setIsLoading(false);
@@ -64,18 +62,18 @@ export const useChat = (): UseChatReturn => {
       let foundResponse = false;
 
       for (const conv of agentConversations) {
-        for (let i = 0; i < conv.messages.length - 1; i++) {
-          const msg = conv.messages[i];
+        for (let i = 0; i < conv.mensagens.length - 1; i++) {
+          const msg = conv.mensagens[i];
           if (
             msg.role === 'user' &&
             msg.content.toLowerCase().includes(content.toLowerCase().substring(0, 20))
           ) {
-            const nextMsg = conv.messages[i + 1];
+            const nextMsg = conv.mensagens[i + 1];
             if (nextMsg && nextMsg.role === 'assistant') {
               setTimeout(() => {
                 setMessages((prev) => [
                   ...prev,
-                  { ...nextMsg, timestamp: new Date().toISOString() },
+                  { ...nextMsg },
                 ]);
               }, 500);
               foundResponse = true;
@@ -90,8 +88,7 @@ export const useChat = (): UseChatReturn => {
         setTimeout(() => {
           const assistantMessage: ChatMessage = {
             role: 'assistant',
-            content: `Olá! Sou o ${currentAgent.name}. Esta é uma demonstração. Ative o "Live Mode" para interagir com a IA real, ou use uma das conversas de exemplo no histórico.`,
-            timestamp: new Date().toISOString(),
+            content: `Olá! Sou o ${currentAgent.nome}. Esta é uma demonstração. Ative o "Live Mode" para interagir com a IA real, ou use uma das conversas de exemplo no histórico.`,
           };
           setMessages((prev) => [...prev, assistantMessage]);
         }, 500);
@@ -104,7 +101,7 @@ export const useChat = (): UseChatReturn => {
   }, []);
 
   const loadConversation = useCallback((conversation: Conversation) => {
-    setMessages(conversation.messages);
+    setMessages(conversation.mensagens);
   }, []);
 
   return {
