@@ -1,7 +1,8 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { jiraTools, jiraToolHandlers } from '../jira/index.js';
 
-// Tool definitions
+// Tool definitions (Agent tools + Jira tools)
 export const tools: Tool[] = [
   // ============================================
   // BA - BRAINSTORM AGENT TOOLS
@@ -274,7 +275,12 @@ export const tools: Tool[] = [
       },
       required: ["component_code"]
     }
-  }
+  },
+
+  // ============================================
+  // JIRA TOOLS (imported from jira module)
+  // ============================================
+  ...jiraTools,
 ];
 
 // Tool handlers
@@ -677,11 +683,17 @@ ${storyVariants.map(v => `export const ${v}: Story = {
   }
 };
 
+// Merge all handlers (agent tools + jira tools)
+const allToolHandlers = {
+  ...toolHandlers,
+  ...jiraToolHandlers,
+};
+
 export async function handleToolCall(
   name: string,
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: "text"; text: string }> }> {
-  const handler = toolHandlers[name];
+  const handler = allToolHandlers[name];
 
   if (!handler) {
     return {
