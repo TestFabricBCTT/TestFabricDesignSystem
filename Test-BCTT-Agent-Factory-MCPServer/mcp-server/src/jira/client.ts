@@ -115,7 +115,7 @@ export class JiraClient {
 
         if (attempt < this.MAX_RETRIES) {
           const waitTime = this.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-          console.log(`[Jira] ${operationName} - Retry ${attempt}/${this.MAX_RETRIES} after ${waitTime}ms...`);
+          console.error(`[Jira] ${operationName} - Retry ${attempt}/${this.MAX_RETRIES} after ${waitTime}ms...`);
           await this.delay(waitTime);
         }
       }
@@ -140,7 +140,7 @@ export class JiraClient {
       const batchNum = Math.floor(i / this.BATCH_SIZE) + 1;
       const totalBatches = Math.ceil(items.length / this.BATCH_SIZE);
 
-      console.log(`[Jira] Processing batch ${batchNum}/${totalBatches} (${batch.length} items)...`);
+      console.error(`[Jira] Processing batch ${batchNum}/${totalBatches} (${batch.length} items)...`);
 
       const results = await Promise.allSettled(
         batch.map(item =>
@@ -167,7 +167,7 @@ export class JiraClient {
       }
     }
 
-    console.log(`[Jira] Batch processing complete: ${success.length} success, ${failed.length} failed`);
+    console.error(`[Jira] Batch processing complete: ${success.length} success, ${failed.length} failed`);
     return { success, failed };
   }
 
@@ -594,14 +594,14 @@ export class JiraClient {
   // ============================================
 
   async createFromFAStructure(structure: FAStructure): Promise<CreateBDEVResult> {
-    console.log(`[Jira] Starting bulk create for: ${structure.functionalityName}`);
+    console.error(`[Jira] Starting bulk create for: ${structure.functionalityName}`);
 
     // 1. Get next BDEV code (with retry)
     const bdevCode = await this.withRetry(
       () => this.getNextBDEVCode(),
       'getNextBDEVCode'
     );
-    console.log(`[Jira] BDEV code: ${bdevCode.formatted}`);
+    console.error(`[Jira] BDEV code: ${bdevCode.formatted}`);
 
     // 2. Create Epic (BDEV) with retry
     const epicInput: CreateBDEVInput = {
@@ -617,7 +617,7 @@ export class JiraClient {
       'createBDEV'
     );
     const epicUrl = `${this.config.baseUrl}/browse/${epic.key}`;
-    console.log(`[Jira] Epic created: ${epic.key}`);
+    console.error(`[Jira] Epic created: ${epic.key}`);
 
     // 3. Collect all features to create
     interface FeatureToCreate {
@@ -640,7 +640,7 @@ export class JiraClient {
     }
 
     // 4. Create Features in parallel batches
-    console.log(`[Jira] Creating ${featuresToCreate.length} features...`);
+    console.error(`[Jira] Creating ${featuresToCreate.length} features...`);
 
     const featureCreationResults = await this.processInBatches(
       featuresToCreate,
@@ -680,7 +680,7 @@ export class JiraClient {
         faUS,
       }));
 
-      console.log(`[Jira] Creating ${usToCreate.length} user stories for feature ${feature.key}...`);
+      console.error(`[Jira] Creating ${usToCreate.length} user stories for feature ${feature.key}...`);
 
       // Create user stories in parallel batches
       const usResults = await this.processInBatches(
@@ -750,7 +750,7 @@ export class JiraClient {
     const totalFeatures = featureCreationResults.success.length;
     const failedFeatures = featureCreationResults.failed.length;
 
-    console.log(`[Jira] Bulk create complete:`);
+    console.error(`[Jira] Bulk create complete:`);
     console.log(`  - Features: ${totalFeatures} success, ${failedFeatures} failed`);
     console.log(`  - User Stories: ${totalUserStories} success, ${failedUserStories} failed`);
 
