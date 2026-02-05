@@ -32,7 +32,7 @@ export const tools: Tool[] = [
   },
   {
     name: "ba_generate_questions",
-    description: "BA Agent: Gera perguntas de clarificação. REGRA: Máximo 2-3 perguntas. NÃO repetir perguntas sobre informação já fornecida. Se info suficiente, NÃO usar esta ferramenta - consolidar directamente.",
+    description: "BA Agent: Gera perguntas de clarificação contextuais. MODO DEMO: ~5 perguntas essenciais. MODO COMPLETO: perguntas adaptadas ao domínio (cartões→PCI-DSS, transferências→SEPA, etc.), evoluindo com base nas respostas. NÃO repetir perguntas já respondidas.",
     inputSchema: {
       type: "object",
       properties: {
