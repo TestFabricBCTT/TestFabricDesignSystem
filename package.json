@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@zeroheight/mcp-server": "^2.1.0"
+    "@zeroheight/mcp-server": "^2.1.0",
+    "figma-developer-mcp": "^0.6.4"
   }
 }
