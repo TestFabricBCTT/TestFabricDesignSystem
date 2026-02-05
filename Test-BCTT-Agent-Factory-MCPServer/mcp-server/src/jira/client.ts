@@ -108,10 +108,11 @@ export class JiraClient {
   async searchIssues(jql: string, maxResults: number = 50): Promise<JiraSearchResult> {
     // Updated to use new Jira Cloud API endpoint (POST /search/jql)
     // Old endpoint /search?jql=... was deprecated (HTTP 410 Gone)
+    // Using *navigable as per Atlassian migration docs (new API default is "id" only)
     return this.post<JiraSearchResult>('/search/jql', {
       jql,
       maxResults,
-      fields: ['summary', 'status', 'issuetype', 'parent', 'labels', 'assignee', 'description']
+      fields: ["*navigable"]
     });
   }
 
