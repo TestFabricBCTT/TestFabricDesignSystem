@@ -234,6 +234,8 @@ export interface CreateBDEVResult {
   summary: {
     totalFeatures: number;
     totalUserStories: number;
+    failedFeatures?: number;
+    failedUserStories?: number;
   };
 }
 
@@ -243,6 +245,7 @@ export interface CreateFeatureResult {
   featureName: string;
   featureUrl: string;
   userStories: CreateUserStoryResult[];
+  error?: string;
 }
 
 export interface CreateUserStoryResult {
@@ -250,4 +253,5 @@ export interface CreateUserStoryResult {
   storyKey: string;
   storyId: string;
   storyUrl: string;
+  error?: string;
 }

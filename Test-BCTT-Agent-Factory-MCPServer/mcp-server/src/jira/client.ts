@@ -83,6 +83,95 @@ export class JiraClient {
   }
 
   // ============================================
+  // PARALLEL PROCESSING HELPERS
+  // ============================================
+
+  private readonly BATCH_SIZE = 3;        // Concurrent requests per batch
+  private readonly BATCH_DELAY_MS = 500;  // Delay between batches
+  private readonly MAX_RETRIES = 3;       // Max retry attempts per request
+  private readonly RETRY_BASE_DELAY_MS = 1000; // Base delay for exponential backoff
+
+  /**
+   * Delay helper
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Retry with exponential backoff
+   */
+  private async withRetry<T>(
+    operation: () => Promise<T>,
+    operationName: string = 'operation'
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        if (attempt < this.MAX_RETRIES) {
+          const waitTime = this.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+          console.log(`[Jira] ${operationName} - Retry ${attempt}/${this.MAX_RETRIES} after ${waitTime}ms...`);
+          await this.delay(waitTime);
+        }
+      }
+    }
+
+    throw lastError || new Error(`${operationName} failed after ${this.MAX_RETRIES} retries`);
+  }
+
+  /**
+   * Process items in parallel batches with retry and error handling
+   */
+  private async processInBatches<T, R>(
+    items: T[],
+    processor: (item: T) => Promise<R>,
+    itemDescriptor: (item: T) => string = () => 'item'
+  ): Promise<{ success: R[]; failed: Array<{ item: T; error: string }> }> {
+    const success: R[] = [];
+    const failed: Array<{ item: T; error: string }> = [];
+
+    for (let i = 0; i < items.length; i += this.BATCH_SIZE) {
+      const batch = items.slice(i, i + this.BATCH_SIZE);
+      const batchNum = Math.floor(i / this.BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(items.length / this.BATCH_SIZE);
+
+      console.log(`[Jira] Processing batch ${batchNum}/${totalBatches} (${batch.length} items)...`);
+
+      const results = await Promise.allSettled(
+        batch.map(item =>
+          this.withRetry(
+            () => processor(item),
+            itemDescriptor(item)
+          )
+        )
+      );
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          success.push(result.value);
+        } else {
+          const errorMsg = result.reason?.message || String(result.reason);
+          console.error(`[Jira] Failed: ${itemDescriptor(batch[index])} - ${errorMsg}`);
+          failed.push({ item: batch[index], error: errorMsg });
+        }
+      });
+
+      // Delay between batches (except for last batch)
+      if (i + this.BATCH_SIZE < items.length) {
+        await this.delay(this.BATCH_DELAY_MS);
+      }
+    }
+
+    console.log(`[Jira] Batch processing complete: ${success.length} success, ${failed.length} failed`);
+    return { success, failed };
+  }
+
+  // ============================================
   // USER OPERATIONS
   // ============================================
 
@@ -505,10 +594,16 @@ export class JiraClient {
   // ============================================
 
   async createFromFAStructure(structure: FAStructure): Promise<CreateBDEVResult> {
-    // 1. Get next BDEV code
-    const bdevCode = await this.getNextBDEVCode();
+    console.log(`[Jira] Starting bulk create for: ${structure.functionalityName}`);
 
-    // 2. Create Epic (BDEV)
+    // 1. Get next BDEV code (with retry)
+    const bdevCode = await this.withRetry(
+      () => this.getNextBDEVCode(),
+      'getNextBDEVCode'
+    );
+    console.log(`[Jira] BDEV code: ${bdevCode.formatted}`);
+
+    // 2. Create Epic (BDEV) with retry
     const epicInput: CreateBDEVInput = {
       name: structure.functionalityName,
       description: structure.description,
@@ -517,74 +612,159 @@ export class JiraClient {
       alerts: structure.alerts,
     };
 
-    const epic = await this.createBDEV(epicInput, bdevCode);
+    const epic = await this.withRetry(
+      () => this.createBDEV(epicInput, bdevCode),
+      'createBDEV'
+    );
     const epicUrl = `${this.config.baseUrl}/browse/${epic.key}`;
+    console.log(`[Jira] Epic created: ${epic.key}`);
 
-    // 3. Create Features and User Stories
-    const featureResults: CreateFeatureResult[] = [];
-    let totalUserStories = 0;
+    // 3. Collect all features to create
+    interface FeatureToCreate {
+      epicKey: string;
+      faFeature: FAStructure['epics'][0]['features'][0];
+      featureNumber: number;
+    }
+
+    const featuresToCreate: FeatureToCreate[] = [];
     let featureNumber = 1;
 
     for (const faEpic of structure.epics) {
       for (const faFeature of faEpic.features) {
-        // Create Feature
-        const featureInput: CreateFeatureInput = {
+        featuresToCreate.push({
           epicKey: epic.key,
-          name: faFeature.name,
-          description: faFeature.description,
-          featureNumber,
-        };
-
-        const feature = await this.createFeature(featureInput);
-        const featureUrl = `${this.config.baseUrl}/browse/${feature.key}`;
-
-        // Create User Stories
-        const userStoryResults: CreateUserStoryResult[] = [];
-
-        for (const faUS of faFeature.userStories) {
-          const usInput: CreateUserStoryInput = {
-            parentKey: feature.key,
-            storyId: faUS.id,
-            narrative: faUS.narrative,
-            screen: faUS.screen,
-            acceptanceCriteria: faUS.acceptanceCriteria,
-            businessRules: faUS.businessRules,
-          };
-
-          const userStory = await this.createUserStory(usInput);
-          const usUrl = `${this.config.baseUrl}/browse/${userStory.key}`;
-
-          userStoryResults.push({
-            success: true,
-            storyKey: userStory.key,
-            storyId: faUS.id,
-            storyUrl: usUrl,
-          });
-
-          totalUserStories++;
-        }
-
-        featureResults.push({
-          success: true,
-          featureKey: feature.key,
-          featureName: faFeature.name,
-          featureUrl,
-          userStories: userStoryResults,
+          faFeature,
+          featureNumber: featureNumber++,
         });
-
-        featureNumber++;
       }
     }
 
+    // 4. Create Features in parallel batches
+    console.log(`[Jira] Creating ${featuresToCreate.length} features...`);
+
+    const featureCreationResults = await this.processInBatches(
+      featuresToCreate,
+      async (item) => {
+        const featureInput: CreateFeatureInput = {
+          epicKey: item.epicKey,
+          name: item.faFeature.name,
+          description: item.faFeature.description,
+          featureNumber: item.featureNumber,
+        };
+
+        const feature = await this.createFeature(featureInput);
+        return {
+          feature,
+          faFeature: item.faFeature,
+        };
+      },
+      (item) => `Feature: ${item.faFeature.name}`
+    );
+
+    // 5. Create User Stories in parallel batches for each successful feature
+    const featureResults: CreateFeatureResult[] = [];
+    let totalUserStories = 0;
+    let failedUserStories = 0;
+
+    for (const { feature, faFeature } of featureCreationResults.success) {
+      const featureUrl = `${this.config.baseUrl}/browse/${feature.key}`;
+
+      // Prepare user stories for this feature
+      interface USToCreate {
+        parentKey: string;
+        faUS: typeof faFeature.userStories[0];
+      }
+
+      const usToCreate: USToCreate[] = faFeature.userStories.map(faUS => ({
+        parentKey: feature.key,
+        faUS,
+      }));
+
+      console.log(`[Jira] Creating ${usToCreate.length} user stories for feature ${feature.key}...`);
+
+      // Create user stories in parallel batches
+      const usResults = await this.processInBatches(
+        usToCreate,
+        async (item) => {
+          const usInput: CreateUserStoryInput = {
+            parentKey: item.parentKey,
+            storyId: item.faUS.id,
+            narrative: item.faUS.narrative,
+            screen: item.faUS.screen,
+            acceptanceCriteria: item.faUS.acceptanceCriteria,
+            businessRules: item.faUS.businessRules,
+          };
+
+          const userStory = await this.createUserStory(usInput);
+          return {
+            userStory,
+            storyId: item.faUS.id,
+          };
+        },
+        (item) => `US: ${item.faUS.id}`
+      );
+
+      // Collect results
+      const userStoryResults: CreateUserStoryResult[] = usResults.success.map(({ userStory, storyId }) => ({
+        success: true,
+        storyKey: userStory.key,
+        storyId,
+        storyUrl: `${this.config.baseUrl}/browse/${userStory.key}`,
+      }));
+
+      // Add failed stories with error info
+      usResults.failed.forEach(({ item, error }) => {
+        userStoryResults.push({
+          success: false,
+          storyKey: '',
+          storyId: item.faUS.id,
+          storyUrl: '',
+          error,
+        });
+      });
+
+      totalUserStories += usResults.success.length;
+      failedUserStories += usResults.failed.length;
+
+      featureResults.push({
+        success: true,
+        featureKey: feature.key,
+        featureName: faFeature.name,
+        featureUrl,
+        userStories: userStoryResults,
+      });
+    }
+
+    // Add failed features
+    featureCreationResults.failed.forEach(({ item, error }) => {
+      featureResults.push({
+        success: false,
+        featureKey: '',
+        featureName: item.faFeature.name,
+        featureUrl: '',
+        userStories: [],
+        error,
+      });
+    });
+
+    const totalFeatures = featureCreationResults.success.length;
+    const failedFeatures = featureCreationResults.failed.length;
+
+    console.log(`[Jira] Bulk create complete:`);
+    console.log(`  - Features: ${totalFeatures} success, ${failedFeatures} failed`);
+    console.log(`  - User Stories: ${totalUserStories} success, ${failedUserStories} failed`);
+
     return {
-      success: true,
+      success: failedFeatures === 0 && failedUserStories === 0,
       bdevCode: bdevCode.formatted,
       epicKey: epic.key,
       epicUrl,
       features: featureResults,
       summary: {
-        totalFeatures: featureResults.length,
+        totalFeatures,
         totalUserStories,
+        failedFeatures,
+        failedUserStories,
       },
     };
   }
