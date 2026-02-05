@@ -672,6 +672,7 @@ const conversationMap: Record<AgentId, Conversation[]> = {
   ba: conversasBA,
   fa: conversasFA,
   da: conversasDA,
+  pa: [], // TODO: Add PA conversations
   dsla: conversasDSLA,
   fda: [], // TODO: Add FDA conversations
   bda: [], // TODO: Add BDA conversations

@@ -24,6 +24,21 @@ import {
   getCategories,
   searchComponents,
 } from '../design-system/index.js';
+import {
+  listPrototypes,
+  loadPrototype,
+  loadPrototypeById,
+  generatePrototype,
+  compareFAvsClient,
+  applyClientChanges,
+  exportPrototype,
+  approvePrototype,
+  type PrototypeRecord,
+  type PrototypeSummary,
+  type Journey,
+  type WireframeScreen,
+} from '../prototype/index.js';
+import { comparePrototypes, generateComparisonSummary } from '../prototype/compare.js';
 
 // Tool definitions (Agent tools + Jira tools)
 export const tools: Tool[] = [
@@ -602,6 +617,170 @@ export const tools: Tool[] = [
           description: "Termo de pesquisa - opcional"
         }
       }
+    }
+  },
+
+  // ============================================
+  // PA - PROTOTYPE AGENT TOOLS
+  // ============================================
+  {
+    name: "pa_list_prototypes",
+    description: "PA Agent: Lista protótipos existentes, opcionalmente filtrados por BDEV. Mostra versão, status e data.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV para filtrar (opcional)"
+        }
+      }
+    }
+  },
+  {
+    name: "pa_get_prototype",
+    description: "PA Agent: Recupera um protótipo específico pelo ID ou por BDEV+versão. Retorna código gerado e traduções.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prototype_id: {
+          type: "string",
+          description: "ID do protótipo (opcional se usar bdev_code)"
+        },
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV (opcional se usar prototype_id)"
+        },
+        version: {
+          type: "number",
+          description: "Versão específica (opcional, usa última se não especificado)"
+        }
+      }
+    }
+  },
+  {
+    name: "pa_create_prototype",
+    description: "PA Agent: Cria ou atualiza protótipo React baseado em wireframes do DA e jornadas do FA.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        },
+        journeys: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              screens: { type: "array", items: { type: "string" } },
+              userStories: { type: "array", items: { type: "string" } }
+            },
+            required: ["id", "name", "screens"]
+          },
+          description: "Jornadas aprovadas pelo FA"
+        },
+        wireframes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              screenId: { type: "string" },
+              screenName: { type: "string" },
+              userStory: { type: "string" },
+              header: { type: "object" },
+              body: { type: "object" },
+              footer: { type: "object" }
+            },
+            required: ["screenId", "screenName", "body"]
+          },
+          description: "Wireframes do DA"
+        },
+        approved_by: {
+          type: "string",
+          enum: ["FA", "Client"],
+          description: "Quem aprovou (opcional)"
+        }
+      },
+      required: ["bdev_code", "journeys", "wireframes"]
+    }
+  },
+  {
+    name: "pa_compare_versions",
+    description: "PA Agent: Compara versões do protótipo (FA approved vs Client approved). Identifica alterações.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        },
+        source_version: {
+          type: "number",
+          description: "Versão origem (opcional)"
+        },
+        target_version: {
+          type: "number",
+          description: "Versão destino (opcional)"
+        }
+      },
+      required: ["bdev_code"]
+    }
+  },
+  {
+    name: "pa_apply_changes",
+    description: "PA Agent: Aplica alterações do cliente para criar versão final do protótipo.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        }
+      },
+      required: ["bdev_code"]
+    }
+  },
+  {
+    name: "pa_export_prototype",
+    description: "PA Agent: Exporta protótipo como pacote (ficheiros TSX, traduções JSON, App.tsx, README).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        },
+        version: {
+          type: "number",
+          description: "Versão específica (opcional)"
+        }
+      },
+      required: ["bdev_code"]
+    }
+  },
+  {
+    name: "pa_approve_prototype",
+    description: "PA Agent: Marca um protótipo como aprovado pelo FA ou Cliente.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        },
+        version: {
+          type: "number",
+          description: "Versão a aprovar"
+        },
+        approved_by: {
+          type: "string",
+          enum: ["FA", "Client"],
+          description: "Quem aprova"
+        }
+      },
+      required: ["bdev_code", "version", "approved_by"]
     }
   },
 
@@ -1789,6 +1968,316 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       })),
       total: components.length,
       message: `Encontrados ${components.length} componentes${category ? ` na categoria '${category}'` : ''}${search ? ` com termo '${search}'` : ''}.`,
+    }, null, 2);
+  },
+
+  // PA Tools
+  pa_list_prototypes: async (args) => {
+    const { bdev_code } = args as { bdev_code?: string };
+
+    const prototypes = listPrototypes(bdev_code);
+
+    return JSON.stringify({
+      agent: "PA",
+      action: "list_prototypes",
+      filter: bdev_code || "all",
+      prototypes: prototypes.map(p => ({
+        id: p.id,
+        bdevCode: p.bdevCode,
+        version: p.version,
+        status: p.status,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        screenCount: p.screenCount,
+        approvedBy: p.approvedBy,
+      })),
+      total: prototypes.length,
+      message: prototypes.length > 0
+        ? `Encontrados ${prototypes.length} protótipo(s)${bdev_code ? ` para ${bdev_code}` : ''}.`
+        : `Nenhum protótipo encontrado${bdev_code ? ` para ${bdev_code}` : ''}.`,
+    }, null, 2);
+  },
+
+  pa_get_prototype: async (args) => {
+    const { prototype_id, bdev_code, version } = args as {
+      prototype_id?: string;
+      bdev_code?: string;
+      version?: number;
+    };
+
+    let prototype: PrototypeRecord | null = null;
+
+    if (prototype_id) {
+      prototype = loadPrototypeById(prototype_id);
+    } else if (bdev_code) {
+      prototype = loadPrototype(bdev_code, version);
+    }
+
+    if (!prototype) {
+      return JSON.stringify({
+        agent: "PA",
+        action: "get_prototype",
+        found: false,
+        message: "Protótipo não encontrado. Use pa_list_prototypes para ver protótipos disponíveis.",
+      }, null, 2);
+    }
+
+    return JSON.stringify({
+      agent: "PA",
+      action: "get_prototype",
+      found: true,
+      prototype: {
+        id: prototype.id,
+        bdevCode: prototype.bdevCode,
+        version: prototype.version,
+        status: prototype.status,
+        createdAt: prototype.createdAt,
+        updatedAt: prototype.updatedAt,
+        approvedBy: prototype.approvedBy,
+        screenCount: prototype.screens.length,
+        screens: prototype.screens.map(s => ({
+          screenId: s.screenId,
+          screenName: s.screenName,
+          userStory: s.userStory,
+          hasCode: !!s.code,
+          translationKeys: Object.keys(s.translations.pt).length,
+        })),
+        journeys: prototype.journeySnapshot,
+        changelog: prototype.changelog.slice(-5), // Last 5 entries
+      },
+      message: `Protótipo ${prototype.bdevCode} v${prototype.version} (${prototype.status})`,
+    }, null, 2);
+  },
+
+  pa_create_prototype: async (args) => {
+    const { bdev_code, journeys, wireframes, approved_by } = args as {
+      bdev_code: string;
+      journeys: Journey[];
+      wireframes: WireframeScreen[];
+      approved_by?: 'FA' | 'Client';
+    };
+
+    try {
+      const prototype = generatePrototype({
+        bdevCode: bdev_code,
+        journeys,
+        wireframes,
+        approvedBy: approved_by,
+      });
+
+      return JSON.stringify({
+        agent: "PA",
+        action: "create_prototype",
+        success: true,
+        prototype: {
+          id: prototype.id,
+          bdevCode: prototype.bdevCode,
+          version: prototype.version,
+          status: prototype.status,
+          screenCount: prototype.screens.length,
+          screens: prototype.screens.map(s => ({
+            screenId: s.screenId,
+            screenName: s.screenName,
+            codeLines: s.code.split('\n').length,
+          })),
+        },
+        message: `Protótipo ${bdev_code} v${prototype.version} criado com sucesso. ${prototype.screens.length} ecrã(s) gerados.`,
+        next_steps: [
+          "Use pa_get_prototype para ver detalhes",
+          "Use pa_export_prototype para exportar ficheiros",
+          "Use pa_approve_prototype quando pronto para aprovar",
+        ],
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "PA",
+        action: "create_prototype",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  pa_compare_versions: async (args) => {
+    const { bdev_code, source_version, target_version } = args as {
+      bdev_code: string;
+      source_version?: number;
+      target_version?: number;
+    };
+
+    // If specific versions provided, compare those
+    if (source_version && target_version) {
+      const sourceProto = loadPrototype(bdev_code, source_version);
+      const targetProto = loadPrototype(bdev_code, target_version);
+
+      if (!sourceProto || !targetProto) {
+        return JSON.stringify({
+          agent: "PA",
+          action: "compare_versions",
+          success: false,
+          message: "Uma ou ambas as versões não foram encontradas.",
+        }, null, 2);
+      }
+
+      const comparison = comparePrototypes(sourceProto, targetProto);
+      const summary = generateComparisonSummary(comparison);
+
+      return JSON.stringify({
+        agent: "PA",
+        action: "compare_versions",
+        success: true,
+        comparison: {
+          sourceVersion: comparison.sourceVersion,
+          targetVersion: comparison.targetVersion,
+          hasChanges: comparison.hasChanges,
+          summary: comparison.summary,
+          screenDiffs: comparison.screenDiffs.filter(d => d.changeType !== 'unchanged'),
+          recommendations: comparison.recommendations,
+        },
+        summaryText: summary,
+      }, null, 2);
+    }
+
+    // Otherwise, compare FA approved vs Client approved
+    const comparison = compareFAvsClient(bdev_code);
+
+    if (!comparison) {
+      return JSON.stringify({
+        agent: "PA",
+        action: "compare_versions",
+        success: false,
+        message: "Não foi possível comparar. Verifique se existem versões aprovadas pelo FA e pelo Cliente.",
+      }, null, 2);
+    }
+
+    const summary = generateComparisonSummary(comparison);
+
+    return JSON.stringify({
+      agent: "PA",
+      action: "compare_versions",
+      success: true,
+      comparison: {
+        sourceVersion: comparison.sourceVersion,
+        targetVersion: comparison.targetVersion,
+        sourceStatus: comparison.sourceStatus,
+        targetStatus: comparison.targetStatus,
+        hasChanges: comparison.hasChanges,
+        summary: comparison.summary,
+        screenDiffs: comparison.screenDiffs.filter(d => d.changeType !== 'unchanged'),
+        recommendations: comparison.recommendations,
+      },
+      summaryText: summary,
+    }, null, 2);
+  },
+
+  pa_apply_changes: async (args) => {
+    const { bdev_code } = args as { bdev_code: string };
+
+    const finalPrototype = applyClientChanges(bdev_code);
+
+    if (!finalPrototype) {
+      return JSON.stringify({
+        agent: "PA",
+        action: "apply_changes",
+        success: false,
+        message: "Não foi possível aplicar alterações. Verifique se existe uma versão aprovada pelo cliente.",
+      }, null, 2);
+    }
+
+    return JSON.stringify({
+      agent: "PA",
+      action: "apply_changes",
+      success: true,
+      prototype: {
+        id: finalPrototype.id,
+        bdevCode: finalPrototype.bdevCode,
+        version: finalPrototype.version,
+        status: finalPrototype.status,
+        screenCount: finalPrototype.screens.length,
+      },
+      message: `Versão final ${finalPrototype.bdevCode} v${finalPrototype.version} criada com alterações do cliente.`,
+      next_step: "Use pa_export_prototype para exportar os ficheiros finais.",
+    }, null, 2);
+  },
+
+  pa_export_prototype: async (args) => {
+    const { bdev_code, version } = args as { bdev_code: string; version?: number };
+
+    const exported = exportPrototype(bdev_code, version);
+
+    if (!exported) {
+      return JSON.stringify({
+        agent: "PA",
+        action: "export_prototype",
+        success: false,
+        message: "Protótipo não encontrado.",
+      }, null, 2);
+    }
+
+    return JSON.stringify({
+      agent: "PA",
+      action: "export_prototype",
+      success: true,
+      files: {
+        screens: exported.screens.map(s => ({
+          filename: s.filename,
+          lines: s.code.split('\n').length,
+        })),
+        app: {
+          filename: exported.app.filename,
+          lines: exported.app.code.split('\n').length,
+        },
+        translations: {
+          pt: exported.translations.pt.filename,
+          en: exported.translations.en.filename,
+        },
+      },
+      code: {
+        app: exported.app.code,
+        screens: exported.screens,
+        translations: {
+          pt: exported.translations.pt.content,
+          en: exported.translations.en.content,
+        },
+      },
+      readme: exported.readme,
+      message: `Exportados ${exported.screens.length} ficheiros de ecrãs + App.tsx + traduções PT/EN.`,
+    }, null, 2);
+  },
+
+  pa_approve_prototype: async (args) => {
+    const { bdev_code, version, approved_by } = args as {
+      bdev_code: string;
+      version: number;
+      approved_by: 'FA' | 'Client';
+    };
+
+    const prototype = approvePrototype(bdev_code, version, approved_by);
+
+    if (!prototype) {
+      return JSON.stringify({
+        agent: "PA",
+        action: "approve_prototype",
+        success: false,
+        message: `Protótipo ${bdev_code} v${version} não encontrado.`,
+      }, null, 2);
+    }
+
+    return JSON.stringify({
+      agent: "PA",
+      action: "approve_prototype",
+      success: true,
+      prototype: {
+        id: prototype.id,
+        bdevCode: prototype.bdevCode,
+        version: prototype.version,
+        status: prototype.status,
+        approvedBy: prototype.approvedBy,
+      },
+      message: `Protótipo ${bdev_code} v${version} aprovado por ${approved_by}.`,
+      next_steps: approved_by === 'FA'
+        ? ["Aguardar aprovação do cliente", "Use pa_compare_versions após aprovação do cliente"]
+        : ["Use pa_apply_changes para criar versão final", "Use pa_export_prototype para exportar"],
     }, null, 2);
   },
 

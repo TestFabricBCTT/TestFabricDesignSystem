@@ -369,6 +369,71 @@ const designAgent: Agent = {
   },
 };
 
+const prototypeAgent: Agent = {
+  id: 'pa',
+  nome: 'Prototype Agent',
+  sigla: 'PA',
+  missao: 'Criar protótipos React não funcionais a partir dos fluxos e wireframes definidos pelo FA e DA, permitindo validação visual pelo cliente antes do desenvolvimento.',
+  cor: '#9333EA',
+  detalhado: true,
+  aiRecomendado: {
+    nome: 'Claude',
+    provider: 'Anthropic',
+    modelo: 'Claude Sonnet 4',
+    logo: 'claude',
+    cor: '#D97706',
+    vantagens: [
+      'Excelente em geração de código React/TypeScript',
+      'Contexto longo permite manter consistência entre ecrãs',
+      'Superior em seguir design system e padrões de código',
+      'Bom em tradução de wireframes para componentes',
+      'Integração MCP para comunicação com FA e DA',
+      'Mantém histórico de versões e comparações',
+    ],
+    desvantagens: [
+      'Necessita acesso a Figma via MCP para leitura',
+      'Custo por token elevado para projetos grandes',
+      'Não executa código - apenas gera para validação visual',
+    ],
+    alternativas: [
+      { nome: 'Copilot', razao: 'Melhor para geração de código inline' },
+      { nome: 'Cursor', razao: 'IDE com AI integrado' },
+    ],
+  },
+  responsabilidades: [
+    'Consultar jornadas aprovadas pelo FA ou Cliente via histórico',
+    'Verificar se já existe protótipo para o BDEV',
+    'Gerar componentes React a partir dos wireframes do DA',
+    'Aplicar design tokens e componentes do BCTT Design System',
+    'Criar traduções PT/EN para todos os textos',
+    'Comparar versões FA vs Cliente e aplicar diferenças',
+    'Exportar protótipo completo (TSX + i18n + rotas)',
+    'Listar e recuperar protótipos existentes',
+  ],
+  inputs: [
+    'Jornadas aprovadas pelo FA (user stories + wireframes)',
+    'Wireframes do DA com fluxos de exceção',
+    'Design tokens do BCTT Design System',
+    'Protótipos anteriores (se existirem)',
+    'Aprovação do Cliente (alterações)',
+  ],
+  outputs: [
+    'Componentes React (TSX) por ecrã',
+    'Ficheiro App.tsx com rotas React Router',
+    'Ficheiros i18n JSON (PT e EN)',
+    'Comparação entre versões FA e Cliente',
+    'README com instruções de execução',
+  ],
+  fluxo: [
+    { fase: 'VERIFICAR', desc: 'Verifica protótipos existentes', icon: '🔍' },
+    { fase: 'CONSULTAR', desc: 'Obtém jornadas aprovadas do FA/DA', icon: '📋' },
+    { fase: 'GERAR', desc: 'Cria componentes React + i18n', icon: '⚛️' },
+    { fase: 'COMPARAR', desc: 'Compara versões FA vs Cliente', icon: '🔄' },
+    { fase: 'EXPORTAR', desc: 'Exporta ficheiros para validação', icon: '📦' },
+  ],
+  versionamento: 'Mantém histórico de versões: draft → fa_approved → client_approved → final. Comparação automática entre versões para identificar alterações do cliente.',
+};
+
 const dslaAgent: Agent = {
   id: 'dsla',
   nome: 'Design System Library Agent',
@@ -917,7 +982,7 @@ export const phases: Phase[] = [
     numero: '01',
     descricao: 'Fase de discovery, definição de requisitos e design da solução',
     cor: '#0A1628',
-    agentes: [brainstormAgent, functionalAgent, designAgent, dslaAgent],
+    agentes: [brainstormAgent, functionalAgent, designAgent, prototypeAgent, dslaAgent],
   },
   {
     id: 'desenvolvimento',
