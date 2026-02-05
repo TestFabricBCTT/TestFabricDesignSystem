@@ -1,0 +1,16 @@
+{
+  "name": "BCTT Bridge",
+  "id": "bctt-bridge-mcp",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["http://localhost:3001", "ws://localhost:3001"],
+    "reasoning": "Connect to local MCP server for receiving design commands"
+  },
+  "permissions": ["currentuser"]
+}

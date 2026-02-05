@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BCTT Bridge</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+      padding: 16px;
+      background: #fff;
+      color: #333;
+    }
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #E00024;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .status.connected {
+      background: #E6F7F6;
+      color: #00837A;
+    }
+    .status.disconnected {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+    .status.connecting {
+      background: #FEF3C7;
+      color: #D97706;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .status.connected .status-dot { background: #00BFB4; }
+    .status.disconnected .status-dot { background: #EF4444; }
+    .status.connecting .status-dot { background: #F59E0B; animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .config {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #666;
+    }
+    input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #E4E9F2;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #E00024;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button.primary {
+      background: #E00024;
+      color: white;
+      width: 100%;
+    }
+    button.primary:hover {
+      background: #C4001F;
+    }
+    button.primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    button.secondary {
+      background: #F7F9FC;
+      color: #333;
+      border: 1px solid #E4E9F2;
+    }
+    button.secondary:hover {
+      background: #E4E9F2;
+    }
+    .buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .log {
+      background: #F7F9FC;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 10px;
+    }
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #E4E9F2;
+    }
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+    .log-entry.error {
+      color: #DC2626;
+    }
+    .log-entry.success {
+      color: #059669;
+    }
+    .log-entry.info {
+      color: #2563EB;
+    }
+    .file-info {
+      background: #F0F9FF;
+      border: 1px solid #BAE6FD;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+      font-size: 11px;
+    }
+    .file-info strong {
+      color: #0369A1;
+    }
+    .restriction-warning {
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      color: #92400E;
+    }
+  </style>
+</head>
+<body>
+  <h1>BCTT Bridge</h1>
+
+  <div class="restriction-warning">
+    <strong>Restrição:</strong> Este plugin só funciona no ficheiro "AI Tests" do projeto "AI".
+  </div>
+
+  <div class="file-info">
+    <strong>Ficheiro atual:</strong> <span id="fileName">A verificar...</span>
+  </div>
+
+  <div id="status" class="status disconnected">
+    <span class="status-dot"></span>
+    <span id="statusText">Desconectado</span>
+  </div>
+
+  <div class="config">
+    <label>MCP Server URL</label>
+    <input type="text" id="serverUrl" value="ws://localhost:3001/figma" placeholder="ws://localhost:3001/figma">
+  </div>
+
+  <div class="buttons">
+    <button id="connectBtn" class="primary">Conectar</button>
+    <button id="disconnectBtn" class="secondary" disabled>Desconectar</button>
+  </div>
+
+  <label>Log de Atividade</label>
+  <div id="log" class="log">
+    <div class="log-entry info">Plugin iniciado. Aguardando conexão...</div>
+  </div>
+
+  <script>
+    let ws = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+
+    const statusEl = document.getElementById('status');
+    const statusText = document.getElementById('statusText');
+    const logEl = document.getElementById('log');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const serverUrlInput = document.getElementById('serverUrl');
+    const fileNameEl = document.getElementById('fileName');
+
+    // Log helper
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Update status display
+    function setStatus(state) {
+      statusEl.className = `status ${state}`;
+      switch (state) {
+        case 'connected':
+          statusText.textContent = 'Conectado ao MCP Server';
+          connectBtn.disabled = true;
+          disconnectBtn.disabled = false;
+          break;
+        case 'disconnected':
+          statusText.textContent = 'Desconectado';
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          break;
+        case 'connecting':
+          statusText.textContent = 'A conectar...';
+          connectBtn.disabled = true;
+          disconnectBtn.disabled = true;
+          break;
+      }
+    }
+
+    // Connect to WebSocket server
+    function connect() {
+      const url = serverUrlInput.value;
+      setStatus('connecting');
+      log(`A conectar a ${url}...`);
+
+      try {
+        ws = new WebSocket(url);
+
+        ws.onopen = () => {
+          setStatus('connected');
+          log('Conexão estabelecida!', 'success');
+          reconnectAttempts = 0;
+
+          // Register as Figma plugin
+          ws.send(JSON.stringify({
+            type: 'register',
+            client: 'figma-plugin',
+            version: '1.0.0'
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            log(`Comando recebido: ${data.type}`, 'info');
+
+            // Forward command to plugin code
+            parent.postMessage({ pluginMessage: data }, '*');
+          } catch (err) {
+            log(`Erro ao processar mensagem: ${err}`, 'error');
+          }
+        };
+
+        ws.onclose = (event) => {
+          setStatus('disconnected');
+          log(`Conexão fechada: ${event.reason || 'Sem razão'}`, 'error');
+
+          // Auto reconnect
+          if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            log(`Tentativa de reconexão ${reconnectAttempts}/${maxReconnectAttempts}...`);
+            setTimeout(connect, 2000 * reconnectAttempts);
+          }
+        };
+
+        ws.onerror = (error) => {
+          log('Erro de conexão. Verifique se o MCP server está a correr.', 'error');
+        };
+      } catch (err) {
+        setStatus('disconnected');
+        log(`Erro: ${err}`, 'error');
+      }
+    }
+
+    // Disconnect
+    function disconnect() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      setStatus('disconnected');
+      log('Desconectado manualmente');
+      reconnectAttempts = maxReconnectAttempts; // Prevent auto-reconnect
+    }
+
+    // Handle messages from plugin code
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      switch (msg.type) {
+        case 'pong':
+          fileNameEl.textContent = msg.fileName;
+          break;
+        case 'page-created':
+        case 'frame-created':
+        case 'screen-created':
+        case 'bdev-structure-created':
+          log(`Sucesso: ${JSON.stringify(msg)}`, 'success');
+          // Send confirmation to server
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'result', ...msg }));
+          }
+          break;
+        case 'page-exists':
+          log(`Página já existe: ${msg.name}`, 'info');
+          break;
+        case 'error':
+          log(`Erro: ${msg.message}`, 'error');
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'error', message: msg.message }));
+          }
+          break;
+      }
+    };
+
+    // Event listeners
+    connectBtn.addEventListener('click', connect);
+    disconnectBtn.addEventListener('click', disconnect);
+
+    // Get current file name on load
+    parent.postMessage({ pluginMessage: { type: 'ping' } }, '*');
+  </script>
+</body>
+</html>

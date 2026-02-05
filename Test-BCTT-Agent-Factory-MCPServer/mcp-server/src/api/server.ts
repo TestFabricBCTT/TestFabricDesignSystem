@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createServer } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import {
   sendMessageToClaude,
   clearConversation,
@@ -276,6 +278,111 @@ app.post("/workflow/create-jira", async (req: Request, res: Response) => {
 });
 
 // ============================================
+// WEBSOCKET SERVER FOR FIGMA PLUGIN
+// ============================================
+
+// Create HTTP server from Express app
+const httpServer = createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocketServer({ server: httpServer, path: "/figma" });
+
+// Store connected Figma plugins
+const figmaClients = new Map<string, WebSocket>();
+
+wss.on("connection", (ws: WebSocket) => {
+  let clientId = `figma-${Date.now()}`;
+  console.log(`[WebSocket] Figma plugin connected: ${clientId}`);
+
+  ws.on("message", (data: Buffer) => {
+    try {
+      const message = JSON.parse(data.toString());
+      console.log(`[WebSocket] Received from ${clientId}:`, message.type);
+
+      switch (message.type) {
+        case "register":
+          clientId = `figma-${message.client}-${Date.now()}`;
+          figmaClients.set(clientId, ws);
+          ws.send(JSON.stringify({ type: "registered", clientId }));
+          console.log(`[WebSocket] Client registered: ${clientId}`);
+          break;
+
+        case "result":
+        case "error":
+          // Log results from Figma operations
+          console.log(`[WebSocket] Figma result:`, message);
+          break;
+      }
+    } catch (err) {
+      console.error("[WebSocket] Error parsing message:", err);
+    }
+  });
+
+  ws.on("close", () => {
+    figmaClients.delete(clientId);
+    console.log(`[WebSocket] Figma plugin disconnected: ${clientId}`);
+  });
+
+  ws.on("error", (err) => {
+    console.error(`[WebSocket] Error from ${clientId}:`, err);
+  });
+});
+
+// Function to send commands to Figma plugin
+export function sendToFigma(command: {
+  type: string;
+  [key: string]: unknown;
+}): boolean {
+  if (figmaClients.size === 0) {
+    console.warn("[WebSocket] No Figma clients connected");
+    return false;
+  }
+
+  const message = JSON.stringify(command);
+  let sent = false;
+
+  figmaClients.forEach((client, id) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+      console.log(`[WebSocket] Sent command to ${id}:`, command.type);
+      sent = true;
+    }
+  });
+
+  return sent;
+}
+
+// API endpoint to send commands to Figma
+app.post("/figma/command", (req: Request, res: Response) => {
+  const command = req.body;
+
+  if (!command || !command.type) {
+    res.status(400).json({ error: "Command must have a type" });
+    return;
+  }
+
+  const sent = sendToFigma(command);
+
+  if (sent) {
+    res.json({ success: true, message: "Command sent to Figma plugin" });
+  } else {
+    res.status(503).json({
+      error: "No Figma plugin connected",
+      message: "Please open the BCTT Bridge plugin in Figma and connect",
+    });
+  }
+});
+
+// Get connected Figma clients
+app.get("/figma/clients", (_req: Request, res: Response) => {
+  const clients = Array.from(figmaClients.keys());
+  res.json({
+    connected: clients.length,
+    clients,
+  });
+});
+
+// ============================================
 // ERROR HANDLING
 // ============================================
 
@@ -294,7 +401,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // START SERVER
 // ============================================
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║       Agent Factory API Server                               ║
@@ -310,6 +417,10 @@ app.listen(PORT, () => {
 ║    GET  /chat/:sid/:aid/history - Get history                ║
 ║    POST /workflow/advance-to-fa - Approve BA → FA            ║
 ║    POST /workflow/create-jira   - Approve Jira creation      ║
+║  Figma Integration:                                          ║
+║    WS   /figma               - WebSocket for Figma plugin    ║
+║    POST /figma/command       - Send command to Figma         ║
+║    GET  /figma/clients       - List connected plugins        ║
 ╚══════════════════════════════════════════════════════════════╝
   `);
 
