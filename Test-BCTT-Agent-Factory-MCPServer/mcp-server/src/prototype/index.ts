@@ -169,9 +169,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   ${Array.from(imports).join(',\n  ')},
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
+} from '@bctt/design-system';
+import { ArrowBack as ArrowBackIcon, Close as CloseIcon } from '@bctt/design-system/icons';
 
 export interface ${componentName}Props {
   // Props can be added as needed
@@ -591,13 +590,14 @@ ${prototype.screens.map(s => `- ${s.screenName} (${s.screenId})`).join('\n')}
 
 ## Setup
 1. Copy files to your React project
-2. Install dependencies: \`npm install @mui/material @emotion/react @emotion/styled react-router-dom react-i18next\`
+2. Install dependencies: \`npm install @bctt/design-system react-router-dom react-i18next i18next\`
 3. Import the App component
 
 ## Notes
-- This is a non-functional prototype
+- This is a non-functional prototype using BCTT Design System
 - All actions are placeholders
 - Translations are included in PT and EN
+- Uses bctt-design-system components (Button, Input, Card, etc.)
 `;
 
   return {

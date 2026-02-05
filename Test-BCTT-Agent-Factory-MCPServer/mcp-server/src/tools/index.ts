@@ -1119,6 +1119,11 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       const base64 = await generateDocumentBase64(data);
       const fileName = `${codigo_bdev.replace(/[\[\]]/g, '')}_${titulo.replace(/\s+/g, '_')}.docx`;
 
+      // Store document in memory for later attachment (don't return full base64 to console)
+      const documentStore = (global as Record<string, unknown>).__faDocumentStore || {};
+      documentStore[codigo_bdev] = { fileName, base64 };
+      (global as Record<string, unknown>).__faDocumentStore = documentStore;
+
       return JSON.stringify({
         agent: "FA",
         action: "generate_document",
@@ -1126,10 +1131,11 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         document: {
           fileName,
           mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          base64,
-          sizeBytes: Math.round(base64.length * 0.75),
+          sizeKB: Math.round(base64.length * 0.75 / 1024),
+          stored: true,
         },
-        message: `Documento '${fileName}' gerado com sucesso. Use este base64 para download ou anexar ao Jira.`,
+        message: `Documento '${fileName}' gerado (${Math.round(base64.length * 0.75 / 1024)}KB). Guardado em memória para anexar ao Jira.`,
+        next_step: "Use 'jira_bulk_create_with_document' para criar no Jira com documento anexado automaticamente.",
       }, null, 2);
     } catch (error) {
       return JSON.stringify({
@@ -1545,6 +1551,38 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
 
     // Generate Figma export JSON
     const figmaJson = exportForFigmaPlugin(bdev_code, specs);
+    const figmaSpec = JSON.parse(figmaJson);
+
+    // Automatically send to Figma plugin via API
+    let figmaSent = false;
+    let figmaError: string | null = null;
+
+    try {
+      const apiPort = process.env.API_PORT || 3001;
+      const response = await fetch(`http://localhost:${apiPort}/figma/command`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'create-bdev-structure',
+          bdevCode: bdev_code,
+          screens: specs.map(s => ({
+            id: s.screenId,
+            name: s.screenName,
+            type: s.type,
+            states: s.states,
+          })),
+        }),
+      });
+
+      if (response.ok) {
+        figmaSent = true;
+      } else {
+        const errorData = await response.json();
+        figmaError = errorData.message || 'Failed to send to Figma';
+      }
+    } catch (err) {
+      figmaError = `Figma plugin não conectado: ${String(err)}`;
+    }
 
     return JSON.stringify({
       agent: "DA",
@@ -1559,13 +1597,16 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         `${bdev_code} - UX Flow`
       ],
       total_frames: specs.length * 4, // 4 states per screen
-      figma_spec: JSON.parse(figmaJson),
-      instructions: [
-        "1. Abrir projeto 'AI Tests' no Figma",
-        "2. Usar plugin 'JSON to Figma' ou similar",
-        "3. Importar o figma_spec acima",
-        "4. Ajustar componentes manualmente se necessário"
-      ]
+      figma_auto_send: {
+        success: figmaSent,
+        message: figmaSent
+          ? `Enviado automaticamente para Figma plugin! ${specs.length} ecrãs criados.`
+          : `Não foi possível enviar ao Figma: ${figmaError}. Verifique se o plugin BCTT Bridge está conectado.`,
+      },
+      figma_spec_summary: {
+        screens: specs.length,
+        states_per_screen: 4,
+      },
     }, null, 2);
   },
 
