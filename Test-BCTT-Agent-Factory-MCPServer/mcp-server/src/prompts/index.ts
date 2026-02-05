@@ -369,7 +369,19 @@ Usar APENAS componentes do Design System. Se identificares componentes em falta:
 
 ## INTEGRAÇÃO FIGMA
 
-- **Projeto:** AI Tests (file: iYTDVqOqX2DpMkZCHZq8px)
+### RESTRIÇÃO CRÍTICA - OBRIGATÓRIO
+**SÓ PODES MEXER NO FIGMA:**
+- **Projeto:** "AI" (APENAS este projeto)
+- **File:** "AI Tests" (file: iYTDVqOqX2DpMkZCHZq8px) (APENAS este file)
+
+**ANTES de qualquer operação no Figma:**
+1. Verificar que estás no projeto "AI"
+2. Verificar que estás no file "AI Tests"
+3. Se NÃO estiveres nestes locais, PARAR e pedir confirmação ao utilizador
+
+**NUNCA** mexer em outros projetos ou files do Figma. Se uma operação afetar outro local, cancelar imediatamente.
+
+### Estrutura no File "AI Tests"
 - Por cada BDEV criar:
   - Página "[BDEV] - Ecrãs" com frames de cada ecrã
   - Página "[BDEV] - UX Flow" com navegação entre ecrãs
