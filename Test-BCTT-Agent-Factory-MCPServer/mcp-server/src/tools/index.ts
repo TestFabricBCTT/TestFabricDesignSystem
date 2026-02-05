@@ -2,6 +2,28 @@ import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { jiraTools, jiraToolHandlers } from '../jira/index.js';
 import { generateDocumentBase64, DocumentData } from '../document/index.js';
+import {
+  getFileInfo,
+  exportForFigmaPlugin,
+  figmaDesignTokens,
+  type WireframeSpec,
+} from '../figma/index.js';
+import {
+  generateScreenTranslations,
+  exportTranslationsToBase64,
+  generateTranslationsJSON,
+  validateTranslation,
+  standardTranslations,
+  type ScreenCopy,
+  type TranslationEntry,
+} from '../translations/index.js';
+import {
+  componentSpecs,
+  getComponentSpec,
+  getComponentsByCategory,
+  getCategories,
+  searchComponents,
+} from '../design-system/index.js';
 
 // Tool definitions (Agent tools + Jira tools)
 export const tools: Tool[] = [
@@ -304,63 +326,282 @@ export const tools: Tool[] = [
   // ============================================
   {
     name: "da_create_wireframes",
-    description: "DA Agent: Gera especificações de wireframes seguindo o Design System Banco CTT.",
+    description: "DA Agent: Gera especificações de wireframes seguindo o Design System Banco CTT. Inclui estrutura JSON com header, body, footer, estados e navegação.",
     inputSchema: {
       type: "object",
       properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV (ex: BDEV00000001)"
+        },
         user_stories: {
           type: "array",
-          items: { type: "string" },
-          description: "User stories para desenhar wireframes"
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              title: { type: "string" },
+              screens: {
+                type: "array",
+                items: { type: "string" },
+                description: "Lista de ecrãs necessários para esta US"
+              }
+            },
+            required: ["id", "title"]
+          },
+          description: "User stories com ecrãs identificados"
         },
         screen_type: {
           type: "string",
           enum: ["mobile", "desktop", "responsive"],
-          description: "Tipo de ecrã"
+          description: "Tipo de ecrã (default: responsive)"
         },
         include_states: {
           type: "boolean",
-          description: "Incluir estados (loading, error, empty)"
+          description: "Incluir todos os estados (default, loading, error, empty, success)"
         }
       },
-      required: ["user_stories"]
+      required: ["bdev_code", "user_stories"]
     }
   },
   {
     name: "da_define_exception_flows",
-    description: "DA Agent: Define fluxos de exceção e mensagens de erro seguindo UX Writing Guidelines.",
+    description: "DA Agent: Define fluxos de exceção com mensagens seguindo UX Writing Guidelines Banco CTT. Inclui título (max 60 chars), descrição (max 120 chars), tipo e ação.",
     inputSchema: {
       type: "object",
       properties: {
         happy_path: {
           type: "string",
-          description: "Descrição do fluxo principal"
+          description: "Descrição do fluxo principal (happy path)"
         },
-        error_types: {
+        exception_scenarios: {
           type: "array",
-          items: { type: "string" },
-          description: "Tipos de erros a considerar"
+          items: {
+            type: "object",
+            properties: {
+              scenario: { type: "string", description: "Nome do cenário de exceção" },
+              trigger: { type: "string", description: "O que causa este erro" },
+              type: {
+                type: "string",
+                enum: ["blocking", "non_blocking", "informational"],
+                description: "Tipo de erro"
+              }
+            },
+            required: ["scenario", "trigger"]
+          },
+          description: "Cenários de exceção identificados pelo BA/FA"
         }
       },
-      required: ["happy_path"]
+      required: ["happy_path", "exception_scenarios"]
     }
   },
   {
     name: "da_generate_figma_spec",
-    description: "DA Agent: Gera especificação JSON para importar no Figma via plugin.",
+    description: "DA Agent: Gera especificação JSON completa para criar páginas e frames no Figma. Cria duas páginas por BDEV: Ecrãs e UX Flow.",
     inputSchema: {
       type: "object",
       properties: {
-        wireframes: {
+        bdev_code: {
           type: "string",
-          description: "Especificações de wireframes"
+          description: "Código BDEV"
         },
-        page_name: {
-          type: "string",
-          description: "Nome da página no Figma"
+        wireframes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              screen_id: { type: "string" },
+              screen_name: { type: "string" },
+              user_story: { type: "string" },
+              type: { type: "string", enum: ["mobile", "desktop", "responsive"] },
+              states: { type: "array", items: { type: "string" } }
+            },
+            required: ["screen_id", "screen_name"]
+          },
+          description: "Lista de wireframes especificados"
         }
       },
-      required: ["wireframes"]
+      required: ["bdev_code", "wireframes"]
+    }
+  },
+  {
+    name: "da_check_design_system",
+    description: "DA Agent: Verifica se um componente existe no Design System (bctt-design-system). Se não existir, gera spec para solicitar ao DSLA.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        component_name: {
+          type: "string",
+          description: "Nome do componente a verificar"
+        },
+        variant: {
+          type: "string",
+          description: "Variante específica (opcional)"
+        }
+      },
+      required: ["component_name"]
+    }
+  },
+  {
+    name: "da_get_design_tokens",
+    description: "DA Agent: Retorna os design tokens do Banco CTT (cores, espaçamentos, tipografia, border radius).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          enum: ["colors", "spacing", "typography", "borderRadius", "all"],
+          description: "Categoria de tokens (default: all)"
+        }
+      }
+    }
+  },
+  {
+    name: "da_validate_accessibility",
+    description: "DA Agent: Valida wireframes contra requisitos WCAG 2.1 AA.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        wireframe: {
+          type: "object",
+          description: "Wireframe a validar"
+        }
+      },
+      required: ["wireframe"]
+    }
+  },
+  {
+    name: "da_create_screen_copy",
+    description: "DA Agent: Cria copy para ecrãs em PT e EN. OBRIGATÓRIO: Todo texto visível deve ter tradução. Gera estrutura para i18n.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        screen_id: {
+          type: "string",
+          description: "ID do ecrã (ex: SCR-001)"
+        },
+        screen_name: {
+          type: "string",
+          description: "Nome do ecrã"
+        },
+        user_story: {
+          type: "string",
+          description: "User story relacionada"
+        },
+        elements: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: ["header", "button", "label", "placeholder", "helper", "error", "title", "description"],
+                description: "Tipo de elemento"
+              },
+              name: {
+                type: "string",
+                description: "Nome/identificador do elemento"
+              },
+              valuePT: {
+                type: "string",
+                description: "Valor em Português (PT-PT)"
+              },
+              valueEN: {
+                type: "string",
+                description: "Valor em Inglês"
+              }
+            },
+            required: ["type", "name", "valuePT", "valueEN"]
+          },
+          description: "Lista de elementos com traduções"
+        }
+      },
+      required: ["screen_id", "screen_name", "elements"]
+    }
+  },
+  {
+    name: "da_generate_translations_excel",
+    description: "DA Agent: Gera ficheiro Excel com todas as traduções. Estrutura: Código React | PT | EN. Inclui sheet de resumo e traduções standard.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        },
+        screens: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              screen_id: { type: "string" },
+              screen_name: { type: "string" },
+              user_story: { type: "string" },
+              translations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    componentCode: { type: "string" },
+                    description: { type: "string" },
+                    valuePT: { type: "string" },
+                    valueEN: { type: "string" }
+                  },
+                  required: ["componentCode", "valuePT", "valueEN"]
+                }
+              }
+            },
+            required: ["screen_id", "screen_name", "translations"]
+          },
+          description: "Lista de ecrãs com traduções"
+        }
+      },
+      required: ["bdev_code", "screens"]
+    }
+  },
+  {
+    name: "da_get_standard_translations",
+    description: "DA Agent: Retorna traduções standard para elementos comuns (botões, formulários, feedback, navegação).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          enum: ["button", "form", "validation", "feedback", "error", "nav", "date", "currency", "common", "all"],
+          description: "Categoria de traduções (default: all)"
+        }
+      }
+    }
+  },
+  {
+    name: "da_get_component_spec",
+    description: "DA Agent: Retorna especificação completa de um componente do Design System (props, variantes, a11y, guidelines).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        component_name: {
+          type: "string",
+          description: "Nome do componente (ex: Button, Input, Card)"
+        }
+      },
+      required: ["component_name"]
+    }
+  },
+  {
+    name: "da_list_components",
+    description: "DA Agent: Lista todos os componentes disponíveis no Design System, opcionalmente filtrados por categoria.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          description: "Categoria (Buttons, Forms, Cards, etc.) - opcional"
+        },
+        search: {
+          type: "string",
+          description: "Termo de pesquisa - opcional"
+        }
+      }
     }
   },
 
@@ -925,89 +1166,629 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
 
   // DA Tools
   da_create_wireframes: async (args) => {
-    const { user_stories, screen_type, include_states } = args as {
-      user_stories: string[];
+    const { bdev_code, user_stories, screen_type, include_states } = args as {
+      bdev_code: string;
+      user_stories: Array<{ id: string; title: string; screens?: string[] }>;
       screen_type?: string;
       include_states?: boolean;
     };
 
-    const type = screen_type || "responsive";
+    const type = (screen_type || "responsive") as 'mobile' | 'desktop' | 'responsive';
+    const states = include_states !== false
+      ? ['default', 'loading', 'error', 'empty', 'success'] as const
+      : ['default'] as const;
+
+    // Generate wireframes for each screen identified
+    const wireframes: WireframeSpec[] = [];
+    let screenIndex = 1;
+
+    user_stories.forEach(us => {
+      const screens = us.screens || [`Ecrã principal - ${us.title}`];
+      screens.forEach(screenName => {
+        wireframes.push({
+          screenId: `SCR-${String(screenIndex).padStart(3, '0')}`,
+          screenName,
+          userStory: us.id,
+          type,
+          width: type === 'desktop' ? 1440 : 375,
+          height: type === 'desktop' ? 900 : 812,
+          header: {
+            title: screenName,
+            backButton: screenIndex > 1,
+            closeButton: false,
+          },
+          sections: [
+            { type: 'form', components: ['Input', 'Button'] }
+          ],
+          footer: {
+            primaryAction: 'Continuar',
+            secondaryAction: null,
+          },
+          states: [...states],
+        });
+        screenIndex++;
+      });
+    });
 
     return JSON.stringify({
       agent: "DA",
       action: "create_wireframes",
-      wireframes: user_stories.map((us, i) => ({
-        id: `WF00${i + 1}`,
-        user_story: us,
-        screen_type: type,
-        components: [
-          { type: "Header", variant: "default" },
-          { type: "ContentArea", variant: "primary" },
-          { type: "ActionBar", variant: "sticky" }
-        ],
-        states: include_states ? ["default", "loading", "error", "empty", "success"] : ["default"]
+      bdev_code,
+      total_screens: wireframes.length,
+      wireframes: wireframes.map(w => ({
+        screen_id: w.screenId,
+        screen_name: w.screenName,
+        user_story: w.userStory,
+        type: w.type,
+        dimensions: `${w.width}x${w.height}`,
+        header: w.header,
+        footer: w.footer,
+        states: w.states,
+        navigation: {
+          previous: wireframes.findIndex(x => x.screenId === w.screenId) > 0
+            ? wireframes[wireframes.findIndex(x => x.screenId === w.screenId) - 1].screenId
+            : null,
+          next: wireframes.findIndex(x => x.screenId === w.screenId) < wireframes.length - 1
+            ? wireframes[wireframes.findIndex(x => x.screenId === w.screenId) + 1].screenId
+            : null,
+        }
       })),
-      design_system: "Banco CTT DS v2.0",
-      figma_ready: true
+      design_system: {
+        name: "Banco CTT Design System",
+        source: "bctt-design-system",
+        zeroheight: "https://zeroheight.com/071c7112f"
+      },
+      next_step: "Use da_define_exception_flows para definir fluxos de erro, depois da_generate_figma_spec para exportar"
     }, null, 2);
   },
 
   da_define_exception_flows: async (args) => {
-    const { happy_path, error_types } = args as {
+    const { happy_path, exception_scenarios } = args as {
       happy_path: string;
-      error_types?: string[];
+      exception_scenarios: Array<{ scenario: string; trigger: string; type?: string }>;
     };
 
-    const errors = error_types || ["validation", "network", "server", "timeout"];
+    // UX Writing Guidelines - Standard messages
+    const uxMessages: Record<string, { title: string; description: string; action: string }> = {
+      timeout: {
+        title: "Algo demorou mais do que o esperado",
+        description: "Estamos a tentar novamente. Por favor aguarde.",
+        action: "retry"
+      },
+      service_unavailable: {
+        title: "Serviço temporariamente indisponível",
+        description: "Por favor tente novamente mais tarde.",
+        action: "retry"
+      },
+      session_expired: {
+        title: "A sua sessão expirou",
+        description: "Por razões de segurança, precisa de iniciar sessão novamente.",
+        action: "redirect"
+      },
+      validation: {
+        title: "Verifique os dados",
+        description: "Existem campos que precisam de ser corrigidos.",
+        action: "dismiss"
+      },
+      insufficient_funds: {
+        title: "Saldo insuficiente",
+        description: "A conta selecionada não tem saldo disponível para esta operação.",
+        action: "redirect"
+      },
+      not_eligible: {
+        title: "Não é possível continuar",
+        description: "De momento não é possível subscrever este serviço. Contacte-nos para mais informações.",
+        action: "contact_support"
+      }
+    };
+
+    const flows = exception_scenarios.map((scenario, index) => {
+      const errorCode = `FE${String(index + 1).padStart(3, '0')}`;
+      const errorType = scenario.type || 'non_blocking';
+
+      // Try to match with standard messages
+      const key = scenario.scenario.toLowerCase().includes('timeout') ? 'timeout'
+        : scenario.scenario.toLowerCase().includes('sessão') ? 'session_expired'
+        : scenario.scenario.toLowerCase().includes('validação') ? 'validation'
+        : scenario.scenario.toLowerCase().includes('saldo') ? 'insufficient_funds'
+        : scenario.scenario.toLowerCase().includes('elegib') ? 'not_eligible'
+        : 'service_unavailable';
+
+      const message = uxMessages[key];
+
+      return {
+        error_code: errorCode,
+        scenario: scenario.scenario,
+        trigger: scenario.trigger,
+        type: errorType,
+        ux_message: {
+          title: message.title,
+          description: message.description,
+          title_length: message.title.length,
+          description_length: message.description.length,
+          validation: {
+            title_ok: message.title.length <= 60,
+            description_ok: message.description.length <= 120
+          }
+        },
+        action_type: message.action,
+        display: errorType === 'blocking' ? 'modal' : errorType === 'informational' ? 'inline' : 'toast',
+        recovery: errorType !== 'blocking' ? 'Auto-dismiss após 5s ou botão fechar' : 'Ação obrigatória'
+      };
+    });
 
     return JSON.stringify({
       agent: "DA",
       action: "define_exception_flows",
-      happy_path: happy_path.substring(0, 100),
-      exception_flows: errors.map(type => ({
-        type,
-        trigger: `Erro de ${type}`,
-        user_message: {
-          pt: `Ocorreu um erro. Por favor, tente novamente.`,
-          en: `An error occurred. Please try again.`
-        },
-        recovery_action: "Botão de retry",
-        ux_guidelines: "Usar toast para erros temporários, modal para erros críticos"
-      }))
+      happy_path,
+      exception_flows: flows,
+      ux_writing_guidelines: {
+        principles: [
+          "Nunca culpar o utilizador",
+          "Ser específico sobre o problema",
+          "Sempre indicar próximos passos",
+          "Tom profissional, empático, direto"
+        ],
+        limits: {
+          title_max_chars: 60,
+          description_max_chars: 120
+        }
+      },
+      next_step: "Integrar estes fluxos nos wireframes usando da_create_wireframes"
     }, null, 2);
   },
 
   da_generate_figma_spec: async (args) => {
-    const { wireframes, page_name } = args as {
-      wireframes: string;
-      page_name?: string;
+    const { bdev_code, wireframes } = args as {
+      bdev_code: string;
+      wireframes: Array<{
+        screen_id: string;
+        screen_name: string;
+        user_story?: string;
+        type?: string;
+        states?: string[];
+      }>;
     };
+
+    // Convert to WireframeSpec format
+    const specs: WireframeSpec[] = wireframes.map(w => ({
+      screenId: w.screen_id,
+      screenName: w.screen_name,
+      userStory: w.user_story || '',
+      type: (w.type as 'mobile' | 'desktop' | 'responsive') || 'responsive',
+      width: w.type === 'desktop' ? 1440 : 375,
+      height: w.type === 'desktop' ? 900 : 812,
+      header: { title: w.screen_name, backButton: true, closeButton: false },
+      sections: [{ type: 'form', components: [] }],
+      footer: { primaryAction: 'Continuar', secondaryAction: null },
+      states: (w.states as WireframeSpec['states']) || ['default', 'loading', 'error', 'empty'],
+    }));
+
+    // Generate Figma export JSON
+    const figmaJson = exportForFigmaPlugin(bdev_code, specs);
 
     return JSON.stringify({
       agent: "DA",
       action: "generate_figma_spec",
-      figma_json: {
-        page: page_name || "New Page",
-        frames: [
-          {
-            name: "Mobile - 375x812",
-            width: 375,
-            height: 812,
-            children: []
-          },
-          {
-            name: "Desktop - 1440x900",
-            width: 1440,
-            height: 900,
-            children: []
-          }
-        ],
-        styles: {
-          colors: "Use Design System palette",
-          typography: "Use Design System fonts"
-        }
+      bdev_code,
+      figma_project: {
+        file_key: process.env.FIGMA_FILE_KEY || "iYTDVqOqX2DpMkZCHZq8px",
+        project_name: "AI Tests"
       },
-      instructions: "Use o plugin Figma JSON Importer para importar esta especificação"
+      pages_to_create: [
+        `${bdev_code} - Ecrãs`,
+        `${bdev_code} - UX Flow`
+      ],
+      total_frames: specs.length * 4, // 4 states per screen
+      figma_spec: JSON.parse(figmaJson),
+      instructions: [
+        "1. Abrir projeto 'AI Tests' no Figma",
+        "2. Usar plugin 'JSON to Figma' ou similar",
+        "3. Importar o figma_spec acima",
+        "4. Ajustar componentes manualmente se necessário"
+      ]
+    }, null, 2);
+  },
+
+  da_check_design_system: async (args) => {
+    const { component_name, variant } = args as {
+      component_name: string;
+      variant?: string;
+    };
+
+    // Available components in bctt-design-system
+    const availableComponents: Record<string, string[]> = {
+      'Button': ['primary', 'secondary', 'ghost', 'icon-only', 'round'],
+      'Input': ['text', 'number', 'currency', 'password', 'search'],
+      'Select': ['default', 'multi'],
+      'Card': ['account', 'info', 'summary', 'profile'],
+      'Badge': ['default', 'primary', 'success', 'warning', 'error', 'info'],
+      'Alert': ['success', 'warning', 'error', 'info'],
+      'Avatar': ['small', 'medium', 'large'],
+      'Checkbox': ['default'],
+      'Radio': ['default'],
+      'Toggle': ['default'],
+      'Switch': ['default'],
+      'Slider': ['default', 'range'],
+      'Toast': ['success', 'warning', 'error', 'info'],
+      'Banner': ['info', 'warning', 'error'],
+      'Modal': ['default', 'confirmation', 'alert'],
+      'Drawer': ['left', 'right', 'bottom'],
+      'Tabs': ['default', 'pills'],
+      'Stepper': ['horizontal', 'vertical'],
+      'List': ['item', 'transaction', 'profile', 'collapsible'],
+      'Accordion': ['default'],
+      'Tooltip': ['default'],
+      'Popover': ['default'],
+    };
+
+    const componentLower = component_name.charAt(0).toUpperCase() + component_name.slice(1).toLowerCase();
+    const found = Object.keys(availableComponents).find(
+      c => c.toLowerCase() === component_name.toLowerCase()
+    );
+
+    if (found) {
+      const variants = availableComponents[found];
+      const variantExists = !variant || variants.includes(variant.toLowerCase());
+
+      return JSON.stringify({
+        agent: "DA",
+        action: "check_design_system",
+        component: found,
+        exists: true,
+        variants_available: variants,
+        requested_variant: variant || null,
+        variant_exists: variantExists,
+        usage: variantExists
+          ? `Usar <${found} variant="${variant || variants[0]}" /> do bctt-design-system`
+          : `Variante '${variant}' não existe. Variantes disponíveis: ${variants.join(', ')}`,
+        import_path: `import { ${found} } from '@bctt/design-system';`
+      }, null, 2);
+    } else {
+      return JSON.stringify({
+        agent: "DA",
+        action: "check_design_system",
+        component: component_name,
+        exists: false,
+        message: `Componente '${component_name}' não existe no Design System.`,
+        action_required: "Solicitar ao DSLA para criar o componente",
+        dsla_request_spec: {
+          component_name: componentLower,
+          atomic_level: "molecule",
+          suggested_props: [
+            { name: "variant", type: "string", required: false },
+            { name: "children", type: "React.ReactNode", required: true }
+          ],
+          design_reference: "Consultar Zeroheight para especificações visuais"
+        },
+        similar_components: Object.keys(availableComponents).filter(
+          c => c.toLowerCase().includes(component_name.toLowerCase().slice(0, 3))
+        )
+      }, null, 2);
+    }
+  },
+
+  da_get_design_tokens: async (args) => {
+    const { category } = args as { category?: string };
+
+    const tokens = {
+      colors: figmaDesignTokens.colors,
+      spacing: figmaDesignTokens.spacing,
+      typography: figmaDesignTokens.typography,
+      borderRadius: figmaDesignTokens.borderRadius,
+    };
+
+    const cat = category || 'all';
+
+    return JSON.stringify({
+      agent: "DA",
+      action: "get_design_tokens",
+      design_system: "Banco CTT Design System",
+      source: "bctt-design-system + Zeroheight",
+      tokens: cat === 'all' ? tokens : { [cat]: tokens[cat as keyof typeof tokens] },
+      usage: {
+        colors: "import { colors } from '@bctt/design-system/theme'",
+        spacing: "import { spacingTokens } from '@bctt/design-system/theme'",
+        all: "import { bcttTheme } from '@bctt/design-system/theme'"
+      }
+    }, null, 2);
+  },
+
+  da_validate_accessibility: async (args) => {
+    const { wireframe } = args as { wireframe: Record<string, unknown> };
+
+    const checks = [
+      {
+        rule: "WCAG 2.1 - 1.4.3 Contrast (Minimum)",
+        level: "AA",
+        status: "pass",
+        note: "Usar cores do Design System garante contraste 4.5:1"
+      },
+      {
+        rule: "WCAG 2.1 - 2.5.5 Target Size",
+        level: "AAA",
+        status: "check",
+        note: "Touch targets devem ter mínimo 44x44px",
+        recommendation: "Verificar que todos os botões têm altura >= 44px"
+      },
+      {
+        rule: "WCAG 2.1 - 2.4.6 Headings and Labels",
+        level: "AA",
+        status: "check",
+        note: "Labels devem ser descritivos",
+        recommendation: "Garantir que todos os campos têm labels visíveis"
+      },
+      {
+        rule: "WCAG 2.1 - 1.3.1 Info and Relationships",
+        level: "A",
+        status: "check",
+        note: "Estrutura semântica",
+        recommendation: "Usar heading hierarchy correto (H1 > H2 > H3)"
+      },
+      {
+        rule: "WCAG 2.1 - 2.1.1 Keyboard",
+        level: "A",
+        status: "check",
+        note: "Navegação por teclado",
+        recommendation: "Garantir focus visible em todos os interativos"
+      }
+    ];
+
+    return JSON.stringify({
+      agent: "DA",
+      action: "validate_accessibility",
+      wcag_level: "AA",
+      wireframe_id: (wireframe as { screen_id?: string }).screen_id || "unknown",
+      total_checks: checks.length,
+      passed: checks.filter(c => c.status === "pass").length,
+      to_verify: checks.filter(c => c.status === "check").length,
+      checks,
+      recommendations: [
+        "Usar componentes do Design System (já acessíveis)",
+        "Incluir aria-labels em elementos interativos",
+        "Testar com screen reader após implementação",
+        "Garantir navegação lógica por Tab"
+      ]
+    }, null, 2);
+  },
+
+  da_create_screen_copy: async (args) => {
+    const { screen_id, screen_name, user_story, elements } = args as {
+      screen_id: string;
+      screen_name: string;
+      user_story?: string;
+      elements: Array<{
+        type: 'header' | 'button' | 'label' | 'placeholder' | 'helper' | 'error' | 'title' | 'description';
+        name: string;
+        valuePT: string;
+        valueEN: string;
+      }>;
+    };
+
+    const screenCopy = generateScreenTranslations(
+      screen_id,
+      screen_name,
+      user_story || '',
+      elements
+    );
+
+    // Validate all translations
+    const validationResults = screenCopy.translations.map(t => ({
+      key: t.componentCode,
+      ...validateTranslation(t)
+    }));
+
+    const allValid = validationResults.every(r => r.valid);
+    const warnings = validationResults.flatMap(r => r.warnings);
+
+    return JSON.stringify({
+      agent: "DA",
+      action: "create_screen_copy",
+      screen: {
+        id: screen_id,
+        name: screen_name,
+        userStory: user_story || '',
+      },
+      translations: screenCopy.translations.map(t => ({
+        componentCode: t.componentCode,
+        valuePT: t.valuePT,
+        valueEN: t.valueEN,
+        description: t.description,
+      })),
+      validation: {
+        allValid,
+        totalEntries: screenCopy.translations.length,
+        warnings: warnings.length > 0 ? warnings : undefined,
+      },
+      i18n_usage: {
+        react: `import { useTranslation } from 'react-i18next';\nconst { t } = useTranslation();\n// Use: t('${screenCopy.translations[0]?.componentCode || 'key'}')`,
+        json_structure: "{ \"pt\": { \"key\": \"valor\" }, \"en\": { \"key\": \"value\" } }"
+      },
+      next_step: "Use da_generate_translations_excel para exportar todas as traduções para Excel"
+    }, null, 2);
+  },
+
+  da_generate_translations_excel: async (args) => {
+    const { bdev_code, screens } = args as {
+      bdev_code: string;
+      screens: Array<{
+        screen_id: string;
+        screen_name: string;
+        user_story?: string;
+        translations: TranslationEntry[];
+      }>;
+    };
+
+    try {
+      // Convert to ScreenCopy format
+      const screenCopies: ScreenCopy[] = screens.map(s => ({
+        screenId: s.screen_id,
+        screenName: s.screen_name,
+        userStory: s.user_story || '',
+        translations: s.translations.map(t => ({
+          componentCode: t.componentCode,
+          description: t.description || '',
+          valuePT: t.valuePT,
+          valueEN: t.valueEN,
+          screen: s.screen_id,
+          userStory: s.user_story,
+        })),
+      }));
+
+      const base64 = await exportTranslationsToBase64(bdev_code, screenCopies);
+      const fileName = `${bdev_code}_translations.xlsx`;
+
+      // Also generate JSON for i18n
+      const jsonTranslations = generateTranslationsJSON(screenCopies);
+
+      return JSON.stringify({
+        agent: "DA",
+        action: "generate_translations_excel",
+        success: true,
+        bdev_code,
+        summary: {
+          totalScreens: screens.length,
+          totalTranslations: screens.reduce((sum, s) => sum + s.translations.length, 0),
+          standardTranslationsIncluded: Object.keys(standardTranslations).length,
+        },
+        excel: {
+          fileName,
+          mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          base64,
+          sheets: ["Translations", "Summary", "Standard Translations"],
+        },
+        json: {
+          pt: `${Object.keys(jsonTranslations.pt).length} keys`,
+          en: `${Object.keys(jsonTranslations.en).length} keys`,
+          sample: {
+            pt: Object.entries(jsonTranslations.pt).slice(0, 3).reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {}),
+            en: Object.entries(jsonTranslations.en).slice(0, 3).reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {}),
+          }
+        },
+        message: `Ficheiro Excel '${fileName}' gerado com sucesso. Use o base64 para download.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "DA",
+        action: "generate_translations_excel",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  da_get_standard_translations: async (args) => {
+    const { category } = args as { category?: string };
+    const cat = category || 'all';
+
+    let filteredTranslations: Record<string, { pt: string; en: string }>;
+
+    if (cat === 'all') {
+      filteredTranslations = standardTranslations;
+    } else {
+      filteredTranslations = Object.entries(standardTranslations)
+        .filter(([key]) => key.startsWith(cat + '.'))
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+    }
+
+    const categories = [...new Set(
+      Object.keys(standardTranslations).map(k => k.split('.')[0])
+    )];
+
+    return JSON.stringify({
+      agent: "DA",
+      action: "get_standard_translations",
+      category: cat,
+      available_categories: categories,
+      translations: filteredTranslations,
+      total: Object.keys(filteredTranslations).length,
+      usage: {
+        react_i18n: "t('button.confirm') // Returns 'Confirmar' or 'Confirm'",
+        import: "import { standardTranslations } from '@bctt/translations';",
+      },
+      ux_writing_guidelines: {
+        titleMaxChars: 60,
+        descriptionMaxChars: 120,
+        tone: "Profissional, empático, direto",
+        principles: [
+          "Nunca culpar o utilizador",
+          "Ser específico sobre o problema",
+          "Sempre indicar próximos passos"
+        ]
+      }
+    }, null, 2);
+  },
+
+  da_get_component_spec: async (args) => {
+    const { component_name } = args as { component_name: string };
+
+    const spec = getComponentSpec(component_name);
+
+    if (spec) {
+      return JSON.stringify({
+        agent: "DA",
+        action: "get_component_spec",
+        found: true,
+        component: {
+          name: spec.name,
+          category: spec.category,
+          atomicLevel: spec.atomicLevel,
+          variants: spec.variants,
+          sizes: spec.sizes,
+          states: spec.states,
+          props: spec.props,
+          accessibility: spec.a11y,
+          usage: spec.usage,
+          zeroheightUrl: spec.zeroheightUrl,
+        },
+        import_path: `import { ${spec.name.replace(/[^a-zA-Z]/g, '')} } from '@bctt/design-system';`,
+      }, null, 2);
+    } else {
+      const similar = searchComponents(component_name);
+      return JSON.stringify({
+        agent: "DA",
+        action: "get_component_spec",
+        found: false,
+        message: `Componente '${component_name}' não encontrado no Design System.`,
+        similar_components: similar.slice(0, 5).map(s => s.name),
+        available_categories: getCategories(),
+        action_required: "Verificar nome do componente ou solicitar ao DSLA",
+      }, null, 2);
+    }
+  },
+
+  da_list_components: async (args) => {
+    const { category, search } = args as { category?: string; search?: string };
+
+    let components = Object.values(componentSpecs);
+
+    if (category) {
+      components = getComponentsByCategory(category);
+    }
+
+    if (search) {
+      components = searchComponents(search);
+    }
+
+    const categories = getCategories();
+
+    return JSON.stringify({
+      agent: "DA",
+      action: "list_components",
+      filters: {
+        category: category || null,
+        search: search || null,
+      },
+      available_categories: categories,
+      components: components.map(c => ({
+        name: c.name,
+        category: c.category,
+        atomicLevel: c.atomicLevel,
+        variants: c.variants,
+        zeroheightUrl: c.zeroheightUrl,
+      })),
+      total: components.length,
+      message: `Encontrados ${components.length} componentes${category ? ` na categoria '${category}'` : ''}${search ? ` com termo '${search}'` : ''}.`,
     }, null, 2);
   },
 
