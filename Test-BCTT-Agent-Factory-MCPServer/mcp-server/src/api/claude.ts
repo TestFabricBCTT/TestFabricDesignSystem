@@ -2,6 +2,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { tools, handleToolCall } from "../tools/index.js";
 import { getPrompt } from "../prompts/index.js";
 
+// ============================================
+// DEMO MODE PROTECTIONS
+// ============================================
+
+// Maximum tool calls per response to prevent infinite loops
+const MAX_TOOL_CALLS_PER_RESPONSE = 5;
+
 // Types for conversation management
 export interface ConversationMessage {
   role: "user" | "assistant";
@@ -146,8 +153,28 @@ export async function sendMessageToClaude(
       messages: apiMessages,
     });
 
-    // Handle tool use loop
+    // Handle tool use loop (with max tool calls limit for demo safety)
+    let toolCallCount = 0;
+
     while (response.stop_reason === "tool_use") {
+      // Check if we've hit the max tool calls limit
+      if (toolCallCount >= MAX_TOOL_CALLS_PER_RESPONSE) {
+        console.log(`[${agentId}] Max tool calls limit reached (${MAX_TOOL_CALLS_PER_RESPONSE}). Stopping to prevent infinite loop.`);
+
+        // Force a text response by not processing more tools
+        const limitMessage = `[DEMO PROTECTION] Limite de ${MAX_TOOL_CALLS_PER_RESPONSE} chamadas de ferramentas atingido. Continua na próxima mensagem se necessário.`;
+
+        conversation.messages.push({
+          role: "assistant",
+          content: limitMessage,
+        });
+
+        return {
+          response: limitMessage,
+          toolsUsed,
+        };
+      }
+
       const assistantContent = response.content;
       const toolUseBlocks = assistantContent.filter(
         (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
@@ -157,7 +184,7 @@ export async function sendMessageToClaude(
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
       for (const toolUse of toolUseBlocks) {
-        console.log(`[${agentId}] Executing tool: ${toolUse.name}`);
+        console.log(`[${agentId}] Executing tool: ${toolUse.name} (${toolCallCount + 1}/${MAX_TOOL_CALLS_PER_RESPONSE})`);
 
         try {
           const result = await handleToolCall(
@@ -176,6 +203,8 @@ export async function sendMessageToClaude(
             name: toolUse.name,
             result: resultText,
           });
+
+          toolCallCount++;
         } catch (error) {
           toolResults.push({
             type: "tool_result",

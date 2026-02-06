@@ -27,6 +27,9 @@ import {
 // JIRA CLIENT
 // ============================================
 
+// Demo mode protection: Jira API timeout in milliseconds
+const JIRA_REQUEST_TIMEOUT_MS = 10000; // 10 seconds
+
 export class JiraClient {
   private config: JiraConfig;
   private authHeader: string;
@@ -47,28 +50,42 @@ export class JiraClient {
   ): Promise<T> {
     const url = `${this.config.baseUrl}/rest/api/3${endpoint}`;
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Authorization': this.authHeader,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...options.headers,
-      },
-    });
+    // Add timeout protection for demo mode
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), JIRA_REQUEST_TIMEOUT_MS);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Jira API Error (${response.status}): ${errorText}`);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Authorization': this.authHeader,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...options.headers,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Jira API Error (${response.status}): ${errorText}`);
+      }
+
+      // Handle empty responses
+      const text = await response.text();
+      if (!text) {
+        return {} as T;
+      }
+
+      return JSON.parse(text) as T;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Jira API timeout após ${JIRA_REQUEST_TIMEOUT_MS}ms para ${endpoint}`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    // Handle empty responses
-    const text = await response.text();
-    if (!text) {
-      return {} as T;
-    }
-
-    return JSON.parse(text) as T;
   }
 
   private async get<T>(endpoint: string): Promise<T> {
@@ -239,23 +256,37 @@ export class JiraClient {
     const footerBuffer = Buffer.from(footer);
     const bodyBuffer = Buffer.concat([headerBuffer, fileBuffer, footerBuffer]);
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': this.authHeader,
-        'X-Atlassian-Token': 'no-check',
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
-      },
-      body: bodyBuffer,
-    });
+    // Add timeout protection for demo mode
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), JIRA_REQUEST_TIMEOUT_MS);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Jira Attachment Error (${response.status}): ${errorText}`);
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Authorization': this.authHeader,
+          'X-Atlassian-Token': 'no-check',
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        },
+        body: bodyBuffer,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Jira Attachment Error (${response.status}): ${errorText}`);
+      }
+
+      const result = await response.json();
+      return result as { id: string; filename: string }[];
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Jira Attachment timeout após ${JIRA_REQUEST_TIMEOUT_MS}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const result = await response.json();
-    return result as { id: string; filename: string }[];
   }
 
   // ============================================

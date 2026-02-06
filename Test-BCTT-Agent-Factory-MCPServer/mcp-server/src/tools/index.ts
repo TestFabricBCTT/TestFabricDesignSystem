@@ -8,6 +8,72 @@ import {
   figmaDesignTokens,
   type WireframeSpec,
 } from '../figma/index.js';
+
+// ============================================
+// DEMO MODE PROTECTIONS
+// ============================================
+
+// Maximum output size in characters (~2KB for demo safety)
+const MAX_OUTPUT_SIZE = 2000;
+
+// Timeout values in milliseconds
+const JIRA_TIMEOUT_MS = 10000;  // 10 seconds
+const FIGMA_TIMEOUT_MS = 5000;  // 5 seconds
+
+/**
+ * Truncates output to prevent context overflow during demos
+ */
+function truncateOutput(output: string, maxSize: number = MAX_OUTPUT_SIZE): string {
+  if (output.length <= maxSize) {
+    return output;
+  }
+
+  const truncated = output.substring(0, maxSize);
+  const truncationNotice = `\n\n... [TRUNCADO: ${output.length - maxSize} caracteres omitidos para demo] ...`;
+
+  // Try to truncate at a valid JSON boundary if it's JSON
+  try {
+    JSON.parse(output);
+    // It's valid JSON, try to truncate intelligently
+    const lastBrace = Math.max(truncated.lastIndexOf('}'), truncated.lastIndexOf(']'));
+    if (lastBrace > maxSize * 0.7) {
+      return output.substring(0, lastBrace + 1) + truncationNotice;
+    }
+  } catch {
+    // Not JSON or invalid, just truncate
+  }
+
+  return truncated + truncationNotice;
+}
+
+/**
+ * Wraps a promise with a timeout
+ */
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`${operation} timeout após ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]);
+}
+
+/**
+ * Safe fetch with timeout for external API calls
+ */
+async function safeFetch(url: string, options: RequestInit, timeoutMs: number, operation: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 import {
   generateScreenTranslations,
   exportTranslationsToBase64,
@@ -1553,26 +1619,31 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
     const figmaJson = exportForFigmaPlugin(bdev_code, specs);
     const figmaSpec = JSON.parse(figmaJson);
 
-    // Automatically send to Figma plugin via API
+    // Automatically send to Figma plugin via API (with timeout protection)
     let figmaSent = false;
     let figmaError: string | null = null;
 
     try {
       const apiPort = process.env.API_PORT || 3001;
-      const response = await fetch(`http://localhost:${apiPort}/figma/command`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'create-bdev-structure',
-          bdevCode: bdev_code,
-          screens: specs.map(s => ({
-            id: s.screenId,
-            name: s.screenName,
-            type: s.type,
-            states: s.states,
-          })),
-        }),
-      });
+      const response = await safeFetch(
+        `http://localhost:${apiPort}/figma/command`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'create-bdev-structure',
+            bdevCode: bdev_code,
+            screens: specs.map(s => ({
+              id: s.screenId,
+              name: s.screenName,
+              type: s.type,
+              states: s.states,
+            })),
+          }),
+        },
+        FIGMA_TIMEOUT_MS,
+        'Figma API'
+      );
 
       if (response.ok) {
         figmaSent = true;
@@ -1581,7 +1652,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         figmaError = errorData.message || 'Failed to send to Figma';
       }
     } catch (err) {
-      figmaError = `Figma plugin não conectado: ${String(err)}`;
+      figmaError = `Figma plugin não conectado ou timeout: ${String(err)}`;
     }
 
     return JSON.stringify({
@@ -2450,7 +2521,8 @@ const allToolHandlers = {
 
 export async function handleToolCall(
   name: string,
-  args: Record<string, unknown> | undefined
+  args: Record<string, unknown> | undefined,
+  options?: { demoMode?: boolean }
 ): Promise<{ content: Array<{ type: "text"; text: string }> }> {
   const handler = allToolHandlers[name];
 
@@ -2465,10 +2537,14 @@ export async function handleToolCall(
 
   try {
     const result = await handler(args || {});
+
+    // Apply truncation for demo mode safety (always on by default)
+    const truncatedResult = truncateOutput(result, MAX_OUTPUT_SIZE);
+
     return {
       content: [{
         type: "text",
-        text: result
+        text: truncatedResult
       }]
     };
   } catch (error) {
