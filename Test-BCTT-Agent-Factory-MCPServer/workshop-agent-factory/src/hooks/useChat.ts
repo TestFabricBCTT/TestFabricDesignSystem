@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Agent, ChatMessage, Conversation } from '@/types';
 import { getConversationsByAgent } from '@/data/conversations';
 import {
@@ -8,6 +8,22 @@ import {
   isApiReady,
 } from '@/services/api';
 
+// Pre-seeded welcome messages for agents in live mode
+const agentWelcomeMessages: Record<string, string> = {
+  ba: `Olá! Antes de começar o levantamento de requisitos, preciso saber:
+
+**A) Modo Demo** - Levantamento rápido com ~5 perguntas essenciais
+**B) Modo Completo** - Levantamento exaustivo e detalhado
+
+Qual preferes? (A ou B)`,
+};
+
+export interface PipelineProgress {
+  currentStep: number;
+  steps: string[];
+  percentage: number;
+}
+
 interface UseChatReturn {
   messages: ChatMessage[];
   isLoading: boolean;
@@ -15,12 +31,18 @@ interface UseChatReturn {
   isApiAvailable: boolean;
   currentAgent: Agent | null;
   conversations: Conversation[];
+  pendingAutoAdvance: string | null;
+  progress: PipelineProgress | null;
   openChat: (agent: Agent) => void;
   closeChat: () => void;
   sendMessage: (content: string) => void;
   toggleLiveMode: () => void;
+  setLiveMode: (value: boolean) => void;
   loadConversation: (conversation: Conversation) => void;
   clearHistory: () => void;
+  resumeWithMessages: (agent: Agent, msgs: ChatMessage[]) => void;
+  getCurrentMessages: () => ChatMessage[];
+  clearAutoAdvance: () => void;
 }
 
 export const useChat = (): UseChatReturn => {
@@ -30,6 +52,12 @@ export const useChat = (): UseChatReturn => {
   const [isApiAvailable, setIsApiAvailable] = useState(false);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [pendingAutoAdvance, setPendingAutoAdvance] = useState<string | null>(null);
+  const [progress, setProgress] = useState<PipelineProgress | null>(null);
+
+  // Ref to track currentAgent — avoids stale closure in sendMessage during auto-advance
+  const currentAgentRef = useRef<Agent | null>(null);
+  useEffect(() => { currentAgentRef.current = currentAgent; }, [currentAgent]);
 
   // Check API availability on mount
   useEffect(() => {
@@ -42,8 +70,16 @@ export const useChat = (): UseChatReturn => {
 
   const openChat = useCallback((agent: Agent) => {
     setCurrentAgent(agent);
-    setMessages([]);
+    setProgress(null); // Clear progress from previous agent
     setConversations(getConversationsByAgent(agent.id));
+
+    // Show pre-seeded welcome message if configured for this agent
+    const welcome = agentWelcomeMessages[agent.id];
+    if (welcome) {
+      setMessages([{ role: 'assistant', content: welcome }]);
+    } else {
+      setMessages([]);
+    }
   }, []);
 
   const closeChat = useCallback(() => {
@@ -51,6 +87,16 @@ export const useChat = (): UseChatReturn => {
     setMessages([]);
     setIsLoading(false);
   }, []);
+
+  // When agent changes or live mode toggles, ensure welcome message is shown if no messages
+  useEffect(() => {
+    if (currentAgent && messages.length === 0) {
+      const welcome = agentWelcomeMessages[currentAgent.id];
+      if (welcome) {
+        setMessages([{ role: 'assistant', content: welcome }]);
+      }
+    }
+  }, [currentAgent]);
 
   const clearHistory = useCallback(async () => {
     if (currentAgent) {
@@ -64,7 +110,9 @@ export const useChat = (): UseChatReturn => {
   }, [currentAgent]);
 
   const sendMessage = useCallback(async (content: string) => {
-    if (!currentAgent) return;
+    // Use ref to get the CURRENT agent (not stale closure from auto-advance)
+    const agent = currentAgentRef.current;
+    if (!agent) return;
 
     const userMessage: ChatMessage = {
       role: 'user',
@@ -79,14 +127,40 @@ export const useChat = (): UseChatReturn => {
       try {
         // Use streaming API but buffer the response
         let responseContent = '';
+        let autoAdvanceAgent: string | null = null;
 
         // Stream the response (buffered - don't update UI until complete)
-        for await (const event of sendMessageStream(currentAgent.id, content)) {
-          if (event.type === 'chunk' && event.content) {
+        for await (const event of sendMessageStream(agent.id, content)) {
+          if (event.type === 'phases') {
+            // Pipeline started — show phase list in progress indicator
+            const phaseList = (event as Record<string, unknown>).phases as Array<{ id: string; name: string }>;
+            setProgress({
+              currentStep: 0,
+              steps: phaseList.map((p) => p.name),
+              percentage: 0,
+            });
+          } else if (event.type === 'phase') {
+            // Pipeline phase update
+            const phaseEvent = event as Record<string, unknown>;
+            const current = phaseEvent.current as number;
+            const total = phaseEvent.total as number;
+            const status = phaseEvent.status as string;
+            setProgress((prev) => {
+              if (!prev) return prev;
+              const pct = Math.round((current / total) * 100);
+              return {
+                ...prev,
+                currentStep: status === 'completed' ? current : current - 1,
+                percentage: status === 'completed' ? pct : pct - Math.round(100 / total / 2),
+              };
+            });
+          } else if (event.type === 'chunk' && event.content) {
             responseContent += event.content;
           } else if (event.type === 'tool') {
-            // Could show tool usage in UI
             console.log(`Tool used: ${event.name}`);
+          } else if (event.type === 'end' && (event as Record<string, unknown>).autoAdvance) {
+            const advance = (event as Record<string, unknown>).autoAdvance as { nextAgent: string };
+            autoAdvanceAgent = advance.nextAgent;
           } else if (event.type === 'error') {
             throw new Error(event.message || 'Streaming error');
           }
@@ -102,12 +176,20 @@ export const useChat = (): UseChatReturn => {
         ]);
 
         setIsLoading(false);
+        setProgress(null);
+
+        // Signal auto-advance if HANDOFF was detected
+        if (autoAdvanceAgent) {
+          console.log(`[auto-advance] HANDOFF detected → ${autoAdvanceAgent}`);
+          // Small delay so the user sees the final response before transition
+          setTimeout(() => setPendingAutoAdvance(autoAdvanceAgent), 1500);
+        }
       } catch (error) {
         console.error('Error sending message:', error);
 
         // Fallback to non-streaming API
         try {
-          const response = await apiSendMessage(currentAgent.id, content);
+          const response = await apiSendMessage(agent.id, content);
           setMessages((prev) => [
             ...prev,
             {
@@ -129,10 +211,11 @@ export const useChat = (): UseChatReturn => {
           ]);
         }
         setIsLoading(false);
+        setProgress(null);
       }
     } else {
       // Demo mode - find matching example response
-      const agentConversations = getConversationsByAgent(currentAgent.id);
+      const agentConversations = getConversationsByAgent(agent.id);
       let foundResponse = false;
 
       for (const conv of agentConversations) {
@@ -162,21 +245,38 @@ export const useChat = (): UseChatReturn => {
         setTimeout(() => {
           const assistantMessage: ChatMessage = {
             role: 'assistant',
-            content: `Olá! Sou o ${currentAgent.nome}. Esta é uma demonstração. Ative o "Live Mode" para interagir com a IA real, ou use uma das conversas de exemplo no histórico.`,
+            content: `Olá! Sou o ${agent.nome}. Esta é uma demonstração. Ative o "Live Mode" para interagir com a IA real, ou use uma das conversas de exemplo no histórico.`,
           };
           setMessages((prev) => [...prev, assistantMessage]);
         }, 500);
       }
     }
-  }, [currentAgent, isLiveMode]);
+  }, [isLiveMode]);
 
   const toggleLiveMode = useCallback(() => {
     setIsLiveMode((prev) => !prev);
   }, []);
 
+  const setLiveMode = useCallback((value: boolean) => {
+    setIsLiveMode(value);
+  }, []);
+
+  const clearAutoAdvance = useCallback(() => {
+    setPendingAutoAdvance(null);
+  }, []);
+
   const loadConversation = useCallback((conversation: Conversation) => {
     setMessages(conversation.mensagens);
   }, []);
+
+  const resumeWithMessages = useCallback((agent: Agent, msgs: ChatMessage[]) => {
+    setCurrentAgent(agent);
+    setMessages(msgs);
+    setIsLiveMode(true);
+    setConversations(getConversationsByAgent(agent.id));
+  }, []);
+
+  const getCurrentMessages = useCallback(() => messages, [messages]);
 
   return {
     messages,
@@ -185,12 +285,18 @@ export const useChat = (): UseChatReturn => {
     isApiAvailable,
     currentAgent,
     conversations,
+    pendingAutoAdvance,
+    progress,
     openChat,
     closeChat,
     sendMessage,
     toggleLiveMode,
+    setLiveMode,
     loadConversation,
     clearHistory,
+    resumeWithMessages,
+    getCurrentMessages,
+    clearAutoAdvance,
   };
 };
 

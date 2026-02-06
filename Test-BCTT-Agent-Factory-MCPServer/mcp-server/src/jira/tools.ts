@@ -1,6 +1,9 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { getJiraClient } from './client.js';
 import { FAStructure, AcceptanceCriterion } from './types.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 // ============================================
 // JIRA TOOL DEFINITIONS
@@ -765,11 +768,27 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
       const client = getJiraClient();
       const result = await client.createFromFAStructure(structure);
 
-      // Attach document to Epic if provided
+      // Attach document to Epic — auto-read from temp file if not provided directly
+      let docBase64 = document_base64;
+      let docName = document_name;
+      if (!docBase64) {
+        try {
+          const tmpDir = os.tmpdir();
+          const docFiles = fs.readdirSync(tmpDir).filter((f: string) => f.startsWith('fa-doc-'));
+          if (docFiles.length > 0) {
+            const latest = docFiles.sort().pop()!;
+            const stored = JSON.parse(fs.readFileSync(path.join(tmpDir, latest), 'utf-8'));
+            docBase64 = stored.base64;
+            docName = docName || stored.fileName;
+          }
+        } catch (e) {
+          // Ignore — document attachment is optional
+        }
+      }
       let attachmentResult = null;
-      if (document_base64 && document_name) {
-        const fileBuffer = Buffer.from(document_base64, 'base64');
-        attachmentResult = await client.addAttachment(result.epicKey, document_name, fileBuffer);
+      if (docBase64 && docName) {
+        const fileBuffer = Buffer.from(docBase64, 'base64');
+        attachmentResult = await client.addAttachment(result.epicKey, docName, fileBuffer);
       }
 
       // Create functional flow links

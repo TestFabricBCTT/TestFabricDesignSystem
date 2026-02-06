@@ -356,6 +356,20 @@ export interface FinalOutputState {
 }
 
 // ============================================
+// INTERACTION HISTORY
+// ============================================
+export interface Interaction {
+  id: string;
+  phaseId: PhaseId;
+  agentId: AgentId;
+  agentSigla: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
 // APP STATE
 // ============================================
 export interface AppState {

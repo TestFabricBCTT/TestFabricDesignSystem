@@ -310,6 +310,7 @@
         case 'frame-created':
         case 'screen-created':
         case 'bdev-structure-created':
+        case 'ux-flow-created':
           log(`Sucesso: ${JSON.stringify(msg)}`, 'success');
           // Send confirmation to server
           if (ws && ws.readyState === WebSocket.OPEN) {

@@ -240,20 +240,19 @@ export class JiraClient {
     // Create form data boundary
     const boundary = '----FormBoundary' + Math.random().toString(36).substring(2);
 
-    // Build multipart form data manually
-    const formDataParts = [
-      `--${boundary}`,
-      `Content-Disposition: form-data; name="file"; filename="${fileName}"`,
-      'Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      '',
-      '', // Will be replaced with buffer
-    ];
+    // Build multipart form data (RFC 2046 compliant)
+    // Structure: --boundary\r\nheaders\r\n\r\n<binary>\r\n--boundary--\r\n
+    const header = [
+      `--${boundary}\r\n`,
+      `Content-Disposition: form-data; name="file"; filename="${fileName}"\r\n`,
+      `Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n`,
+      `\r\n`, // empty line separating headers from body
+    ].join('');
 
-    const header = formDataParts.join('\r\n');
     const footer = `\r\n--${boundary}--\r\n`;
 
-    const headerBuffer = Buffer.from(header);
-    const footerBuffer = Buffer.from(footer);
+    const headerBuffer = Buffer.from(header, 'utf-8');
+    const footerBuffer = Buffer.from(footer, 'utf-8');
     const bodyBuffer = Buffer.concat([headerBuffer, fileBuffer, footerBuffer]);
 
     // Add timeout protection for demo mode
@@ -493,7 +492,7 @@ export class JiraClient {
           }],
         } : undefined,
         issuetype: {
-          name: 'Story',
+          name: 'Feature',
         },
         labels: ['feature', 'fa-generated'],
         parent: {
@@ -621,34 +620,77 @@ export class JiraClient {
   }
 
   // ============================================
+  // DEDUPLICATION: FIND EXISTING BDEV
+  // ============================================
+
+  async findExistingBDEV(functionalityName: string): Promise<JiraIssue | null> {
+    try {
+      const escapedName = functionalityName.replace(/"/g, '\\"');
+      const jql = `project = ${this.config.projectKey} AND issuetype = Epic AND labels = "bdev" AND summary ~ "${escapedName}" ORDER BY created DESC`;
+      const result = await this.searchIssues(jql, 5);
+
+      // Check for a close match (the summary contains [BDEVxxxxxxxx] + functionality name)
+      for (const issue of result.issues) {
+        const summaryWithoutCode = issue.fields.summary.replace(/\[BDEV\d{8}\]\s*/, '');
+        if (summaryWithoutCode.toLowerCase() === functionalityName.toLowerCase()) {
+          return issue;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`[Jira] Error searching for existing BDEV: ${error}`);
+      return null;
+    }
+  }
+
+  // ============================================
   // BULK CREATE FROM FA STRUCTURE
   // ============================================
 
   async createFromFAStructure(structure: FAStructure): Promise<CreateBDEVResult> {
     console.error(`[Jira] Starting bulk create for: ${structure.functionalityName}`);
 
-    // 1. Get next BDEV code (with retry)
-    const bdevCode = await this.withRetry(
-      () => this.getNextBDEVCode(),
-      'getNextBDEVCode'
-    );
-    console.error(`[Jira] BDEV code: ${bdevCode.formatted}`);
+    // 1. Check for existing epic with same functionality name (deduplication)
+    const existingEpic = await this.findExistingBDEV(structure.functionalityName);
 
-    // 2. Create Epic (BDEV) with retry
-    const epicInput: CreateBDEVInput = {
-      name: structure.functionalityName,
-      description: structure.description,
-      stakeholder: structure.stakeholder,
-      dependencies: structure.dependencies,
-      alerts: structure.alerts,
-    };
+    let epic: JiraIssue;
+    let bdevCode: BDEVCode;
+    let epicUrl: string;
 
-    const epic = await this.withRetry(
-      () => this.createBDEV(epicInput, bdevCode),
-      'createBDEV'
-    );
-    const epicUrl = `${this.config.baseUrl}/browse/${epic.key}`;
-    console.error(`[Jira] Epic created: ${epic.key}`);
+    if (existingEpic) {
+      // Reuse existing epic
+      epic = existingEpic;
+      epicUrl = `${this.config.baseUrl}/browse/${epic.key}`;
+      const match = epic.fields.summary.match(/\[(BDEV\d{8})\]/);
+      bdevCode = match
+        ? { code: match[1], number: parseInt(match[1].replace('BDEV', ''), 10), formatted: `[${match[1]}]` }
+        : { code: 'BDEV00000000', number: 0, formatted: '[BDEV00000000]' };
+      console.error(`[Jira] Reusing existing epic: ${epic.key} (${bdevCode.formatted})`);
+    } else {
+      // 1b. Get next BDEV code (with retry)
+      bdevCode = await this.withRetry(
+        () => this.getNextBDEVCode(),
+        'getNextBDEVCode'
+      );
+      console.error(`[Jira] BDEV code: ${bdevCode.formatted}`);
+
+      // 2. Create Epic (BDEV) with retry
+      const epicInput: CreateBDEVInput = {
+        name: structure.functionalityName,
+        description: structure.description,
+        stakeholder: structure.stakeholder,
+        dependencies: structure.dependencies,
+        alerts: structure.alerts,
+      };
+
+      epic = await this.withRetry(
+        () => this.createBDEV(epicInput, bdevCode),
+        'createBDEV'
+      );
+      epicUrl = `${this.config.baseUrl}/browse/${epic.key}`;
+      console.error(`[Jira] Epic created: ${epic.key}`);
+    }
 
     // 3. Collect all features to create
     interface FeatureToCreate {

@@ -1,13 +1,18 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { tools, handleToolCall } from "../tools/index.js";
+import { spawn, execFile } from "child_process";
+import { promisify } from "util";
 import { getPrompt } from "../prompts/index.js";
+import path from "path";
+import fs from "fs";
+import os from "os";
+import { fileURLToPath } from "url";
+import crypto from "crypto";
+
+const execFileAsync = promisify(execFile);
 
 // ============================================
-// DEMO MODE PROTECTIONS
+// CLAUDE CODE CLI INTEGRATION
+// Uses Claude Code (included in Max plan) instead of Anthropic API
 // ============================================
-
-// Maximum tool calls per response to prevent infinite loops
-const MAX_TOOL_CALLS_PER_RESPONSE = 5;
 
 // Types for conversation management
 export interface ConversationMessage {
@@ -19,37 +24,286 @@ export interface AgentConversation {
   agentId: string;
   messages: ConversationMessage[];
   systemPrompt: string;
+  claudeSessionId: string;
 }
 
 // Map to store active conversations by session
 const conversations = new Map<string, AgentConversation>();
 
-// Initialize Anthropic client
-let anthropicClient: Anthropic | null = null;
+// ============================================
+// CROSS-AGENT HANDOFF
+// ============================================
 
-function getAnthropicClient(): Anthropic {
-  if (!anthropicClient) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "ANTHROPIC_API_KEY not configured. Set it in your .env file."
-      );
+const AGENT_UPSTREAM: Record<string, string[]> = {
+  fa: ["ba"],
+  da: ["fa"],
+  pa: ["da"],
+  dsla: ["da", "pa"],
+};
+
+const HANDOFF_FALLBACK_CHARS = 4000;
+const HANDOFF_MAX_RETRIES = 2;
+
+/**
+ * Extrai o bloco ### HANDOFF de uma lista de mensagens.
+ * Procura nas últimas 3 mensagens assistant.
+ * Retorna null se não encontrar.
+ */
+function findHandoffBlock(
+  messages: ConversationMessage[]
+): string | null {
+  const assistantMsgs = messages.filter((m) => m.role === "assistant");
+  if (assistantMsgs.length === 0) return null;
+
+  for (
+    let i = assistantMsgs.length - 1;
+    i >= Math.max(0, assistantMsgs.length - 3);
+    i--
+  ) {
+    const content = assistantMsgs[i].content;
+    const idx = content.indexOf("### HANDOFF");
+    if (idx !== -1) {
+      let handoff = content.substring(idx);
+      const nextSection = handoff.indexOf("\n### ", 5);
+      if (nextSection > 0) handoff = handoff.substring(0, nextSection);
+      return handoff.trim();
     }
-    anthropicClient = new Anthropic({ apiKey });
   }
-  return anthropicClient;
+  return null;
 }
 
-// Convert MCP tools to Anthropic tool format
-function convertToolsToAnthropicFormat(): Anthropic.Tool[] {
-  return tools.map((tool) => ({
-    name: tool.name,
-    description: tool.description,
-    input_schema: tool.inputSchema as Anthropic.Tool.InputSchema,
-  }));
+/**
+ * Fallback: extrai os últimos N chars da última mensagem assistant.
+ */
+function extractFallback(
+  messages: ConversationMessage[]
+): string | null {
+  const assistantMsgs = messages.filter((m) => m.role === "assistant");
+  if (assistantMsgs.length === 0) return null;
+
+  const lastMsg = assistantMsgs[assistantMsgs.length - 1].content;
+  const truncated =
+    lastMsg.length > HANDOFF_FALLBACK_CHARS
+      ? lastMsg.slice(-HANDOFF_FALLBACK_CHARS)
+      : lastMsg;
+  return (
+    "[Resumo automático - sem bloco HANDOFF estruturado]\n\n" + truncated
+  );
 }
 
-// Get system prompt for an agent
+/**
+ * Pede explicitamente ao agente upstream para produzir o bloco HANDOFF.
+ * Envia uma mensagem na conversa existente e espera pela resposta.
+ */
+async function requestHandoffFromAgent(
+  sessionId: string,
+  agentId: string
+): Promise<string | null> {
+  console.log(`[handoff] Requesting HANDOFF block from ${agentId}...`);
+  try {
+    const result = await sendMessageToClaude(
+      sessionId,
+      agentId,
+      "Produz agora o bloco ### HANDOFF conforme as regras do teu prompt. " +
+        "Inclui TODOS os deliverables do trabalho que fizeste nesta sessão. " +
+        'Formato obrigatório: começar com "### HANDOFF" seguido dos campos estruturados.'
+    );
+    if (result.response.includes("### HANDOFF")) {
+      const idx = result.response.indexOf("### HANDOFF");
+      let handoff = result.response.substring(idx);
+      const nextSection = handoff.indexOf("\n### ", 5);
+      if (nextSection > 0) handoff = handoff.substring(0, nextSection);
+      console.log(
+        `[handoff] ${agentId} produced HANDOFF block (${handoff.length} chars)`
+      );
+      return handoff.trim();
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      `[handoff] Failed to request HANDOFF from ${agentId}:`,
+      error
+    );
+    return null;
+  }
+}
+
+/**
+ * Obtém o handoff consolidado dos agentes upstream.
+ * Estratégia com retries:
+ *   1. Procurar bloco ### HANDOFF na conversa existente
+ *   2. Se não encontrar, pedir ao agente para o produzir (até 2x)
+ *   3. Se falhar tudo, fallback aos últimos 4000 chars
+ */
+async function getUpstreamHandoff(
+  sessionId: string,
+  agentId: string
+): Promise<string | null> {
+  const upstreamIds = AGENT_UPSTREAM[agentId];
+  if (!upstreamIds || upstreamIds.length === 0) return null;
+
+  const parts: string[] = [];
+
+  for (const upId of upstreamIds) {
+    const conv = conversations.get(`${sessionId}:${upId}`);
+    if (!conv || conv.messages.length === 0) continue;
+
+    // 1. Tentar encontrar bloco HANDOFF existente
+    let handoff = findHandoffBlock(conv.messages);
+
+    // 2. Se não encontrar, pedir ao agente (retries)
+    if (!handoff) {
+      console.log(
+        `[handoff] No HANDOFF block found in ${upId} conversation, requesting...`
+      );
+      for (let retry = 0; retry < HANDOFF_MAX_RETRIES && !handoff; retry++) {
+        console.log(
+          `[handoff] Retry ${retry + 1}/${HANDOFF_MAX_RETRIES} for ${upId}`
+        );
+        handoff = await requestHandoffFromAgent(sessionId, upId);
+      }
+    }
+
+    // 3. Fallback se tudo falhar
+    if (!handoff) {
+      console.log(
+        `[handoff] All retries failed for ${upId}, using fallback (${HANDOFF_FALLBACK_CHARS} chars)`
+      );
+      handoff = extractFallback(conv.messages);
+    }
+
+    if (handoff) {
+      parts.push(`## Entrega do ${upId.toUpperCase()}\n${handoff}`);
+    }
+  }
+
+  if (parts.length === 0) return null;
+
+  const result = parts.join("\n\n---\n\n");
+  console.log(
+    `[handoff] ${agentId} ← [${upstreamIds.join(",")}]: ${result.length} chars`
+  );
+  return result;
+}
+
+// ============================================
+// CLAUDE CODE CLI DETECTION
+// ============================================
+
+let cachedCLIPath: string | null = null;
+
+function getClaudeCLIPath(): string {
+  if (cachedCLIPath) return cachedCLIPath;
+
+  // 1. Check env var
+  if (process.env.CLAUDE_CLI_PATH) {
+    cachedCLIPath = process.env.CLAUDE_CLI_PATH;
+    return cachedCLIPath;
+  }
+
+  // 2. Try to find in VS Code extensions
+  const homeDir = process.env.USERPROFILE || process.env.HOME || "";
+  const extensionsDir = path.join(homeDir, ".vscode", "extensions");
+
+  try {
+    const entries = fs.readdirSync(extensionsDir);
+    const claudeExts = entries
+      .filter((e) => e.startsWith("anthropic.claude-code-"))
+      .sort()
+      .reverse(); // Latest version first
+
+    for (const ext of claudeExts) {
+      const binaryName =
+        process.platform === "win32" ? "claude.exe" : "claude";
+      const binaryPath = path.join(
+        extensionsDir,
+        ext,
+        "resources",
+        "native-binary",
+        binaryName
+      );
+      if (fs.existsSync(binaryPath)) {
+        cachedCLIPath = binaryPath;
+        console.log(`[claude-code] Found CLI at: ${binaryPath}`);
+        return cachedCLIPath;
+      }
+    }
+  } catch {
+    // Extension dir not found
+  }
+
+  // 3. Fallback to PATH
+  cachedCLIPath = "claude";
+  return cachedCLIPath;
+}
+
+/**
+ * Check if Claude Code CLI is available
+ */
+export async function isClaudeCodeAvailable(): Promise<boolean> {
+  try {
+    const cliPath = getClaudeCLIPath();
+    const { stdout } = await execFileAsync(cliPath, ["--version"], {
+      timeout: 5000,
+    });
+    console.log(`[claude-code] CLI version: ${stdout.trim()}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ============================================
+// MCP CONFIG GENERATION
+// ============================================
+
+let mcpConfigPath: string | null = null;
+
+function getOrCreateMCPConfig(): string {
+  if (mcpConfigPath && fs.existsSync(mcpConfigPath)) return mcpConfigPath;
+
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  mcpConfigPath = path.join(__dirname, "..", "claude-mcp-config.json");
+
+  // Get the dist/index.js path for the MCP server
+  const mcpServerPath = path
+    .join(__dirname, "..", "index.js")
+    .replace(/\\/g, "/");
+
+  const envVars: Record<string, string> = {};
+  const envKeys = [
+    "JIRA_BASE_URL",
+    "JIRA_USER_EMAIL",
+    "JIRA_API_TOKEN",
+    "JIRA_PROJECT_KEY",
+    "FIGMA_ACCESS_TOKEN",
+    "FIGMA_FILE_KEY",
+  ];
+  for (const key of envKeys) {
+    if (process.env[key]) {
+      envVars[key] = process.env[key]!;
+    }
+  }
+
+  const config = {
+    mcpServers: {
+      "agent-factory": {
+        command: "node",
+        args: [mcpServerPath],
+        env: envVars,
+      },
+    },
+  };
+
+  fs.writeFileSync(mcpConfigPath, JSON.stringify(config, null, 2));
+  console.log(`[claude-code] MCP config written to: ${mcpConfigPath}`);
+  return mcpConfigPath;
+}
+
+// ============================================
+// AGENT CONFIGURATION
+// ============================================
+
 function getAgentSystemPrompt(agentId: string): string {
   try {
     const promptResult = getPrompt(`agent_${agentId}`, {});
@@ -60,36 +314,25 @@ function getAgentSystemPrompt(agentId: string): string {
     }
     return "";
   } catch {
-    // Return default prompt if agent not found
     return `Tu és um assistente especializado da Fábrica de Agentes do Banco CTT.
 Responde sempre em português de Portugal. Sê conciso mas completo.`;
   }
 }
 
-// Filter tools based on agent type
-function getToolsForAgent(agentId: string): Anthropic.Tool[] {
-  const allTools = convertToolsToAnthropicFormat();
+// Pre-seeded first messages
+const agentFirstMessages: Record<string, string> = {
+  ba: `Olá! Antes de começar o levantamento de requisitos, preciso saber:
 
-  // Filter tools based on agent type
-  const toolPrefixes: Record<string, string[]> = {
-    ba: ["ba_", "jira_test_connection"],
-    fa: ["fa_", "jira_"],
-    da: ["da_"],
-    dsla: ["dsla_"],
-  };
+**A) Modo Demo** - Levantamento rápido com ~5 perguntas essenciais
+**B) Modo Completo** - Levantamento exaustivo e detalhado
 
-  const prefixes = toolPrefixes[agentId];
-  if (!prefixes) {
-    // Return all tools if agent not specifically configured
-    return allTools;
-  }
+Qual preferes? (A ou B)`,
+};
 
-  return allTools.filter((tool) =>
-    prefixes.some((prefix) => tool.name.startsWith(prefix))
-  );
-}
+// ============================================
+// CONVERSATION MANAGEMENT
+// ============================================
 
-// Start or get a conversation
 export function getOrCreateConversation(
   sessionId: string,
   agentId: string
@@ -97,23 +340,166 @@ export function getOrCreateConversation(
   const key = `${sessionId}:${agentId}`;
 
   if (!conversations.has(key)) {
+    const messages: ConversationMessage[] = [];
+
+    const firstMessage = agentFirstMessages[agentId];
+    if (firstMessage) {
+      messages.push({
+        role: "assistant",
+        content: firstMessage,
+      });
+    }
+
     conversations.set(key, {
       agentId,
-      messages: [],
+      messages,
       systemPrompt: getAgentSystemPrompt(agentId),
+      claudeSessionId: crypto.randomUUID(),
     });
   }
 
   return conversations.get(key)!;
 }
 
-// Clear a conversation
 export function clearConversation(sessionId: string, agentId: string): void {
   const key = `${sessionId}:${agentId}`;
   conversations.delete(key);
 }
 
-// Send message to Claude and get response
+// ============================================
+// FORMAT CONVERSATION FOR CLAUDE CODE
+// ============================================
+
+function formatConversationPrompt(
+  previousMessages: ConversationMessage[],
+  newUserMessage: string
+): string {
+  if (previousMessages.length === 0) {
+    return newUserMessage;
+  }
+
+  let formatted = "CONVERSA ANTERIOR (contexto):\n";
+  formatted += "---\n";
+
+  for (const msg of previousMessages) {
+    const label = msg.role === "user" ? "Utilizador" : "Assistente";
+    formatted += `${label}: ${msg.content}\n\n`;
+  }
+
+  formatted += "---\n\n";
+  formatted += `Responde à mensagem mais recente do utilizador:\n\n`;
+  formatted += newUserMessage;
+
+  return formatted;
+}
+
+// ============================================
+// SPAWN CLAUDE CODE CLI (robust for long text)
+// ============================================
+
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "sonnet";
+const CLAUDE_TIMEOUT_MS = 300000; // 5 minutes
+
+/**
+ * Spawn Claude Code CLI and pipe prompt via stdin.
+ * This avoids Windows command-line length limits with long prompts/system prompts.
+ * The system prompt is written to a temp file to avoid arg length issues.
+ */
+export function spawnClaudeCode(
+  prompt: string,
+  systemPrompt: string,
+  mcpConfigPath: string
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const cliPath = getClaudeCLIPath();
+
+    // Write system prompt to a temp file (avoids CLI arg length limits)
+    const tmpDir = os.tmpdir();
+    const systemPromptFile = path.join(tmpDir, `claude-sp-${Date.now()}.txt`);
+    fs.writeFileSync(systemPromptFile, systemPrompt, "utf-8");
+
+    // Read the system prompt back as a string for the CLI arg
+    // Actually, we'll use --append-system-prompt which also takes a string.
+    // Better approach: pass via a settings file or directly.
+    // Since --system-prompt takes a string, let's read it from the file via Node and pass it.
+    // The key issue was execFile - spawn handles args as an array without shell interpretation.
+
+    const args: string[] = [
+      "-p", // print mode (non-interactive), prompt comes from stdin when no positional arg
+      "--output-format", "json",
+      "--model", CLAUDE_MODEL,
+      "--system-prompt", systemPrompt, // spawn passes this correctly as a single arg
+      "--mcp-config", mcpConfigPath,
+      "--strict-mcp-config",
+      "--no-session-persistence",
+      "--dangerously-skip-permissions",
+      "--disallowed-tools", "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,NotebookEdit,Task,TodoWrite",
+    ];
+
+    console.log(`[claude-code] Spawning CLI: ${cliPath}`);
+    console.log(`[claude-code] Args count: ${args.length}, prompt length: ${prompt.length}, system prompt length: ${systemPrompt.length}`);
+
+    const child = spawn(cliPath, args, {
+      cwd: process.cwd(),
+      stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
+      },
+      windowsHide: true,
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (data: Buffer) => {
+      stdout += data.toString();
+    });
+
+    child.stderr.on("data", (data: Buffer) => {
+      stderr += data.toString();
+    });
+
+    // Write prompt to stdin and close it
+    child.stdin.write(prompt);
+    child.stdin.end();
+
+    // Timeout protection
+    const timer = setTimeout(() => {
+      child.kill("SIGTERM");
+      // Cleanup temp file
+      try { fs.unlinkSync(systemPromptFile); } catch {}
+      reject(new Error(`Claude Code timed out after ${CLAUDE_TIMEOUT_MS / 1000}s`));
+    }, CLAUDE_TIMEOUT_MS);
+
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      // Cleanup temp file
+      try { fs.unlinkSync(systemPromptFile); } catch {}
+
+      if (code === 0) {
+        resolve({ stdout, stderr });
+      } else {
+        reject(
+          new Error(
+            `Claude Code exited with code ${code}. stderr: ${stderr.substring(0, 500)}`
+          )
+        );
+      }
+    });
+
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      try { fs.unlinkSync(systemPromptFile); } catch {}
+      reject(err);
+    });
+  });
+}
+
+// ============================================
+// SEND MESSAGE VIA CLAUDE CODE CLI
+// ============================================
+
 export async function sendMessageToClaude(
   sessionId: string,
   agentId: string,
@@ -122,139 +508,219 @@ export async function sendMessageToClaude(
   response: string;
   toolsUsed: Array<{ name: string; result: string }>;
 }> {
-  const client = getAnthropicClient();
   const conversation = getOrCreateConversation(sessionId, agentId);
-  const agentTools = getToolsForAgent(agentId);
+  const configPath = getOrCreateMCPConfig();
 
-  // Add user message to history
+  // HANDOFF: enrich first message with upstream agent context
+  let enrichedMessage = userMessage;
+  if (conversation.messages.length <= 1) {
+    const handoff = await getUpstreamHandoff(sessionId, agentId);
+    if (handoff) {
+      // Inject into system prompt (persists for all subsequent messages)
+      if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
+        conversation.systemPrompt +=
+          "\n\n" +
+          "═".repeat(50) +
+          "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
+          handoff +
+          "\n" +
+          "═".repeat(50);
+      }
+      // Inject into message (higher weight in attention window)
+      enrichedMessage =
+        `CONTEXTO DO AGENTE ANTERIOR:\n${handoff}\n\n---\n\nPEDIDO DO UTILIZADOR:\n${userMessage}`;
+    }
+  }
+
+  // Add ORIGINAL user message to history (not enriched)
   conversation.messages.push({
     role: "user",
     content: userMessage,
   });
 
-  // Prepare messages for API
-  const apiMessages: Anthropic.MessageParam[] = conversation.messages.map(
-    (msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })
-  );
+  // Format prompt with conversation history (use enriched for current message)
+  const allMessagesExceptLast = conversation.messages.slice(0, -1);
+  const prompt = formatConversationPrompt(allMessagesExceptLast, enrichedMessage);
 
-  const toolsUsed: Array<{ name: string; result: string }> = [];
-  let finalResponse = "";
+  console.log(`[${agentId}] Sending message via Claude Code CLI...`);
+  console.log(`[${agentId}] Model: ${CLAUDE_MODEL}`);
+  console.log(`[${agentId}] Conversation messages: ${conversation.messages.length}`);
 
   try {
-    // Call Claude API with tools
-    let response = await client.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: 4096,
-      system: conversation.systemPrompt,
-      tools: agentTools.length > 0 ? agentTools : undefined,
-      messages: apiMessages,
-    });
+    const { stdout, stderr } = await spawnClaudeCode(
+      prompt,
+      conversation.systemPrompt,
+      configPath
+    );
 
-    // Handle tool use loop (with max tool calls limit for demo safety)
-    let toolCallCount = 0;
-
-    while (response.stop_reason === "tool_use") {
-      // Check if we've hit the max tool calls limit
-      if (toolCallCount >= MAX_TOOL_CALLS_PER_RESPONSE) {
-        console.log(`[${agentId}] Max tool calls limit reached (${MAX_TOOL_CALLS_PER_RESPONSE}). Stopping to prevent infinite loop.`);
-
-        // Force a text response by not processing more tools
-        const limitMessage = `[DEMO PROTECTION] Limite de ${MAX_TOOL_CALLS_PER_RESPONSE} chamadas de ferramentas atingido. Continua na próxima mensagem se necessário.`;
-
-        conversation.messages.push({
-          role: "assistant",
-          content: limitMessage,
-        });
-
-        return {
-          response: limitMessage,
-          toolsUsed,
-        };
-      }
-
-      const assistantContent = response.content;
-      const toolUseBlocks = assistantContent.filter(
-        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-      );
-
-      // Execute each tool
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-
-      for (const toolUse of toolUseBlocks) {
-        console.log(`[${agentId}] Executing tool: ${toolUse.name} (${toolCallCount + 1}/${MAX_TOOL_CALLS_PER_RESPONSE})`);
-
-        try {
-          const result = await handleToolCall(
-            toolUse.name,
-            toolUse.input as Record<string, unknown>
-          );
-          const resultText = result.content[0]?.text || "";
-
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: toolUse.id,
-            content: resultText,
-          });
-
-          toolsUsed.push({
-            name: toolUse.name,
-            result: resultText,
-          });
-
-          toolCallCount++;
-        } catch (error) {
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: toolUse.id,
-            content: JSON.stringify({ error: String(error) }),
-            is_error: true,
-          });
-        }
-      }
-
-      // Continue conversation with tool results
-      const nextMessages: Anthropic.MessageParam[] = [
-        ...apiMessages,
-        { role: "assistant", content: assistantContent },
-        { role: "user", content: toolResults },
-      ];
-
-      response = await client.messages.create({
-        model: "claude-3-5-haiku-20241022",
-        max_tokens: 4096,
-        system: conversation.systemPrompt,
-        tools: agentTools.length > 0 ? agentTools : undefined,
-        messages: nextMessages,
-      });
+    if (stderr) {
+      console.log(`[${agentId}] Claude Code stderr:`, stderr.substring(0, 500));
     }
 
-    // Extract final text response
-    const textBlocks = response.content.filter(
-      (block): block is Anthropic.TextBlock => block.type === "text"
-    );
-    finalResponse = textBlocks.map((block) => block.text).join("\n");
+    // Parse JSON response from Claude Code
+    let responseText = "";
+    const toolsUsed: Array<{ name: string; result: string }> = [];
+
+    try {
+      const result = JSON.parse(stdout);
+
+      if (result.is_error) {
+        throw new Error(result.result || "Claude Code returned an error");
+      }
+
+      responseText = result.result || "";
+
+      if (result.session_id) {
+        conversation.claudeSessionId = result.session_id;
+      }
+
+      console.log(
+        `[${agentId}] Response received (${responseText.length} chars, ${result.num_turns || 1} turns, $${result.cost_usd?.toFixed(4) || "0"} cost)`
+      );
+    } catch {
+      // If not valid JSON, use raw output as text
+      console.log(`[${agentId}] Non-JSON response, using raw output`);
+      responseText = stdout.trim();
+    }
 
     // Add assistant response to history
     conversation.messages.push({
       role: "assistant",
-      content: finalResponse,
+      content: responseText,
     });
 
-    return { response: finalResponse, toolsUsed };
+    return { response: responseText, toolsUsed };
   } catch (error) {
-    console.error(`[${agentId}] Error calling Claude:`, error);
+    // Remove the user message from history on failure
+    conversation.messages.pop();
+
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[${agentId}] Error calling Claude Code:`, errorMsg);
+
+    if (errorMsg.includes("ENOENT")) {
+      throw new Error(
+        "Claude Code CLI not found. Install Claude Code or set CLAUDE_CLI_PATH in .env"
+      );
+    }
+    if (errorMsg.includes("timed out")) {
+      throw new Error(
+        "Claude Code response timed out. Try again with a shorter message."
+      );
+    }
+
     throw error;
   }
 }
 
-// Get conversation history
+// ============================================
+// CONVERSATION HISTORY
+// ============================================
+
 export function getConversationHistory(
   sessionId: string,
   agentId: string
 ): ConversationMessage[] {
   const conversation = getOrCreateConversation(sessionId, agentId);
   return [...conversation.messages];
+}
+
+// ============================================
+// PIPELINE-BASED EXECUTION (multi-phase)
+// ============================================
+
+import {
+  executePipeline,
+  hasPhases,
+  getAgentPhases,
+  type ProgressCallback,
+  type PhaseProgress,
+} from "./pipeline.js";
+
+// Re-export for server.ts convenience
+export { hasPhases, getAgentPhases, type PhaseProgress, type ProgressCallback };
+
+/**
+ * Send a message using the multi-phase pipeline.
+ * Each phase is a separate CLI call with focused context.
+ * Progress is emitted via the onProgress callback (for SSE events).
+ */
+export async function sendMessageWithPipeline(
+  sessionId: string,
+  agentId: string,
+  userMessage: string,
+  onProgress: ProgressCallback
+): Promise<{
+  response: string;
+  toolsUsed: Array<{ name: string; result: string }>;
+}> {
+  const conversation = getOrCreateConversation(sessionId, agentId);
+  const configPath = getOrCreateMCPConfig();
+
+  // HANDOFF: enrich first message with upstream agent context
+  let enrichedMessage = userMessage;
+  if (conversation.messages.length <= 1) {
+    const handoff = await getUpstreamHandoff(sessionId, agentId);
+    if (handoff) {
+      // Inject into system prompt (propagates to all pipeline phases)
+      if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
+        conversation.systemPrompt +=
+          "\n\n" +
+          "═".repeat(50) +
+          "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
+          handoff +
+          "\n" +
+          "═".repeat(50);
+      }
+      // Inject into message (phase 1 sees it directly)
+      enrichedMessage =
+        `CONTEXTO DO AGENTE ANTERIOR:\n${handoff}\n\n---\n\nPEDIDO DO UTILIZADOR:\n${userMessage}`;
+    }
+  }
+
+  // Add ORIGINAL user message to history (not enriched)
+  conversation.messages.push({
+    role: "user",
+    content: userMessage,
+  });
+
+  // Build the original message with conversation context (use enriched for current)
+  const allMessagesExceptLast = conversation.messages.slice(0, -1);
+  const fullPrompt = formatConversationPrompt(allMessagesExceptLast, enrichedMessage);
+
+  console.log(`[${agentId}] Starting pipeline execution...`);
+  console.log(`[${agentId}] Model: ${CLAUDE_MODEL}`);
+  console.log(`[${agentId}] Conversation messages: ${conversation.messages.length}`);
+
+  try {
+    const finalResponse = await executePipeline(
+      agentId,
+      conversation.systemPrompt,
+      fullPrompt,
+      configPath,
+      spawnClaudeCode, // inject the spawn function
+      onProgress
+    );
+
+    // Add only the final summary to conversation history
+    conversation.messages.push({
+      role: "assistant",
+      content: finalResponse,
+    });
+
+    return { response: finalResponse, toolsUsed: [] };
+  } catch (error) {
+    // Remove user message on failure
+    conversation.messages.pop();
+
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[${agentId}] Pipeline error:`, errorMsg);
+
+    if (errorMsg.includes("timed out")) {
+      throw new Error(
+        "Claude Code response timed out during pipeline execution. Try again."
+      );
+    }
+
+    throw error;
+  }
 }

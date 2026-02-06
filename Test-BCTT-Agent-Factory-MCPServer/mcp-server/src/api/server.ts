@@ -5,8 +5,12 @@ import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import {
   sendMessageToClaude,
+  sendMessageWithPipeline,
   clearConversation,
   getConversationHistory,
+  isClaudeCodeAvailable,
+  hasPhases,
+  getAgentPhases,
 } from "./claude.js";
 import { tools } from "../tools/index.js";
 
@@ -33,11 +37,13 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 /**
  * Health check endpoint
  */
-app.get("/health", (_req: Request, res: Response) => {
+app.get("/health", async (_req: Request, res: Response) => {
+  const claudeCodeReady = await isClaudeCodeAvailable();
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    hasAnthropicKey: claudeCodeReady, // Now checks Claude Code CLI instead of API key
+    claudeCodeAvailable: claudeCodeReady,
     hasJiraConfig: !!(
       process.env.JIRA_BASE_URL &&
       process.env.JIRA_USER_EMAIL &&
@@ -153,11 +159,18 @@ app.get(
 /**
  * Stream response (SSE endpoint for streaming)
  * POST /chat/stream
- * Body: { sessionId: string, agentId: string, message: string }
+ * Body: { sessionId: string, agentId: string, message: string, pipeline?: boolean }
+ *
+ * When pipeline=true (or auto-detected for agents with phases like FA/DA),
+ * the response is broken into multiple phases with progress events:
+ *   { type: "phases", phases: [...] }       — list of all phases at start
+ *   { type: "phase", ...PhaseProgress }     — phase status updates
+ *   { type: "chunk", content: string }      — final response text chunks
+ *   { type: "end" }                         — stream complete
  */
 app.post("/chat/stream", async (req: Request, res: Response) => {
   try {
-    const { sessionId, agentId, message } = req.body;
+    const { sessionId, agentId, message, pipeline } = req.body;
 
     if (!sessionId || !agentId || !message) {
       res.status(400).json({
@@ -179,28 +192,77 @@ app.post("/chat/stream", async (req: Request, res: Response) => {
     // Send initial event
     res.write(`data: ${JSON.stringify({ type: "start", agentId })}\n\n`);
 
-    // Get response from Claude
-    const result = await sendMessageToClaude(sessionId, agentId, message);
+    // Decide whether to use pipeline mode
+    const usePipeline = pipeline === true || (pipeline !== false && hasPhases(agentId));
 
-    // Send tool events if any
-    for (const tool of result.toolsUsed) {
-      res.write(
-        `data: ${JSON.stringify({ type: "tool", name: tool.name })}\n\n`
+    // Track full response for HANDOFF detection
+    let responseText = "";
+
+    if (usePipeline) {
+      // --- PIPELINE MODE ---
+      const phases = getAgentPhases(agentId);
+      if (phases) {
+        // Send phase list so frontend can show progress
+        res.write(`data: ${JSON.stringify({
+          type: "phases",
+          phases: phases.map((p) => ({ id: p.id, name: p.name })),
+        })}\n\n`);
+      }
+
+      const result = await sendMessageWithPipeline(
+        sessionId,
+        agentId,
+        message,
+        (progress) => {
+          // Emit phase progress as SSE event
+          res.write(`data: ${JSON.stringify({ type: "phase", ...progress })}\n\n`);
+        }
       );
+
+      responseText = result.response;
+
+      // Stream the final response in chunks
+      const chunkSize = 50;
+      for (let i = 0; i < result.response.length; i += chunkSize) {
+        const chunk = result.response.slice(i, i + chunkSize);
+        res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    } else {
+      // --- STANDARD MODE (single call) ---
+      const result = await sendMessageToClaude(sessionId, agentId, message);
+
+      responseText = result.response;
+
+      // Send tool events if any
+      for (const tool of result.toolsUsed) {
+        res.write(
+          `data: ${JSON.stringify({ type: "tool", name: tool.name })}\n\n`
+        );
+      }
+
+      // Stream response in chunks
+      const chunkSize = 50;
+      for (let i = 0; i < result.response.length; i += chunkSize) {
+        const chunk = result.response.slice(i, i + chunkSize);
+        res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
     }
 
-    // Simulate streaming by sending chunks
-    const chunkSize = 50;
-    for (let i = 0; i < result.response.length; i += chunkSize) {
-      const chunk = result.response.slice(i, i + chunkSize);
-      res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
+    // Auto-advance: detect HANDOFF in response and signal next agent
+    const AGENT_DOWNSTREAM: Record<string, string> = {
+      ba: "fa", fa: "da", da: "pa"
+    };
+    const nextAgent = AGENT_DOWNSTREAM[agentId];
+    const hasHandoff = responseText.includes("### HANDOFF");
 
-      // Small delay for streaming effect
-      await new Promise((resolve) => setTimeout(resolve, 20));
+    const endEvent: Record<string, unknown> = { type: "end" };
+    if (hasHandoff && nextAgent) {
+      console.log(`[auto-advance] ${agentId} → ${nextAgent} (HANDOFF detected)`);
+      endEvent.autoAdvance = { nextAgent };
     }
-
-    // Send end event
-    res.write(`data: ${JSON.stringify({ type: "end" })}\n\n`);
+    res.write(`data: ${JSON.stringify(endEvent)}\n\n`);
     res.end();
   } catch (error) {
     console.error("Error in /chat/stream:", error);
@@ -425,11 +487,15 @@ httpServer.listen(PORT, () => {
   `);
 
   // Check configuration
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.warn(
-      "⚠️  Warning: ANTHROPIC_API_KEY not set. Chat functionality will not work."
-    );
-  }
+  isClaudeCodeAvailable().then((available) => {
+    if (available) {
+      console.log("✅ Claude Code CLI detected. Using Max plan for LLM calls.");
+    } else {
+      console.warn(
+        "⚠️  Warning: Claude Code CLI not found. Set CLAUDE_CLI_PATH in .env or install Claude Code."
+      );
+    }
+  });
   if (
     !process.env.JIRA_BASE_URL ||
     !process.env.JIRA_USER_EMAIL ||

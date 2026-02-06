@@ -1,12 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ThemeProvider, CssBaseline, Box, alpha } from '@mui/material';
 import { theme } from '@/theme/theme';
 import { Layout, Header, Navigation } from '@/components/layout';
 import { AgentList, AgentDetail } from '@/components/agents';
 import { ChatModal } from '@/components/chat';
-import { Agent, PhaseId } from '@/types';
-import { phases, getPhaseById, getAgentsByPhase } from '@/data/agents';
+import { PhaseInteractionPanel, AgentPickerDialog } from '@/components/interactions';
+import { Agent, PhaseId, Interaction } from '@/types';
+import { phases, getPhaseById, getAgentsByPhase, getAgentById } from '@/data/agents';
 import { useChat } from '@/hooks/useChat';
+import { useInteractionHistory } from '@/hooks/useInteractionHistory';
 
 function App() {
   // Phase state
@@ -18,6 +20,9 @@ function App() {
   const [detailAgent, setDetailAgent] = useState<Agent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
+  // Agent picker for new iteration
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   // Chat state - using the real useChat hook that calls the API
   const [chatOpen, setChatOpen] = useState(false);
   const {
@@ -25,11 +30,56 @@ function App() {
     isLoading,
     isLiveMode,
     currentAgent: chatAgent,
+    pendingAutoAdvance,
+    progress,
     openChat,
     closeChat: closeChatHook,
     sendMessage,
     toggleLiveMode,
+    setLiveMode,
+    resumeWithMessages,
+    getCurrentMessages,
+    clearAutoAdvance,
   } = useChat();
+
+  // Interaction history
+  const { getByPhase, save, update, remove } = useInteractionHistory();
+  const phaseInteractions = getByPhase(activePhaseId);
+
+  // Track active interaction for auto-save
+  const activeInteractionId = useRef<string | null>(null);
+
+  // Auto-advance: when an agent produces a HANDOFF, auto-open next agent
+  useEffect(() => {
+    if (!pendingAutoAdvance) return;
+
+    const nextAgent = getAgentById(pendingAutoAdvance);
+    if (!nextAgent) {
+      console.warn(`[auto-advance] Agent ${pendingAutoAdvance} not found`);
+      clearAutoAdvance();
+      return;
+    }
+
+    console.log(`[auto-advance] Transitioning to ${nextAgent.sigla} (${nextAgent.nome})`);
+    clearAutoAdvance();
+
+    // Close current chat
+    setChatOpen(false);
+    closeChatHook();
+
+    // Open next agent after a short visual transition
+    setTimeout(() => {
+      openChat(nextAgent);
+      setLiveMode(true);
+      setChatOpen(true);
+      activeInteractionId.current = null;
+
+      // Auto-send initial processing message
+      setTimeout(() => {
+        sendMessage('Analisa e processa com base no contexto recebido do agente anterior.');
+      }, 500);
+    }, 800);
+  }, [pendingAutoAdvance, clearAutoAdvance, closeChatHook, openChat, setLiveMode, sendMessage]);
 
   // Phase change handler
   const handlePhaseChange = useCallback((phaseId: string) => {
@@ -47,6 +97,7 @@ function App() {
     openChat(agent);
     setChatOpen(true);
     setDetailOpen(false);
+    activeInteractionId.current = null;
   }, [openChat]);
 
   // Close detail modal
@@ -55,11 +106,38 @@ function App() {
     setDetailAgent(null);
   }, []);
 
-  // Close chat modal
+  // Close chat modal - auto-save interaction
   const handleChatClose = useCallback(() => {
+    const currentMsgs = getCurrentMessages();
+    const liveMessages = currentMsgs.filter((m) => m.role === 'user' || m.role === 'assistant');
+
+    if (chatAgent && isLiveMode && liveMessages.length > 1) {
+      // Extract a title from the first user message
+      const firstUserMsg = liveMessages.find((m) => m.role === 'user');
+      const title = firstUserMsg
+        ? firstUserMsg.content.substring(0, 60) + (firstUserMsg.content.length > 60 ? '...' : '')
+        : `Conversa com ${chatAgent.nome}`;
+
+      if (activeInteractionId.current) {
+        // Update existing interaction
+        update(activeInteractionId.current, liveMessages, title);
+      } else {
+        // Save new interaction
+        const interaction = save({
+          phaseId: activePhaseId,
+          agentId: chatAgent.id,
+          agentSigla: chatAgent.sigla,
+          title,
+          messages: liveMessages,
+        });
+        activeInteractionId.current = interaction.id;
+      }
+    }
+
     setChatOpen(false);
     closeChatHook();
-  }, [closeChatHook]);
+    activeInteractionId.current = null;
+  }, [chatAgent, isLiveMode, activePhaseId, getCurrentMessages, save, update, closeChatHook]);
 
   // Toggle live mode
   const handleToggleLiveMode = useCallback(() => {
@@ -75,9 +153,37 @@ function App() {
   // Handle download from chat
   const handleDownload = useCallback((type: string) => {
     console.log('Download:', type);
-    // In production, this would generate and download the actual file
     alert(`A funcionalidade de download (${type}) será implementada com o MCP Server.`);
   }, []);
+
+  // Resume an interaction from history
+  const handleResumeInteraction = useCallback((interaction: Interaction) => {
+    const agent = getAgentById(interaction.agentId);
+    if (!agent) return;
+
+    resumeWithMessages(agent, interaction.messages);
+    activeInteractionId.current = interaction.id;
+    setChatOpen(true);
+  }, [resumeWithMessages]);
+
+  // New iteration - open agent picker
+  const handleNewIteration = useCallback(() => {
+    setPickerOpen(true);
+  }, []);
+
+  // Agent picked for new iteration
+  const handleAgentPicked = useCallback((agent: Agent) => {
+    setPickerOpen(false);
+    openChat(agent);
+    toggleLiveMode(); // Start in live mode
+    setChatOpen(true);
+    activeInteractionId.current = null;
+  }, [openChat, toggleLiveMode]);
+
+  // Delete an interaction
+  const handleDeleteInteraction = useCallback((id: string) => {
+    remove(id);
+  }, [remove]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -123,6 +229,24 @@ function App() {
           onSend={handleSendMessage}
           onToggleLiveMode={handleToggleLiveMode}
           onDownload={handleDownload}
+          progress={progress ?? undefined}
+        />
+
+        {/* Phase Interaction Panel - FAB + Drawer per phase */}
+        <PhaseInteractionPanel
+          phase={activePhase}
+          interactions={phaseInteractions}
+          onResume={handleResumeInteraction}
+          onNewIteration={handleNewIteration}
+          onDelete={handleDeleteInteraction}
+        />
+
+        {/* Agent Picker for new iteration */}
+        <AgentPickerDialog
+          open={pickerOpen}
+          agents={activeAgents}
+          onClose={() => setPickerOpen(false)}
+          onSelect={handleAgentPicked}
         />
       </Layout>
     </ThemeProvider>

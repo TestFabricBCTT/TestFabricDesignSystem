@@ -4,7 +4,7 @@
   "description": "Figma plugin to receive commands from BCTT MCP Server and create pages/frames",
   "scripts": {
     "build": "npm run build:code && npm run build:ui",
-    "build:code": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es2020",
+    "build:code": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es2015",
     "build:ui": "cp src/ui.html dist/ui.html",
     "watch": "npm run build && chokidar \"src/**/*\" -c \"npm run build\"",
     "dev": "npm run build"

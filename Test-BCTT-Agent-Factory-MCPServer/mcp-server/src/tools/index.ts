@@ -5,9 +5,15 @@ import { generateDocumentBase64, DocumentData } from '../document/index.js';
 import {
   getFileInfo,
   exportForFigmaPlugin,
+  generateUxFlowPage,
   figmaDesignTokens,
   type WireframeSpec,
+  type FlowConnection,
+  type FlowNode,
 } from '../figma/index.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 // ============================================
 // DEMO MODE PROTECTIONS
@@ -478,7 +484,7 @@ export const tools: Tool[] = [
   },
   {
     name: "da_generate_figma_spec",
-    description: "DA Agent: Gera especificação JSON completa para criar páginas e frames no Figma. Cria duas páginas por BDEV: Ecrãs e UX Flow.",
+    description: "DA Agent: Gera especificação JSON completa para criar páginas e frames no Figma. Cria duas páginas por BDEV: Ecrãs e UX Flow. IMPORTANTE: Inclui sempre sections com components para cada ecrã.",
     inputSchema: {
       type: "object",
       properties: {
@@ -495,14 +501,130 @@ export const tools: Tool[] = [
               screen_name: { type: "string" },
               user_story: { type: "string" },
               type: { type: "string", enum: ["mobile", "desktop", "responsive"] },
-              states: { type: "array", items: { type: "string" } }
+              states: { type: "array", items: { type: "string" } },
+              header: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  back_button: { type: "boolean" },
+                  close_button: { type: "boolean" }
+                },
+                description: "Configuração do header do ecrã"
+              },
+              sections: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    type: { type: "string", enum: ["info_banner", "form", "card_list", "summary", "action"] },
+                    title: { type: "string", description: "Título da secção (opcional)" },
+                    components: {
+                      type: "array",
+                      items: { type: "string" },
+                      description: "Lista de componentes UI (ex: 'TextInput: Email', 'Button: Confirmar', 'Card: Saldo disponível')"
+                    }
+                  },
+                  required: ["type", "components"]
+                },
+                description: "Secções do conteúdo do ecrã com componentes UI"
+              },
+              footer: {
+                type: "object",
+                properties: {
+                  primary_action: { type: "string", description: "Texto do botão principal" },
+                  secondary_action: { type: "string", description: "Texto do botão secundário (opcional)" }
+                },
+                description: "Ações do footer"
+              }
             },
             required: ["screen_id", "screen_name"]
           },
-          description: "Lista de wireframes especificados"
+          description: "Lista de wireframes com secções e componentes UI detalhados"
         }
       },
       required: ["bdev_code", "wireframes"]
+    }
+  },
+  {
+    name: "da_generate_ux_flow",
+    description: "DA Agent: Gera a página UX Flow no Figma com diagrama de navegação entre ecrãs. Agrupa por regras de negócio. Linhas verdes = happy path, linhas vermelhas = exceções. Usa os ecrãs reais quando existem.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        },
+        nodes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "ID único do nó (ex: SCR-001 ou NODE-001)" },
+              label: { type: "string", description: "Nome/label do nó" },
+              screen_id: { type: "string", description: "ID do ecrã associado (se existir). Referencia screen_id do da_generate_figma_spec" },
+              mvp: { type: "string", description: "MVP a que o passo pertence (ex: 'MVP1', 'MVP2', 'MVP3')" }
+            },
+            required: ["id", "label"]
+          },
+          description: "Nós do diagrama (ecrãs ou pontos de decisão)"
+        },
+        connections: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              from: { type: "string", description: "ID do nó de origem" },
+              to: { type: "string", description: "ID do nó de destino" },
+              type: { type: "string", enum: ["happy", "exception"], description: "Tipo de fluxo: happy (verde) ou exception (vermelho)" },
+              label: { type: "string", description: "Descrição da transição (ex: 'Login sucesso', 'Credenciais inválidas')" },
+              rule: { type: "string", description: "Regra de negócio associada (ex: 'RN01 - Autenticação')" }
+            },
+            required: ["from", "to", "type", "label"]
+          },
+          description: "Conexões entre nós com tipo (happy/exception) e regra de negócio"
+        },
+        wireframes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              screen_id: { type: "string" },
+              screen_name: { type: "string" },
+              type: { type: "string", enum: ["mobile", "desktop", "responsive"] },
+              header: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  back_button: { type: "boolean" },
+                  close_button: { type: "boolean" }
+                }
+              },
+              sections: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    type: { type: "string" },
+                    components: { type: "array", items: { type: "string" } }
+                  },
+                  required: ["type", "components"]
+                }
+              },
+              footer: {
+                type: "object",
+                properties: {
+                  primary_action: { type: "string" },
+                  secondary_action: { type: "string" }
+                }
+              }
+            },
+            required: ["screen_id", "screen_name"]
+          },
+          description: "Wireframes dos ecrãs referenciados nos nós (para renderizar ecrãs reais no flow)"
+        }
+      },
+      required: ["bdev_code", "nodes", "connections"]
     }
   },
   {
@@ -1185,10 +1307,10 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       const base64 = await generateDocumentBase64(data);
       const fileName = `${codigo_bdev.replace(/[\[\]]/g, '')}_${titulo.replace(/\s+/g, '_')}.docx`;
 
-      // Store document in memory for later attachment (don't return full base64 to console)
-      const documentStore = (global as Record<string, unknown>).__faDocumentStore || {};
-      documentStore[codigo_bdev] = { fileName, base64 };
-      (global as Record<string, unknown>).__faDocumentStore = documentStore;
+      // Persist document to temp file for cross-process access (MCP spawns separate processes per phase)
+      const tmpDir = os.tmpdir();
+      const docPath = path.join(tmpDir, `fa-doc-${codigo_bdev.replace(/[\[\]]/g, '')}.json`);
+      fs.writeFileSync(docPath, JSON.stringify({ fileName, base64 }));
 
       return JSON.stringify({
         agent: "FA",
@@ -1598,10 +1720,13 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         user_story?: string;
         type?: string;
         states?: string[];
+        header?: { title?: string; back_button?: boolean; close_button?: boolean };
+        sections?: Array<{ type: string; title?: string; components: string[] }>;
+        footer?: { primary_action?: string; secondary_action?: string };
       }>;
     };
 
-    // Convert to WireframeSpec format
+    // Convert to WireframeSpec format (now with real sections/components)
     const specs: WireframeSpec[] = wireframes.map(w => ({
       screenId: w.screen_id,
       screenName: w.screen_name,
@@ -1609,9 +1734,21 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       type: (w.type as 'mobile' | 'desktop' | 'responsive') || 'responsive',
       width: w.type === 'desktop' ? 1440 : 375,
       height: w.type === 'desktop' ? 900 : 812,
-      header: { title: w.screen_name, backButton: true, closeButton: false },
-      sections: [{ type: 'form', components: [] }],
-      footer: { primaryAction: 'Continuar', secondaryAction: null },
+      header: {
+        title: w.header?.title || w.screen_name,
+        backButton: w.header?.back_button !== false,
+        closeButton: w.header?.close_button || false,
+      },
+      sections: w.sections && w.sections.length > 0
+        ? w.sections.map(s => ({
+            type: s.type as WireframeSpec['sections'][0]['type'],
+            components: s.components || [],
+          }))
+        : [{ type: 'form' as const, components: ['Placeholder: Conteúdo pendente'] }],
+      footer: {
+        primaryAction: w.footer?.primary_action || 'Continuar',
+        secondaryAction: w.footer?.secondary_action || null,
+      },
       states: (w.states as WireframeSpec['states']) || ['default', 'loading', 'error', 'empty'],
     }));
 
@@ -1620,6 +1757,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
     const figmaSpec = JSON.parse(figmaJson);
 
     // Automatically send to Figma plugin via API (with timeout protection)
+    // Now includes full section/component data for the plugin to render
     let figmaSent = false;
     let figmaError: string | null = null;
 
@@ -1638,6 +1776,9 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
               name: s.screenName,
               type: s.type,
               states: s.states,
+              header: s.header,
+              sections: s.sections,
+              footer: s.footer,
             })),
           }),
         },
@@ -1648,7 +1789,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       if (response.ok) {
         figmaSent = true;
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json() as Record<string, string>;
         figmaError = errorData.message || 'Failed to send to Figma';
       }
     } catch (err) {
@@ -1671,12 +1812,142 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
       figma_auto_send: {
         success: figmaSent,
         message: figmaSent
-          ? `Enviado automaticamente para Figma plugin! ${specs.length} ecrãs criados.`
+          ? `Enviado automaticamente para Figma plugin! ${specs.length} ecrãs criados com componentes.`
           : `Não foi possível enviar ao Figma: ${figmaError}. Verifique se o plugin BCTT Bridge está conectado.`,
       },
       figma_spec_summary: {
         screens: specs.length,
         states_per_screen: 4,
+        components_per_screen: specs.map(s => ({
+          screen: s.screenName,
+          sections: s.sections.length,
+          total_components: s.sections.reduce((sum, sec) => sum + sec.components.length, 0),
+        })),
+      },
+    }, null, 2);
+  },
+
+  da_generate_ux_flow: async (args) => {
+    const { bdev_code, nodes, connections, wireframes } = args as {
+      bdev_code: string;
+      nodes: Array<{ id: string; label: string; screen_id?: string; mvp?: string }>;
+      connections: Array<{ from: string; to: string; type: 'happy' | 'exception'; label: string; rule?: string }>;
+      wireframes?: Array<{
+        screen_id: string;
+        screen_name: string;
+        type?: string;
+        header?: { title?: string; back_button?: boolean; close_button?: boolean };
+        sections?: Array<{ type: string; components: string[] }>;
+        footer?: { primary_action?: string; secondary_action?: string };
+      }>;
+    };
+
+    // Convert wireframes to WireframeSpec format
+    const wireframeSpecs: WireframeSpec[] = (wireframes || []).map(w => ({
+      screenId: w.screen_id,
+      screenName: w.screen_name,
+      userStory: '',
+      type: (w.type as 'mobile' | 'desktop' | 'responsive') || 'responsive',
+      width: w.type === 'desktop' ? 1440 : 375,
+      height: w.type === 'desktop' ? 900 : 812,
+      header: {
+        title: w.header?.title || w.screen_name,
+        backButton: w.header?.back_button !== false,
+        closeButton: w.header?.close_button || false,
+      },
+      sections: w.sections && w.sections.length > 0
+        ? w.sections.map(s => ({
+            type: s.type as WireframeSpec['sections'][0]['type'],
+            components: s.components || [],
+          }))
+        : [{ type: 'form' as const, components: ['Placeholder'] }],
+      footer: {
+        primaryAction: w.footer?.primary_action || null,
+        secondaryAction: w.footer?.secondary_action || null,
+      },
+      states: ['default'],
+    }));
+
+    // Convert nodes
+    const flowNodes: FlowNode[] = nodes.map(n => ({
+      id: n.id,
+      label: n.label,
+      screenId: n.screen_id,
+      mvp: n.mvp,
+    }));
+
+    // Convert connections
+    const flowConnections: FlowConnection[] = connections.map(c => ({
+      from: c.from,
+      to: c.to,
+      type: c.type,
+      label: c.label,
+      rule: c.rule,
+    }));
+
+    // Generate UX Flow page spec
+    const flowPageSpec = generateUxFlowPage({
+      bdevCode: bdev_code,
+      nodes: flowNodes,
+      connections: flowConnections,
+      wireframes: wireframeSpecs,
+    });
+
+    // Send to Figma plugin via API
+    let figmaSent = false;
+    let figmaError: string | null = null;
+
+    try {
+      const apiPort = process.env.API_PORT || 3001;
+      const response = await safeFetch(
+        `http://localhost:${apiPort}/figma/command`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'create-ux-flow',
+            bdevCode: bdev_code,
+            flowPage: flowPageSpec,
+          }),
+        },
+        FIGMA_TIMEOUT_MS,
+        'Figma UX Flow'
+      );
+
+      if (response.ok) {
+        figmaSent = true;
+      } else {
+        const errorData = await response.json() as Record<string, string>;
+        figmaError = errorData.message || 'Failed to send UX Flow to Figma';
+      }
+    } catch (err) {
+      figmaError = `Figma plugin não conectado ou timeout: ${String(err)}`;
+    }
+
+    // Count unique rules
+    const rules = new Set(connections.map(c => c.rule || 'Fluxo Geral'));
+    const happyCount = connections.filter(c => c.type === 'happy').length;
+    const exceptionCount = connections.filter(c => c.type === 'exception').length;
+
+    return JSON.stringify({
+      agent: "DA",
+      action: "generate_ux_flow",
+      bdev_code,
+      flow_page: `${bdev_code} - UX Flow`,
+      figma_auto_send: {
+        success: figmaSent,
+        message: figmaSent
+          ? `UX Flow enviado para Figma! ${nodes.length} nós, ${connections.length} conexões, ${rules.size} regras de negócio.`
+          : `Não foi possível enviar ao Figma: ${figmaError}. Verifique se o plugin BCTT Bridge está conectado.`,
+      },
+      summary: {
+        total_nodes: nodes.length,
+        screens_with_frames: wireframeSpecs.length,
+        text_only_nodes: nodes.length - wireframeSpecs.length,
+        total_connections: connections.length,
+        happy_paths: happyCount,
+        exception_flows: exceptionCount,
+        business_rules: Array.from(rules),
       },
     }, null, 2);
   },

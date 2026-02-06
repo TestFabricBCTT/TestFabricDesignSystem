@@ -483,7 +483,7 @@ export async function generateInformacaoAdicional(
 
   // Generate buffer
   const buffer = await Packer.toBuffer(doc);
-  return Buffer.from(buffer);
+  return buffer;
 }
 
 // Save document to file
