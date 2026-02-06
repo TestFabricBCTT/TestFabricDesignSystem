@@ -77,29 +77,13 @@ export const useChat = (): UseChatReturn => {
       setIsLoading(true);
 
       try {
-        // Use streaming API for real-time response
+        // Use streaming API but buffer the response
         let responseContent = '';
 
-        // Add placeholder message for streaming
-        const placeholderMessage: ChatMessage = {
-          role: 'assistant',
-          content: '',
-        };
-        setMessages((prev) => [...prev, placeholderMessage]);
-
-        // Stream the response
+        // Stream the response (buffered - don't update UI until complete)
         for await (const event of sendMessageStream(currentAgent.id, content)) {
           if (event.type === 'chunk' && event.content) {
             responseContent += event.content;
-            // Update the last message with new content
-            setMessages((prev) => {
-              const newMessages = [...prev];
-              newMessages[newMessages.length - 1] = {
-                role: 'assistant',
-                content: responseContent,
-              };
-              return newMessages;
-            });
           } else if (event.type === 'tool') {
             // Could show tool usage in UI
             console.log(`Tool used: ${event.name}`);
@@ -108,6 +92,15 @@ export const useChat = (): UseChatReturn => {
           }
         }
 
+        // Display the complete response at once
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: responseContent,
+          },
+        ]);
+
         setIsLoading(false);
       } catch (error) {
         console.error('Error sending message:', error);
@@ -115,43 +108,25 @@ export const useChat = (): UseChatReturn => {
         // Fallback to non-streaming API
         try {
           const response = await apiSendMessage(currentAgent.id, content);
-          setMessages((prev) => {
-            const newMessages = [...prev];
-            // Replace placeholder or add new message
-            if (newMessages[newMessages.length - 1]?.content === '') {
-              newMessages[newMessages.length - 1] = {
-                role: 'assistant',
-                content: response.response,
-              };
-            } else {
-              newMessages.push({
-                role: 'assistant',
-                content: response.response,
-              });
-            }
-            return newMessages;
-          });
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: response.response,
+            },
+          ]);
         } catch (fallbackError) {
           const errorMessage = fallbackError instanceof Error
             ? fallbackError.message
             : 'Erro desconhecido';
 
-          setMessages((prev) => {
-            const newMessages = [...prev];
-            // Replace placeholder with error message
-            if (newMessages[newMessages.length - 1]?.content === '') {
-              newMessages[newMessages.length - 1] = {
-                role: 'assistant',
-                content: `⚠️ Erro ao comunicar com o servidor: ${errorMessage}\n\nVerifique se:\n- O servidor API está a correr (npm run dev:api)\n- A ANTHROPIC_API_KEY está configurada no .env`,
-              };
-            } else {
-              newMessages.push({
-                role: 'assistant',
-                content: `⚠️ Erro ao comunicar com o servidor: ${errorMessage}`,
-              });
-            }
-            return newMessages;
-          });
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: `⚠️ Erro ao comunicar com o servidor: ${errorMessage}\n\nVerifique se:\n- O servidor API está a correr (npm run dev:api)\n- A ANTHROPIC_API_KEY está configurada no .env`,
+            },
+          ]);
         }
         setIsLoading(false);
       }

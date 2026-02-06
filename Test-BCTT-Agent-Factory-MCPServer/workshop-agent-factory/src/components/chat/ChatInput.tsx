@@ -80,6 +80,10 @@ export const ChatInput = ({
         sx={{
           bgcolor: agentColor,
           color: 'white',
+          width: 48,
+          height: 48,
+          minWidth: 48,
+          flexShrink: 0,
           '&:hover': {
             bgcolor: alpha(agentColor, 0.8),
           },
