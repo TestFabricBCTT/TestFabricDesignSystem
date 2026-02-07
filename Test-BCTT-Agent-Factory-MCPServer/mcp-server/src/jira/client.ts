@@ -103,8 +103,8 @@ export class JiraClient {
   // PARALLEL PROCESSING HELPERS
   // ============================================
 
-  private readonly BATCH_SIZE = 3;        // Concurrent requests per batch
-  private readonly BATCH_DELAY_MS = 500;  // Delay between batches
+  private readonly BATCH_SIZE = 5;        // Concurrent requests per batch
+  private readonly BATCH_DELAY_MS = 200;  // Delay between batches
   private readonly MAX_RETRIES = 3;       // Max retry attempts per request
   private readonly RETRY_BASE_DELAY_MS = 1000; // Base delay for exponential backoff
 
@@ -743,13 +743,17 @@ export class JiraClient {
       const featureUrl = `${this.config.baseUrl}/browse/${feature.key}`;
 
       // Prepare user stories for this feature
+      // Stories are children of Epic (not Feature) because Feature and Story
+      // are at the same hierarchy level in Jira. We link Stories to Features afterwards.
       interface USToCreate {
         parentKey: string;
+        featureKey: string;
         faUS: typeof faFeature.userStories[0];
       }
 
       const usToCreate: USToCreate[] = faFeature.userStories.map(faUS => ({
-        parentKey: feature.key,
+        parentKey: epic.key,
+        featureKey: feature.key,
         faUS,
       }));
 
@@ -776,6 +780,15 @@ export class JiraClient {
         },
         (item) => `US: ${item.faUS.id}`
       );
+
+      // Link each created Story to its Feature (Relates link) — parallel for performance
+      if (usResults.success.length > 0) {
+        const linkPromises = usResults.success.map(({ userStory }) =>
+          this.createIssueLink(feature.key, userStory.key, 'Relates')
+            .catch(err => console.error(`[Jira] Link failed: ${feature.key} → ${userStory.key}: ${err}`))
+        );
+        await Promise.allSettled(linkPromises);
+      }
 
       // Collect results
       const userStoryResults: CreateUserStoryResult[] = usResults.success.map(({ userStory, storyId }) => ({

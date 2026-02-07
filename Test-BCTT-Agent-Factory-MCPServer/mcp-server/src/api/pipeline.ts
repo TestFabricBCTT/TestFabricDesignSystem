@@ -9,6 +9,7 @@ export interface AgentPhase {
   name: string;
   phasePrompt: string;
   requiredFullPhases?: string[];
+  maxTurns?: number;
 }
 
 export interface PhaseProgress {
@@ -23,10 +24,11 @@ export interface PhaseProgress {
 export type ProgressCallback = (progress: PhaseProgress) => void;
 
 // Signature for the Claude Code CLI spawn function (injected to avoid circular deps)
-type SpawnFn = (
+export type SpawnFn = (
   prompt: string,
   systemPrompt: string,
-  mcpConfigPath: string
+  mcpConfigPath: string,
+  maxTurns?: number
 ) => Promise<{ stdout: string; stderr: string }>;
 
 // ============================================
@@ -69,6 +71,7 @@ Podes usar a tool fa_create_user_stories para auxiliar a estruturação.
 Termina SEMPRE a tua resposta com um bloco:
 ## ENTREGA
 [Lista compacta de todas as US: ID, título, narrativa resumida, MVP — max 2000 chars]`,
+    maxTurns: 15,
   },
   {
     id: "rules",
@@ -129,6 +132,7 @@ Termina SEMPRE com:
 ## ENTREGA
 [Confirmação: documento gerado, nome do ficheiro, tamanho — max 500 chars]`,
     requiredFullPhases: ["user_stories", "rules"],
+    maxTurns: 15,
   },
   {
     id: "jira_export",
@@ -152,11 +156,18 @@ Termina SEMPRE a tua resposta com um bloco:
 ## ENTREGA
 [Keys criadas no Jira: Epic, Features, User Stories — max 1000 chars]`,
     requiredFullPhases: ["user_stories", "rules"],
+    maxTurns: 15,
   },
   {
     id: "summary",
     name: "Consolidação",
     phasePrompt: `[FASE 8/8] Consolida e apresenta o resultado final ao utilizador.
+
+⚠️ ATENÇÃO: NÃO chames NENHUMA tool nesta fase.
+A exportação Jira e geração de documentos já foram feitas nas fases anteriores.
+O teu ÚNICO trabalho é apresentar um resumo claro e organizado.
+NÃO uses nenhuma tool. APENAS texto.
+
 Apresenta de forma clara e concisa:
 1. **User Stories** — Lista com títulos e MVPs
 2. **Regras principais** — Resumo das regras de negócio
@@ -166,8 +177,9 @@ Apresenta de forma clara e concisa:
 6. **Jira** — Issues criadas (keys) e estrutura exportada
 7. **Próximos passos** — Avanço para DA
 
-IMPORTANTE: Esta é a resposta que o utilizador vai ver. Sê claro e organizado.`,
+IMPORTANTE: Esta é a resposta que o utilizador vai ver. Sê claro e organizado. NÃO executes tools — apenas texto.`,
     requiredFullPhases: ["user_stories"],
+    maxTurns: 5,
   },
 ];
 
@@ -371,9 +383,18 @@ export async function executePipeline(
       status: "in_progress",
     });
 
+    // Strip HANDOFF rule from base prompt — pipeline manages transitions automatically
+    let cleanBasePrompt = baseSystemPrompt;
+    const handoffIdx = cleanBasePrompt.indexOf("## REGRA DE HANDOFF");
+    if (handoffIdx !== -1) {
+      const nextSection = cleanBasePrompt.indexOf("\n## ", handoffIdx + 5);
+      cleanBasePrompt = cleanBasePrompt.substring(0, handoffIdx).trimEnd() +
+        (nextSection > 0 ? cleanBasePrompt.substring(nextSection) : "");
+    }
+
     // Build phase-specific system prompt
     const phaseSystemPrompt =
-      baseSystemPrompt +
+      cleanBasePrompt +
       `\n\n---\n## EXECUÇÃO POR FASES\nEstás a executar a fase ${i + 1} de ${phases.length}.\n` +
       phase.phasePrompt;
 
@@ -387,15 +408,23 @@ export async function executePipeline(
     );
 
     console.log(
-      `[${agentId}] Pipeline phase ${i + 1}/${phases.length}: ${phase.name} (prompt: ${phasePrompt.length} chars)`
+      `[${agentId}] Pipeline phase ${i + 1}/${phases.length}: ${phase.name} (prompt: ${phasePrompt.length} chars, sysPrompt: ${phaseSystemPrompt.length} chars, maxTurns: ${phase.maxTurns || 10})`
     );
 
     try {
-      const { stdout } = await spawnFn(
+      const startTime = Date.now();
+      const { stdout, stderr } = await spawnFn(
         phasePrompt,
         phaseSystemPrompt,
-        mcpConfigPath
+        mcpConfigPath,
+        phase.maxTurns
       );
+      const elapsed = Date.now() - startTime;
+
+      // Log stderr from CLI (MCP server startup, errors, etc.)
+      if (stderr) {
+        console.log(`[${agentId}] Phase ${i + 1} stderr: ${stderr.substring(0, 500)}`);
+      }
 
       // Parse response
       let responseText = "";
@@ -406,16 +435,58 @@ export async function executePipeline(
         }
         responseText = result.result || "";
         console.log(
-          `[${agentId}] Phase ${i + 1} completed (${responseText.length} chars, ${result.num_turns || 1} turns)`
+          `[${agentId}] Phase ${i + 1} completed in ${elapsed}ms (${responseText.length} chars, ${result.num_turns || 1} turns, $${result.cost_usd?.toFixed(4) || "0"})`
         );
       } catch (parseErr) {
         if (parseErr instanceof SyntaxError) {
           responseText = stdout.trim();
           console.log(
-            `[${agentId}] Phase ${i + 1} completed (non-JSON, ${responseText.length} chars)`
+            `[${agentId}] Phase ${i + 1} completed in ${elapsed}ms (non-JSON, ${responseText.length} chars)`
           );
         } else {
           throw parseErr;
+        }
+      }
+
+      // Log output preview for debugging
+      if (responseText.length > 0) {
+        console.log(`[${agentId}] Phase ${i + 1} preview: ${responseText.substring(0, 300).replace(/\n/g, "\\n")}`);
+      }
+
+      // Retry if output is suspiciously short (not for summary phases)
+      if (responseText.length < 100 && phase.id !== "summary") {
+        console.warn(
+          `[${agentId}] ⚠️ Phase ${i + 1} (${phase.name}) output too short (${responseText.length} chars). Retrying...`
+        );
+        const retryPrompt =
+          `A tua resposta anterior foi demasiado curta (${responseText.length} chars). ` +
+          `Precisas de produzir uma resposta COMPLETA e DETALHADA para esta fase.\n\n` +
+          phasePrompt;
+        const retryStart = Date.now();
+        const { stdout: retryStdout, stderr: retryStderr } = await spawnFn(
+          retryPrompt, phaseSystemPrompt, mcpConfigPath, phase.maxTurns
+        );
+        const retryElapsed = Date.now() - retryStart;
+
+        if (retryStderr) {
+          console.log(`[${agentId}] Phase ${i + 1} retry stderr: ${retryStderr.substring(0, 500)}`);
+        }
+
+        try {
+          const retryResult = JSON.parse(retryStdout);
+          const retryText = retryResult.result || "";
+          console.log(
+            `[${agentId}] Phase ${i + 1} retry completed in ${retryElapsed}ms (${retryText.length} chars, ${retryResult.num_turns || 1} turns)`
+          );
+          if (retryText.length > responseText.length) {
+            responseText = retryText;
+            console.log(`[${agentId}] Phase ${i + 1} using retry result (${responseText.length} chars)`);
+          }
+        } catch {
+          const retryText = retryStdout.trim();
+          if (retryText.length > responseText.length) {
+            responseText = retryText;
+          }
         }
       }
 

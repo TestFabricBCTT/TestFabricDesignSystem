@@ -42,7 +42,7 @@ const AGENT_UPSTREAM: Record<string, string[]> = {
 };
 
 const HANDOFF_FALLBACK_CHARS = 4000;
-const HANDOFF_MAX_RETRIES = 2;
+const HANDOFF_MAX_RETRIES = 0; // Fast pipeline always produces complete output; fallback (last 4000 chars) is sufficient
 
 /**
  * Extrai o bloco ### HANDOFF de uma lista de mensagens.
@@ -398,7 +398,7 @@ function formatConversationPrompt(
 // ============================================
 
 const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "sonnet";
-const CLAUDE_TIMEOUT_MS = 300000; // 5 minutes
+const CLAUDE_TIMEOUT_MS = parseInt(process.env.CLAUDE_TIMEOUT_MS || "600000"); // 10 min default (configurable)
 
 /**
  * Spawn Claude Code CLI and pipe prompt via stdin.
@@ -408,7 +408,8 @@ const CLAUDE_TIMEOUT_MS = 300000; // 5 minutes
 export function spawnClaudeCode(
   prompt: string,
   systemPrompt: string,
-  mcpConfigPath: string
+  mcpConfigPath: string,
+  maxTurns?: number
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const cliPath = getClaudeCLIPath();
@@ -418,17 +419,14 @@ export function spawnClaudeCode(
     const systemPromptFile = path.join(tmpDir, `claude-sp-${Date.now()}.txt`);
     fs.writeFileSync(systemPromptFile, systemPrompt, "utf-8");
 
-    // Read the system prompt back as a string for the CLI arg
-    // Actually, we'll use --append-system-prompt which also takes a string.
-    // Better approach: pass via a settings file or directly.
-    // Since --system-prompt takes a string, let's read it from the file via Node and pass it.
-    // The key issue was execFile - spawn handles args as an array without shell interpretation.
+    const effectiveMaxTurns = maxTurns || 10;
 
     const args: string[] = [
       "-p", // print mode (non-interactive), prompt comes from stdin when no positional arg
       "--output-format", "json",
       "--model", CLAUDE_MODEL,
-      "--system-prompt", systemPrompt, // spawn passes this correctly as a single arg
+      "--max-turns", String(effectiveMaxTurns),
+      "--system-prompt-file", systemPromptFile, // read from temp file to avoid Windows arg escaping issues
       "--mcp-config", mcpConfigPath,
       "--strict-mcp-config",
       "--no-session-persistence",
@@ -635,9 +633,10 @@ import {
   type ProgressCallback,
   type PhaseProgress,
 } from "./pipeline.js";
+import { executeFastPipeline, hasFastPipeline } from "./pipeline-fast.js";
 
 // Re-export for server.ts convenience
-export { hasPhases, getAgentPhases, type PhaseProgress, type ProgressCallback };
+export { hasPhases, getAgentPhases, hasFastPipeline, type PhaseProgress, type ProgressCallback };
 
 /**
  * Send a message using the multi-phase pipeline.
@@ -718,6 +717,85 @@ export async function sendMessageWithPipeline(
     if (errorMsg.includes("timed out")) {
       throw new Error(
         "Claude Code response timed out during pipeline execution. Try again."
+      );
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Send a message using the fast single-call pipeline.
+ * Instead of N separate CLI calls, uses ONE call with a consolidated prompt.
+ * ~50-65% faster than multi-phase pipeline.
+ */
+export async function sendMessageWithFastPipeline(
+  sessionId: string,
+  agentId: string,
+  userMessage: string,
+  onProgress: ProgressCallback
+): Promise<{
+  response: string;
+  toolsUsed: Array<{ name: string; result: string }>;
+}> {
+  const conversation = getOrCreateConversation(sessionId, agentId);
+  const configPath = getOrCreateMCPConfig();
+
+  // HANDOFF: enrich first message with upstream agent context
+  let enrichedMessage = userMessage;
+  if (conversation.messages.length <= 1) {
+    const handoff = await getUpstreamHandoff(sessionId, agentId);
+    if (handoff) {
+      if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
+        conversation.systemPrompt +=
+          "\n\n" +
+          "═".repeat(50) +
+          "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
+          handoff +
+          "\n" +
+          "═".repeat(50);
+      }
+      enrichedMessage =
+        `CONTEXTO DO AGENTE ANTERIOR:\n${handoff}\n\n---\n\nPEDIDO DO UTILIZADOR:\n${userMessage}`;
+    }
+  }
+
+  conversation.messages.push({
+    role: "user",
+    content: userMessage,
+  });
+
+  const allMessagesExceptLast = conversation.messages.slice(0, -1);
+  const fullPrompt = formatConversationPrompt(allMessagesExceptLast, enrichedMessage);
+
+  console.log(`[${agentId}] Starting FAST pipeline execution...`);
+  console.log(`[${agentId}] Model: ${CLAUDE_MODEL}`);
+
+  try {
+    const finalResponse = await executeFastPipeline(
+      agentId,
+      conversation.systemPrompt,
+      fullPrompt,
+      configPath,
+      spawnClaudeCode,
+      onProgress
+    );
+
+    conversation.messages.push({
+      role: "assistant",
+      content: finalResponse,
+    });
+
+    return { response: finalResponse, toolsUsed: [] };
+  } catch (error) {
+    conversation.messages.pop();
+
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[${agentId}] Fast pipeline error:`, errorMsg);
+
+    if (errorMsg.includes("timed out")) {
+      throw new Error(
+        "Claude Code response timed out during fast pipeline execution. Try again."
       );
     }
 

@@ -326,7 +326,10 @@ export const jiraTools: Tool[] = [
                           id: { type: "string" },
                           narrative: { type: "string" },
                           screen: { type: "string" },
-                          mvp: { type: "string" },
+                          business_rules: {
+                            type: "array",
+                            items: { type: "string" }
+                          },
                           acceptance_criteria: {
                             type: "array",
                             items: {
@@ -338,7 +341,9 @@ export const jiraTools: Tool[] = [
                                 then: { type: "string" }
                               }
                             }
-                          }
+                          },
+                          mvp: { type: "boolean" },
+                          priority: { type: "string" }
                         }
                       }
                     }
@@ -731,7 +736,9 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
               id: string;
               narrative: string;
               screen?: string;
-              mvp?: string;
+              business_rules?: string[];
+              mvp?: boolean | string;
+              priority?: string;
               acceptance_criteria: AcceptanceCriterion[];
             }>;
           }>;
@@ -757,9 +764,10 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
               id: us.id,
               narrative: us.narrative,
               screen: us.screen,
+              businessRules: us.business_rules,
               acceptanceCriteria: us.acceptance_criteria,
-              mvp: us.mvp === 'true' || us.mvp === 'MVP1',
-              priority: 'Must Have' as const,
+              mvp: typeof us.mvp === 'boolean' ? us.mvp : us.mvp === 'true' || us.mvp === 'MVP1',
+              priority: (us.priority === 'High' ? 'Must Have' : us.priority === 'Medium' ? 'Should Have' : us.priority === 'Low' ? 'Could Have' : 'Must Have') as 'Must Have' | 'Should Have' | 'Could Have',
             })),
           })),
         })),
@@ -785,10 +793,15 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
           // Ignore — document attachment is optional
         }
       }
-      let attachmentResult = null;
+      let attachmentResult: { success: boolean; filename?: string; error?: string } | null = null;
       if (docBase64 && docName) {
-        const fileBuffer = Buffer.from(docBase64, 'base64');
-        attachmentResult = await client.addAttachment(result.epicKey, docName, fileBuffer);
+        try {
+          const fileBuffer = Buffer.from(docBase64, 'base64');
+          await client.addAttachment(result.epicKey, docName, fileBuffer);
+          attachmentResult = { success: true, filename: docName };
+        } catch (e) {
+          attachmentResult = { success: false, error: String(e) };
+        }
       }
 
       // Create functional flow links
@@ -817,14 +830,22 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
         }
       }
 
+      // Collect detailed error messages for debugging
+      const errors: string[] = result.features.flatMap(f => [
+        ...(f.error ? [`Feature "${f.featureName}": ${f.error}`] : []),
+        ...f.userStories.filter(us => !us.success).map(us => `US ${us.storyId}: ${us.error || 'unknown error'}`),
+      ]);
+
       return JSON.stringify({
-        success: true,
+        success: result.success,
         bdev_code: result.bdevCode,
         epic_key: result.epicKey,
         epic_url: result.epicUrl,
         summary: {
           total_features: result.summary.totalFeatures,
           total_user_stories: result.summary.totalUserStories,
+          failed_features: result.summary.failedFeatures,
+          failed_user_stories: result.summary.failedUserStories,
         },
         features: result.features.map(f => ({
           key: f.featureKey,
@@ -836,12 +857,12 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
             url: us.storyUrl,
           })),
         })),
-        document_attached: attachmentResult ? {
-          success: true,
-          filename: document_name,
-        } : null,
+        document_attached: attachmentResult,
         functional_flow_links: linkResults,
-        message: `Criados com sucesso: 1 Epic (${result.bdevCode}), ${result.summary.totalFeatures} Features, ${result.summary.totalUserStories} User Stories${attachmentResult ? ', documento anexado' : ''}${linkResults.length > 0 ? `, ${linkResults.filter(l => l.success).length} links de fluxo` : ''}`,
+        ...(errors.length > 0 && { errors }),
+        message: result.success
+          ? `Criados com sucesso: 1 Epic (${result.bdevCode}), ${result.summary.totalFeatures} Features, ${result.summary.totalUserStories} User Stories${attachmentResult?.success ? ', documento anexado' : ''}${linkResults.length > 0 ? `, ${linkResults.filter(l => l.success).length} links de fluxo` : ''}`
+          : `Criação parcial: ${result.summary.failedFeatures} features falharam, ${result.summary.failedUserStories} user stories falharam. Epic: ${result.bdevCode}. Erros: ${errors.slice(0, 5).join('; ')}`,
       }, null, 2);
     } catch (error) {
       return JSON.stringify({

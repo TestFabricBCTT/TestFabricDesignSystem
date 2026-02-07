@@ -224,48 +224,13 @@ Antes de mostrar ao humano:
 - Fluxo funcional proposto
 - Hierarquia para Jira (Epic/Features/Stories)
 
-## EXPORTAÇÃO JIRA — OBRIGATÓRIO
-Após consolidação, DEVES OBRIGATORIAMENTE usar a tool \`jira_bulk_create_from_fa\` para exportar a estrutura completa para o Jira.
+## EXPORTAÇÃO JIRA
+A exportação para Jira é gerida automaticamente pelo pipeline de fases.
+Na fase de Exportação Jira (fase 7), usa a tool \`jira_bulk_create_with_document\`.
+NÃO chames tools de Jira fora da fase 7 do pipeline — o pipeline trata disso automaticamente.
 
-### Regras de exportação:
-1. CADA Feature DEVE incluir o array \`user_stories\` preenchido com:
-   - \`id\`: ID da user story (ex: "US001")
-   - \`narrative\`: Texto completo "Como [persona], quero [ação], para [benefício]"
-   - \`screen\`: Ecrã associado (se identificado)
-   - \`business_rules\`: Array de regras de negócio aplicáveis
-   - \`acceptance_criteria\`: Array de cenários Gherkin com \`scenario\`, \`given\`, \`when\`, \`then\`
-   - \`mvp\`: true se MVP1, false caso contrário
-   - \`priority\`: "High" para MVP1, "Medium" para MVP2, "Low" para MVP3
-2. NUNCA envies features com \`user_stories\` vazio ou ausente
-3. Se o documento Word foi gerado, usa \`jira_bulk_create_with_document\` em vez de \`jira_bulk_create_from_fa\` para anexar o documento ao Epic
-
-### Exemplo de chamada:
-\`\`\`json
-{
-  "functionality_name": "Transferências SEPA",
-  "description": "Funcionalidade de transferências...",
-  "epics": [{
-    "name": "BDEV-Transferências SEPA",
-    "features": [{
-      "name": "Transferência imediata",
-      "description": "Permite ao utilizador realizar...",
-      "user_stories": [{
-        "id": "US001",
-        "narrative": "Como cliente, quero realizar uma transferência SEPA, para enviar dinheiro para outra conta",
-        "business_rules": ["Limite diário 10.000€", "IBAN válido obrigatório"],
-        "acceptance_criteria": [{
-          "scenario": "Transferência com sucesso",
-          "given": "Cliente autenticado com saldo suficiente",
-          "when": "Submete transferência com IBAN válido",
-          "then": "Transferência é processada e saldo atualizado"
-        }],
-        "mvp": true,
-        "priority": "High"
-      }]
-    }]
-  }]
-}
-\`\`\`
+### Campos obrigatórios por User Story:
+- \`id\`, \`narrative\`, \`business_rules\` (array), \`acceptance_criteria\` (Gherkin), \`mvp\` (boolean true/false), \`priority\` (string "High"/"Medium"/"Low")
 
 ## Integração
 - Recebe requisitos e cenários de exceção do BA

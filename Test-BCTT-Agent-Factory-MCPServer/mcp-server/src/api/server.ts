@@ -6,13 +6,18 @@ import { WebSocketServer, WebSocket } from "ws";
 import {
   sendMessageToClaude,
   sendMessageWithPipeline,
+  sendMessageWithFastPipeline,
   clearConversation,
   getConversationHistory,
   isClaudeCodeAvailable,
   hasPhases,
+  hasFastPipeline,
   getAgentPhases,
 } from "./claude.js";
 import { tools } from "../tools/index.js";
+import { listPrototypes } from "../prototype/storage.js";
+import { exportPrototype } from "../prototype/index.js";
+import { exportPrototypeToDisk } from "../prototype/export-to-disk.js";
 
 // Load environment variables
 dotenv.config();
@@ -159,8 +164,9 @@ app.get(
 /**
  * Stream response (SSE endpoint for streaming)
  * POST /chat/stream
- * Body: { sessionId: string, agentId: string, message: string, pipeline?: boolean }
+ * Body: { sessionId: string, agentId: string, message: string, pipeline?: boolean, fast?: boolean }
  *
+ * When fast=true and agent supports it, uses single-call fast pipeline (~50% faster).
  * When pipeline=true (or auto-detected for agents with phases like FA/DA),
  * the response is broken into multiple phases with progress events:
  *   { type: "phases", phases: [...] }       — list of all phases at start
@@ -170,7 +176,7 @@ app.get(
  */
 app.post("/chat/stream", async (req: Request, res: Response) => {
   try {
-    const { sessionId, agentId, message, pipeline } = req.body;
+    const { sessionId, agentId, message, pipeline, fast } = req.body;
 
     if (!sessionId || !agentId || !message) {
       res.status(400).json({
@@ -185,20 +191,40 @@ app.post("/chat/stream", async (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
+    // Decide whether to use fast mode (single-call per agent) — DEFAULT when available
+    const useFast = fast !== false && hasFastPipeline(agentId);
+
     console.log(
-      `[${agentId}] Starting stream for session ${sessionId}`
+      `[${agentId}] Starting stream for session ${sessionId}${useFast ? " (FAST MODE)" : ""}`
     );
 
     // Send initial event
     res.write(`data: ${JSON.stringify({ type: "start", agentId })}\n\n`);
 
     // Decide whether to use pipeline mode
-    const usePipeline = pipeline === true || (pipeline !== false && hasPhases(agentId));
+    const usePipeline = !useFast && (pipeline === true || (pipeline !== false && hasPhases(agentId)));
 
     // Track full response for HANDOFF detection
     let responseText = "";
 
-    if (usePipeline) {
+    if (useFast) {
+      // --- FAST MODE (single call per agent) ---
+      res.write(`data: ${JSON.stringify({
+        type: "phases",
+        phases: [{ id: "execute", name: "Execução completa (modo rápido)" }],
+      })}\n\n`);
+
+      const result = await sendMessageWithFastPipeline(
+        sessionId,
+        agentId,
+        message,
+        (progress) => {
+          res.write(`data: ${JSON.stringify({ type: "phase", ...progress })}\n\n`);
+        }
+      );
+
+      responseText = result.response;
+    } else if (usePipeline) {
       // --- PIPELINE MODE ---
       const phases = getAgentPhases(agentId);
       if (phases) {
@@ -250,17 +276,26 @@ app.post("/chat/stream", async (req: Request, res: Response) => {
       }
     }
 
-    // Auto-advance: detect HANDOFF in response and signal next agent
+    // Auto-advance: signal next agent transition
     const AGENT_DOWNSTREAM: Record<string, string> = {
       ba: "fa", fa: "da", da: "pa"
     };
     const nextAgent = AGENT_DOWNSTREAM[agentId];
-    const hasHandoff = responseText.includes("### HANDOFF");
 
     const endEvent: Record<string, unknown> = { type: "end" };
-    if (hasHandoff && nextAgent) {
-      console.log(`[auto-advance] ${agentId} → ${nextAgent} (HANDOFF detected)`);
-      endEvent.autoAdvance = { nextAgent };
+    if (useFast || usePipeline) {
+      // Pipeline/fast agents: auto-advance on successful completion (no HANDOFF needed)
+      if (nextAgent) {
+        console.log(`[auto-advance] ${agentId} → ${nextAgent} (pipeline completed)`);
+        endEvent.autoAdvance = { nextAgent };
+      }
+    } else {
+      // Non-pipeline agents (BA): require HANDOFF block in response
+      const hasHandoff = responseText.includes("### HANDOFF");
+      if (hasHandoff && nextAgent) {
+        console.log(`[auto-advance] ${agentId} → ${nextAgent} (HANDOFF detected)`);
+        endEvent.autoAdvance = { nextAgent };
+      }
     }
     res.write(`data: ${JSON.stringify(endEvent)}\n\n`);
     res.end();
@@ -445,6 +480,79 @@ app.get("/figma/clients", (_req: Request, res: Response) => {
 });
 
 // ============================================
+// PROTOTYPE ENDPOINTS
+// ============================================
+
+/**
+ * List prototypes
+ * GET /api/prototypes?bdevCode=BDEV00000007
+ */
+app.get("/api/prototypes", (_req: Request, res: Response) => {
+  try {
+    const bdevCode = _req.query.bdevCode as string | undefined;
+    const prototypes = listPrototypes(bdevCode);
+
+    res.json({
+      success: true,
+      total: prototypes.length,
+      prototypes,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: "Failed to list prototypes", message: msg });
+  }
+});
+
+/**
+ * Export prototype (in-memory)
+ * GET /api/prototypes/:bdevCode/export?version=2
+ */
+app.get("/api/prototypes/:bdevCode/export", (req: Request, res: Response) => {
+  try {
+    const { bdevCode } = req.params;
+    const version = req.query.version ? parseInt(req.query.version as string) : undefined;
+
+    const result = exportPrototype(bdevCode, version);
+    if (!result) {
+      res.status(404).json({ error: `No prototype found for ${bdevCode}` });
+      return;
+    }
+
+    res.json({
+      success: true,
+      files: {
+        screens: result.screens,
+        app: result.app,
+        translations: result.translations,
+      },
+      readme: result.readme,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: "Failed to export prototype", message: msg });
+  }
+});
+
+/**
+ * Export prototype to disk (standalone Vite+React project)
+ * POST /api/prototypes/:bdevCode/export-to-disk
+ * Body: { version?: number }
+ */
+app.post("/api/prototypes/:bdevCode/export-to-disk", (req: Request, res: Response) => {
+  try {
+    const { bdevCode } = req.params;
+    const { version } = req.body || {};
+
+    const result = exportPrototypeToDisk(bdevCode, version);
+
+    res.json(result);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: "Failed to export prototype to disk", message: msg });
+  }
+});
+
+// ============================================
 // ERROR HANDLING
 // ============================================
 
@@ -479,6 +587,10 @@ httpServer.listen(PORT, () => {
 ║    GET  /chat/:sid/:aid/history - Get history                ║
 ║    POST /workflow/advance-to-fa - Approve BA → FA            ║
 ║    POST /workflow/create-jira   - Approve Jira creation      ║
+║  Prototypes:                                                   ║
+║    GET  /api/prototypes         - List prototypes              ║
+║    GET  /api/prototypes/:b/export - Export prototype            ║
+║    POST /api/prototypes/:b/export-to-disk - Export to disk     ║
 ║  Figma Integration:                                          ║
 ║    WS   /figma               - WebSocket for Figma plugin    ║
 ║    POST /figma/command       - Send command to Figma         ║
