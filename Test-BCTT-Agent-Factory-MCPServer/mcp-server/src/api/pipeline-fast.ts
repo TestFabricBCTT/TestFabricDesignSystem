@@ -127,7 +127,8 @@ REGRAS CRÍTICAS:
 3. CRIAÇÃO DE COMPONENTES
    Para cada componente novo:
    a. Usa dsla_create_component com: component_name (PascalCase), atomic_level, base_mui_component (componente MUI a wrapar), variants, props
-   b. Usa dsla_generate_stories com: component_name, variants
+   b. Usa dsla_generate_stories com: component_name, variants, props (OBRIGATÓRIO — sem props não há controls interactivos no Storybook)
+      Exemplo de props: [{ name: "variant", type: "string", options: ["primary", "secondary"], description: "Variante visual" }, { name: "disabled", type: "boolean", description: "Estado desabilitado" }]
    c. Usa dsla_check_accessibility para verificar conformidade WCAG
 
 4. BUILD DO DESIGN SYSTEM

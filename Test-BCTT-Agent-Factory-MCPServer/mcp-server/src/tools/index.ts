@@ -40,7 +40,7 @@ const MAX_OUTPUT_SIZE = 2000;
 
 // Timeout values in milliseconds
 const JIRA_TIMEOUT_MS = 10000;  // 10 seconds
-const FIGMA_TIMEOUT_MS = 5000;  // 5 seconds
+const FIGMA_TIMEOUT_MS = 10000;  // 10 seconds (increased for reliability)
 
 /**
  * Truncates output to prevent context overflow during demos
@@ -1121,6 +1121,20 @@ export const tools: Tool[] = [
           type: "array",
           items: { type: "string" },
           description: "Variantes a documentar"
+        },
+        props: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              type: { type: "string" },
+              required: { type: "boolean" },
+              description: { type: "string" },
+              options: { type: "array", items: { type: "string" } }
+            }
+          },
+          description: "Props do componente para gerar argTypes interactivos no Storybook"
         }
       },
       required: ["component_name"]
@@ -1978,47 +1992,54 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
     const figmaJson = exportForFigmaPlugin(bdev_code, specs);
     const figmaSpec = JSON.parse(figmaJson);
 
-    // Automatically send to Figma plugin via API (with timeout protection)
-    // Now includes full section/component data for the plugin to render
+    // Send to Figma plugin via API (with retry + timeout protection)
     let figmaSent = false;
     let figmaError: string | null = null;
+    const maxRetries = 2;
+    const apiPort = process.env.API_PORT || 3001;
 
-    try {
-      const apiPort = process.env.API_PORT || 3001;
-      const response = await safeFetch(
-        `http://localhost:${apiPort}/figma/command`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'create-bdev-structure',
-            bdevCode: bdev_code,
-            screens: specs.map(s => ({
-              id: s.screenId,
-              name: s.screenName,
-              type: s.type,
-              states: s.states,
-              header: s.header,
-              sections: s.sections,
-              footer: s.footer,
-            })),
-          }),
-        },
-        FIGMA_TIMEOUT_MS,
-        'Figma API'
-      );
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await safeFetch(
+          `http://localhost:${apiPort}/figma/command`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'create-bdev-structure',
+              bdevCode: bdev_code,
+              screens: specs.map(s => ({
+                id: s.screenId,
+                name: s.screenName,
+                type: s.type,
+                states: s.states,
+                header: s.header,
+                sections: s.sections,
+                footer: s.footer,
+              })),
+            }),
+          },
+          FIGMA_TIMEOUT_MS,
+          'Figma API'
+        );
 
-      if (response.ok) {
-        figmaSent = true;
-      } else {
-        const errorData = await response.json() as Record<string, string>;
-        figmaError = errorData.message || 'Failed to send to Figma';
+        if (response.ok) {
+          figmaSent = true;
+          break;
+        } else {
+          const errorData = await response.json() as Record<string, string>;
+          figmaError = errorData.message || 'Failed to send to Figma';
+        }
+      } catch (err) {
+        figmaError = `Figma plugin não conectado ou timeout (tentativa ${attempt}/${maxRetries}): ${String(err)}`;
       }
-    } catch (err) {
-      figmaError = `Figma plugin não conectado ou timeout: ${String(err)}`;
+      if (!figmaSent && attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
     }
 
     return JSON.stringify({
+      ...(figmaSent ? {} : { "FIGMA_FALHOU": `ATENÇÃO: Não foi possível enviar ecrãs ao Figma após ${maxRetries} tentativas. ${figmaError}. Verifique se o plugin BCTT Bridge está conectado no Figma.` }),
       agent: "DA",
       action: "generate_figma_spec",
       bdev_code,
@@ -2035,7 +2056,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         success: figmaSent,
         message: figmaSent
           ? `Enviado automaticamente para Figma plugin! ${specs.length} ecrãs criados com componentes.`
-          : `Não foi possível enviar ao Figma: ${figmaError}. Verifique se o plugin BCTT Bridge está conectado.`,
+          : `FALHOU após ${maxRetries} tentativas: ${figmaError}. Plugin BCTT Bridge não está conectado.`,
       },
       figma_spec_summary: {
         screens: specs.length,
@@ -2118,32 +2139,39 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
     // Send to Figma plugin via API
     let figmaSent = false;
     let figmaError: string | null = null;
+    const maxRetries = 2;
+    const apiPort = process.env.API_PORT || 3001;
 
-    try {
-      const apiPort = process.env.API_PORT || 3001;
-      const response = await safeFetch(
-        `http://localhost:${apiPort}/figma/command`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'create-ux-flow',
-            bdevCode: bdev_code,
-            flowPage: flowPageSpec,
-          }),
-        },
-        FIGMA_TIMEOUT_MS,
-        'Figma UX Flow'
-      );
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await safeFetch(
+          `http://localhost:${apiPort}/figma/command`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'create-ux-flow',
+              bdevCode: bdev_code,
+              flowPage: flowPageSpec,
+            }),
+          },
+          FIGMA_TIMEOUT_MS,
+          'Figma UX Flow'
+        );
 
-      if (response.ok) {
-        figmaSent = true;
-      } else {
-        const errorData = await response.json() as Record<string, string>;
-        figmaError = errorData.message || 'Failed to send UX Flow to Figma';
+        if (response.ok) {
+          figmaSent = true;
+          break;
+        } else {
+          const errorData = await response.json() as Record<string, string>;
+          figmaError = errorData.message || 'Failed to send UX Flow to Figma';
+        }
+      } catch (err) {
+        figmaError = `Figma plugin não conectado ou timeout (tentativa ${attempt}/${maxRetries}): ${String(err)}`;
       }
-    } catch (err) {
-      figmaError = `Figma plugin não conectado ou timeout: ${String(err)}`;
+      if (!figmaSent && attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
     }
 
     // Count unique rules
@@ -2152,6 +2180,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
     const exceptionCount = connections.filter(c => c.type === 'exception').length;
 
     return JSON.stringify({
+      ...(figmaSent ? {} : { "FIGMA_FALHOU": `ATENÇÃO: Não foi possível enviar UX Flow ao Figma após ${maxRetries} tentativas. ${figmaError}. Verifique se o plugin BCTT Bridge está conectado.` }),
       agent: "DA",
       action: "generate_ux_flow",
       bdev_code,
@@ -2160,7 +2189,7 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         success: figmaSent,
         message: figmaSent
           ? `UX Flow enviado para Figma! ${nodes.length} nós, ${connections.length} conexões, ${rules.size} regras de negócio.`
-          : `Não foi possível enviar ao Figma: ${figmaError}. Verifique se o plugin BCTT Bridge está conectado.`,
+          : `FALHOU após ${maxRetries} tentativas: ${figmaError}. Plugin BCTT Bridge não está conectado.`,
       },
       summary: {
         total_nodes: nodes.length,
@@ -2997,13 +3026,51 @@ export default ${component_name};
   },
 
   dsla_generate_stories: async (args) => {
-    const { component_name, variants } = args as {
+    const { component_name, variants, props } = args as {
       component_name: string;
       variants?: string[];
+      props?: Array<{ name: string; type: string; required?: boolean; description?: string; options?: string[] }>;
     };
 
     const dsRoot = getBcttDesignSystemPath();
     const storyVariants = variants || ['Default', 'Primary', 'Secondary'];
+
+    // Build argTypes from props
+    let argTypesBlock = '';
+    if (props && props.length > 0) {
+      const argEntries = props.map(p => {
+        // Determine control type from prop metadata
+        if (p.options || p.type?.includes('|')) {
+          const opts = p.options || p.type.split('|').map(s => s.trim().replace(/['"]/g, ''));
+          return `    ${p.name}: {\n      control: 'select',\n      options: [${opts.map(o => `'${o}'`).join(', ')}],\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+        }
+        if (p.type === 'boolean') {
+          return `    ${p.name}: {\n      control: 'boolean',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+        }
+        if (p.type === 'number') {
+          return `    ${p.name}: {\n      control: 'number',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+        }
+        if (p.type?.includes('=>') || p.type?.includes('Function') || p.name.startsWith('on')) {
+          return `    ${p.name}: { action: '${p.name}' }`;
+        }
+        return `    ${p.name}: {\n      control: 'text',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+      });
+      argTypesBlock = `  argTypes: {\n${argEntries.join(',\n')},\n  },`;
+    }
+
+    // Sanitize variant names for JS export (avoid reserved keywords like 'default')
+    const sanitizeExportName = (v: string) => {
+      // Convert hyphens/underscores to PascalCase: "read-only" → "ReadOnly"
+      const camelCase = v.replace(/[-_]+(.)/g, (_: string, c: string) => c.toUpperCase());
+      const capitalized = camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+      // Remove non-alphanumeric chars
+      const clean = capitalized.replace(/[^a-zA-Z0-9]/g, '');
+      // Avoid JS reserved keywords
+      if (['Default', 'New', 'Delete', 'Return', 'Switch', 'Case'].includes(clean)) {
+        return `${clean}Variant`;
+      }
+      return clean;
+    };
 
     const storiesCode = `import type { Meta, StoryObj } from '@storybook/react';
 import { Stack } from '@mui/material';
@@ -3014,19 +3081,20 @@ const meta: Meta<typeof ${component_name}> = {
   component: ${component_name},
   parameters: { layout: 'centered' },
   tags: ['autodocs'],
+${argTypesBlock}
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-${storyVariants.map(v => `export const ${v}: Story = {
-  args: { variant: '${v.toLowerCase()}', children: '${component_name} - ${v}' },
+${storyVariants.map(v => `export const ${sanitizeExportName(v)}: Story = {
+  args: { variant: '${v.toLowerCase()}' },
 };`).join('\n\n')}
 
 export const AllVariants: Story = {
   render: () => (
     <Stack direction="row" spacing={2}>
-${storyVariants.map(v => `      <${component_name} variant="${v.toLowerCase()}">${v}</${component_name}>`).join('\n')}
+${storyVariants.map(v => `      <${component_name} variant="${v.toLowerCase()}" />`).join('\n')}
     </Stack>
   ),
 };

@@ -833,7 +833,9 @@ Criar componentes React REAIS no projecto bctt-design-system, baseados em MUI co
       - \`base_mui_component\`: componente MUI base (ex: "AppBar", "Select")
       - \`variants\`: variantes necessárias
       - \`props\`: props com design tokens BCTT aplicados
-   c. Usar \`dsla_generate_stories\` para criar Storybook stories
+   c. Usar \`dsla_generate_stories\` com component_name, variants E OBRIGATORIAMENTE o parâmetro "props" — ex:
+      props: [{ name: "variant", type: "string", options: ["primary", "secondary"], description: "Variante visual" }]
+      Sem props, o Storybook NÃO mostra controls interactivos (argTypes).
    d. Usar \`dsla_check_accessibility\` para verificar acessibilidade
 4. Se NÃO há componentes novos: avançar directamente para o HANDOFF
 5. Quando TODOS os componentes estiverem criados, usar \`dsla_build_design_system\` para compilar o projecto

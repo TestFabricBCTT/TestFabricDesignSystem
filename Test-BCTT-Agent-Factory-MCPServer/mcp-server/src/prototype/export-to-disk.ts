@@ -260,6 +260,8 @@ const DS_EXPORTS = new Set([
   'Badge', 'BadgeProps', 'Alert', 'AlertTitle', 'AlertProps',
   'Chip', 'ChipProps', 'Skeleton', 'SkeletonProps',
   'Divider', 'DividerProps', 'DateRangePicker', 'DateRangePickerProps',
+  'ListTransaction', 'ListTransactionProps', 'FilterChip', 'FilterChipProps',
+  'DatePicker', 'DatePickerProps',
   // Theme
   'bcttTheme', 'colors', 'typography', 'borderRadius', 'shadows',
   'spacing', 'spacingTokens', 'layoutSpacing',
