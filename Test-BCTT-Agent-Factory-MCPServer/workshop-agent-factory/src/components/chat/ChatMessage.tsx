@@ -22,8 +22,9 @@ export const ChatMessage = ({ message, agentId, onDownload, onApprove }: ChatMes
   const isApproval = message.role === 'approval';
   const agentColor = getAgentColor(agentId);
 
-  // Parse markdown-style formatting
+  // Parse markdown-style formatting (with fallback to raw text on error)
   const formatContent = (content: string) => {
+    try {
     // Split by code blocks
     const parts = content.split(/(```[\s\S]*?```)/g);
 
@@ -82,8 +83,8 @@ export const ChatMessage = ({ message, agentId, onDownload, onApprove }: ChatMes
         .replace(/\n---\n/g, '<hr/>')
         .replace(/^##\s+(.*)$/gm, '<h3>$1</h3>')
         .replace(/^###\s+(.*)$/gm, '<h4>$1</h4>')
-        .replace(/^\|\s*(.+)\s*\|$/gm, (_match, content) => {
-          const cells = content.split('|').map((c: string) => c.trim());
+        .replace(/^\|\s*(.+)\s*\|$/gm, (_match, rowContent) => {
+          const cells = rowContent.split('|').map((c: string) => c.trim());
           return `<tr>${cells.map((c: string) => `<td>${c}</td>`).join('')}</tr>`;
         });
 
@@ -128,6 +129,14 @@ export const ChatMessage = ({ message, agentId, onDownload, onApprove }: ChatMes
         />
       );
     });
+    } catch (e) {
+      console.error('[ChatMessage] formatContent error:', e);
+      return (
+        <Typography component="div" variant="body2" sx={{ color: 'text.primary', whiteSpace: 'pre-wrap' }}>
+          {content}
+        </Typography>
+      );
+    }
   };
 
   // System message styling

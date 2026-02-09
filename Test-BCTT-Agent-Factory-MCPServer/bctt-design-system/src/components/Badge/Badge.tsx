@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { colors, typography, borderRadius } from '../../theme/bcttTheme';
 
 export interface BadgeProps extends Omit<ChipProps, 'variant' | 'color' | 'label' | 'children'> {
   /**
@@ -21,28 +22,28 @@ export interface BadgeProps extends Omit<ChipProps, 'variant' | 'color' | 'label
 
 const variantStyles = {
   default: {
-    backgroundColor: '#E4E9F2',
-    color: '#333333',
+    backgroundColor: colors.greyblue[300],
+    color: colors.neutral[500],
   },
   primary: {
-    backgroundColor: '#FBDFE3',
-    color: '#C4001F',
+    backgroundColor: colors.primary[100],
+    color: colors.primary.dark,
   },
   success: {
-    backgroundColor: '#CCF2F0',
-    color: '#00BFB4',
+    backgroundColor: colors.bluegreen[200],
+    color: colors.bluegreen.dark,
   },
   warning: {
-    backgroundColor: '#E9EECB',
-    color: '#A4BF00',
+    backgroundColor: colors.lime[200],
+    color: colors.lime.dark,
   },
   error: {
-    backgroundColor: '#FBDFE3',
-    color: '#E00024',
+    backgroundColor: colors.primary[100],
+    color: colors.primary.main,
   },
   info: {
-    backgroundColor: '#E4E9F2',
-    color: '#6E7B93',
+    backgroundColor: colors.greyblue[300],
+    color: colors.greyblue.dark,
   },
 };
 
@@ -50,8 +51,8 @@ const StyledChip = styled(Chip, {
   shouldForwardProp: (prop) => prop !== 'badgeVariant',
 })<{ badgeVariant: BadgeProps['variant'] }>(({ badgeVariant = 'default' }) => ({
   ...variantStyles[badgeVariant],
-  fontWeight: 600,
-  borderRadius: 4,
+  fontWeight: typography.fontWeightSemiBold,
+  borderRadius: borderRadius.sm,
 }));
 
 /**

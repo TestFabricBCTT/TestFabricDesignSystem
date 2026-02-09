@@ -33,6 +33,7 @@ interface UseChatReturn {
   conversations: Conversation[];
   pendingAutoAdvance: string | null;
   progress: PipelineProgress | null;
+  streamingText: string;
   openChat: (agent: Agent) => void;
   closeChat: () => void;
   sendMessage: (content: string) => void;
@@ -54,10 +55,17 @@ export const useChat = (): UseChatReturn => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState<string | null>(null);
   const [progress, setProgress] = useState<PipelineProgress | null>(null);
+  const [streamingText, setStreamingText] = useState('');
 
-  // Ref to track currentAgent — avoids stale closure in sendMessage during auto-advance
+  // Refs to avoid stale closures in sendMessage during auto-advance
   const currentAgentRef = useRef<Agent | null>(null);
   useEffect(() => { currentAgentRef.current = currentAgent; }, [currentAgent]);
+
+  const isLiveModeRef = useRef(isLiveMode);
+  useEffect(() => { isLiveModeRef.current = isLiveMode; }, [isLiveMode]);
+
+  // AbortController ref to cancel ongoing SSE stream when chat closes
+  const abortRef = useRef<AbortController | null>(null);
 
   // Check API availability on mount
   useEffect(() => {
@@ -83,9 +91,16 @@ export const useChat = (): UseChatReturn => {
   }, []);
 
   const closeChat = useCallback(() => {
+    // Abort any running SSE stream
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
     setCurrentAgent(null);
     setMessages([]);
     setIsLoading(false);
+    setProgress(null);
+    setStreamingText('');
   }, []);
 
   // When agent changes or live mode toggles, ensure welcome message is shown if no messages
@@ -121,7 +136,7 @@ export const useChat = (): UseChatReturn => {
 
     setMessages((prev) => [...prev, userMessage]);
 
-    if (isLiveMode) {
+    if (isLiveModeRef.current) {
       setIsLoading(true);
 
       try {
@@ -129,8 +144,12 @@ export const useChat = (): UseChatReturn => {
         let responseContent = '';
         let autoAdvanceAgent: string | null = null;
 
+        // Create abort controller for this stream (can be cancelled by closeChat)
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         // Stream the response (buffered - don't update UI until complete)
-        for await (const event of sendMessageStream(agent.id, content)) {
+        for await (const event of sendMessageStream(agent.id, content, controller.signal)) {
           if (event.type === 'phases') {
             // Pipeline started — show phase list in progress indicator
             const phaseList = (event as Record<string, unknown>).phases as Array<{ id: string; name: string }>;
@@ -156,6 +175,7 @@ export const useChat = (): UseChatReturn => {
             });
           } else if (event.type === 'chunk' && event.content) {
             responseContent += event.content;
+            setStreamingText(responseContent);
           } else if (event.type === 'tool') {
             console.log(`Tool used: ${event.name}`);
           } else if (event.type === 'end' && (event as Record<string, unknown>).autoAdvance) {
@@ -166,7 +186,10 @@ export const useChat = (): UseChatReturn => {
           }
         }
 
-        // Display the complete response at once
+        abortRef.current = null; // Stream completed normally
+
+        // Clear streaming text and display the complete response
+        setStreamingText('');
         setMessages((prev) => [
           ...prev,
           {
@@ -185,6 +208,10 @@ export const useChat = (): UseChatReturn => {
           setTimeout(() => setPendingAutoAdvance(autoAdvanceAgent), 1500);
         }
       } catch (error) {
+        // If aborted by user closing chat, stop silently
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
         console.error('Error sending message:', error);
 
         // Fallback to non-streaming API
@@ -212,6 +239,7 @@ export const useChat = (): UseChatReturn => {
         }
         setIsLoading(false);
         setProgress(null);
+        setStreamingText('');
       }
     } else {
       // Demo mode - find matching example response
@@ -251,7 +279,8 @@ export const useChat = (): UseChatReturn => {
         }, 500);
       }
     }
-  }, [isLiveMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleLiveMode = useCallback(() => {
     setIsLiveMode((prev) => !prev);
@@ -287,6 +316,7 @@ export const useChat = (): UseChatReturn => {
     conversations,
     pendingAutoAdvance,
     progress,
+    streamingText,
     openChat,
     closeChat,
     sendMessage,

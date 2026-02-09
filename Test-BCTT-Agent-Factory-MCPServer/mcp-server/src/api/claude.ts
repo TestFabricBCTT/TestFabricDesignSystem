@@ -366,6 +366,17 @@ export function clearConversation(sessionId: string, agentId: string): void {
   conversations.delete(key);
 }
 
+/**
+ * Reset all agent conversations for a session.
+ * Used when starting a new project from the dashboard.
+ */
+export function resetSession(sessionId: string): void {
+  for (const aid of ['ba', 'fa', 'da', 'dsla', 'pa']) {
+    conversations.delete(`${sessionId}:${aid}`);
+  }
+  console.log(`[session] Full reset for ${sessionId}`);
+}
+
 // ============================================
 // FORMAT CONVERSATION FOR CLAUDE CODE
 // ============================================
@@ -509,21 +520,19 @@ export async function sendMessageToClaude(
   const conversation = getOrCreateConversation(sessionId, agentId);
   const configPath = getOrCreateMCPConfig();
 
-  // HANDOFF: enrich first message with upstream agent context
+  // HANDOFF: enrich with upstream agent context (if not already injected)
   let enrichedMessage = userMessage;
-  if (conversation.messages.length <= 1) {
+  if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
     const handoff = await getUpstreamHandoff(sessionId, agentId);
     if (handoff) {
       // Inject into system prompt (persists for all subsequent messages)
-      if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
-        conversation.systemPrompt +=
-          "\n\n" +
-          "═".repeat(50) +
-          "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
-          handoff +
-          "\n" +
-          "═".repeat(50);
-      }
+      conversation.systemPrompt +=
+        "\n\n" +
+        "═".repeat(50) +
+        "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
+        handoff +
+        "\n" +
+        "═".repeat(50);
       // Inject into message (higher weight in attention window)
       enrichedMessage =
         `CONTEXTO DO AGENTE ANTERIOR:\n${handoff}\n\n---\n\nPEDIDO DO UTILIZADOR:\n${userMessage}`;
@@ -655,21 +664,19 @@ export async function sendMessageWithPipeline(
   const conversation = getOrCreateConversation(sessionId, agentId);
   const configPath = getOrCreateMCPConfig();
 
-  // HANDOFF: enrich first message with upstream agent context
+  // HANDOFF: enrich with upstream agent context (if not already injected)
   let enrichedMessage = userMessage;
-  if (conversation.messages.length <= 1) {
+  if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
     const handoff = await getUpstreamHandoff(sessionId, agentId);
     if (handoff) {
       // Inject into system prompt (propagates to all pipeline phases)
-      if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
-        conversation.systemPrompt +=
-          "\n\n" +
-          "═".repeat(50) +
-          "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
-          handoff +
-          "\n" +
-          "═".repeat(50);
-      }
+      conversation.systemPrompt +=
+        "\n\n" +
+        "═".repeat(50) +
+        "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
+        handoff +
+        "\n" +
+        "═".repeat(50);
       // Inject into message (phase 1 sees it directly)
       enrichedMessage =
         `CONTEXTO DO AGENTE ANTERIOR:\n${handoff}\n\n---\n\nPEDIDO DO UTILIZADOR:\n${userMessage}`;
@@ -741,20 +748,18 @@ export async function sendMessageWithFastPipeline(
   const conversation = getOrCreateConversation(sessionId, agentId);
   const configPath = getOrCreateMCPConfig();
 
-  // HANDOFF: enrich first message with upstream agent context
+  // HANDOFF: enrich with upstream agent context (if not already injected)
   let enrichedMessage = userMessage;
-  if (conversation.messages.length <= 1) {
+  if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
     const handoff = await getUpstreamHandoff(sessionId, agentId);
     if (handoff) {
-      if (!conversation.systemPrompt.includes("## CONTEXTO RECEBIDO")) {
-        conversation.systemPrompt +=
-          "\n\n" +
-          "═".repeat(50) +
-          "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
-          handoff +
-          "\n" +
-          "═".repeat(50);
-      }
+      conversation.systemPrompt +=
+        "\n\n" +
+        "═".repeat(50) +
+        "\n## CONTEXTO RECEBIDO (handoff automático)\n\n" +
+        handoff +
+        "\n" +
+        "═".repeat(50);
       enrichedMessage =
         `CONTEXTO DO AGENTE ANTERIOR:\n${handoff}\n\n---\n\nPEDIDO DO UTILIZADOR:\n${userMessage}`;
     }

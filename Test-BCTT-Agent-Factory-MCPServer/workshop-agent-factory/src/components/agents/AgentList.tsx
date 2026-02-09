@@ -1,4 +1,5 @@
-import { Box, Typography, alpha, Grid } from '@mui/material';
+import { Box, Typography, alpha, Grid, IconButton, Tooltip } from '@mui/material';
+import { AccountTree as AccountTreeIcon } from '@mui/icons-material';
 import { Agent, Phase } from '@/types';
 import { AgentCard } from './AgentCard';
 
@@ -7,9 +8,10 @@ interface AgentListProps {
   agents: Agent[];
   onAgentClick: (agent: Agent) => void;
   onChatClick: (agent: Agent) => void;
+  onGovernanceClick?: () => void;
 }
 
-export const AgentList = ({ phase, agents, onAgentClick, onChatClick }: AgentListProps) => {
+export const AgentList = ({ phase, agents, onAgentClick, onChatClick, onGovernanceClick }: AgentListProps) => {
   if (!phase) return null;
 
   return (
@@ -42,6 +44,25 @@ export const AgentList = ({ phase, agents, onAgentClick, onChatClick }: AgentLis
             </Box>
             {phase.nome}
           </Typography>
+          {onGovernanceClick && (
+            <Tooltip title="Ver Governação" arrow>
+              <IconButton
+                onClick={onGovernanceClick}
+                size="small"
+                sx={{
+                  color: alpha('#FFFFFF', 0.4),
+                  border: `1px solid ${alpha('#FFFFFF', 0.1)}`,
+                  '&:hover': {
+                    color: '#C8102E',
+                    borderColor: alpha('#C8102E', 0.3),
+                    bgcolor: alpha('#C8102E', 0.08),
+                  },
+                }}
+              >
+                <AccountTreeIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
         <Typography variant="body2" sx={{ color: alpha('#FFFFFF', 0.6), maxWidth: 600 }}>
           {phase.descricao}

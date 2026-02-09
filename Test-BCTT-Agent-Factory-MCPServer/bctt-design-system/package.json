@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
@@ -32,15 +32,18 @@
   },
   "peerDependencies": {
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "@mui/material": "^6.4.0",
+    "@mui/icons-material": "^6.4.0",
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0"
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@mui/material": "^6.4.0",
-    "@mui/icons-material": "^6.4.0"
-  },
-  "devDependencies": {
+    "@mui/icons-material": "^6.4.0",
     "@storybook/addon-essentials": "^8.5.0",
     "@storybook/addon-interactions": "^8.5.0",
     "@storybook/addon-links": "^8.5.0",

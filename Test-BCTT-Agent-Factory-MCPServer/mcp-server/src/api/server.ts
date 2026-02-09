@@ -8,6 +8,7 @@ import {
   sendMessageWithPipeline,
   sendMessageWithFastPipeline,
   clearConversation,
+  resetSession,
   getConversationHistory,
   isClaudeCodeAvailable,
   hasPhases,
@@ -17,7 +18,7 @@ import {
 import { tools } from "../tools/index.js";
 import { listPrototypes } from "../prototype/storage.js";
 import { exportPrototype } from "../prototype/index.js";
-import { exportPrototypeToDisk } from "../prototype/export-to-disk.js";
+import { exportPrototypeToDisk, stopPrototypeServer } from "../prototype/export-to-disk.js";
 
 // Load environment variables
 dotenv.config();
@@ -143,6 +144,19 @@ app.delete("/chat/:sessionId/:agentId", (req: Request, res: Response) => {
 });
 
 /**
+ * Reset all conversations for a session
+ * DELETE /chat/:sessionId
+ */
+app.delete("/chat/:sessionId", (req: Request, res: Response) => {
+  const { sessionId } = req.params;
+  resetSession(sessionId);
+  res.json({
+    success: true,
+    message: `Session ${sessionId} reset — all agent conversations cleared`,
+  });
+});
+
+/**
  * Get conversation history
  * GET /chat/:sessionId/:agentId/history
  */
@@ -175,6 +189,7 @@ app.get(
  *   { type: "end" }                         — stream complete
  */
 app.post("/chat/stream", async (req: Request, res: Response) => {
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
   try {
     const { sessionId, agentId, message, pipeline, fast } = req.body;
 
@@ -207,7 +222,19 @@ app.post("/chat/stream", async (req: Request, res: Response) => {
     // Track full response for HANDOFF detection
     let responseText = "";
 
-    if (useFast) {
+    // SSE heartbeat to keep connection alive during long operations (every 30s)
+    heartbeat = setInterval(() => {
+      try {
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({ type: "heartbeat", timestamp: Date.now() })}\n\n`);
+        } else {
+          if (heartbeat) clearInterval(heartbeat);
+        }
+      } catch { if (heartbeat) clearInterval(heartbeat); }
+    }, 30000);
+
+    try {
+      if (useFast) {
       // --- FAST MODE (single call per agent) ---
       res.write(`data: ${JSON.stringify({
         type: "phases",
@@ -224,6 +251,15 @@ app.post("/chat/stream", async (req: Request, res: Response) => {
       );
 
       responseText = result.response;
+
+      // Stream response to client as chunks (fast mode needs this — webapp builds content from chunk events)
+      if (responseText.length > 0) {
+        const chunkSize = 500;
+        for (let i = 0; i < responseText.length; i += chunkSize) {
+          const chunk = responseText.slice(i, i + chunkSize);
+          res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
+        }
+      }
     } else if (usePipeline) {
       // --- PIPELINE MODE ---
       const phases = getAgentPhases(agentId);
@@ -278,35 +314,46 @@ app.post("/chat/stream", async (req: Request, res: Response) => {
 
     // Auto-advance: signal next agent transition
     const AGENT_DOWNSTREAM: Record<string, string> = {
-      ba: "fa", fa: "da", da: "pa"
+      ba: "fa", fa: "da", da: "dsla", dsla: "pa"
     };
     const nextAgent = AGENT_DOWNSTREAM[agentId];
 
+    const shouldAutoAdvance = nextAgent && (
+      useFast || usePipeline || responseText.includes("### HANDOFF")
+    );
+
     const endEvent: Record<string, unknown> = { type: "end" };
-    if (useFast || usePipeline) {
-      // Pipeline/fast agents: auto-advance on successful completion (no HANDOFF needed)
-      if (nextAgent) {
-        console.log(`[auto-advance] ${agentId} → ${nextAgent} (pipeline completed)`);
-        endEvent.autoAdvance = { nextAgent };
+    if (shouldAutoAdvance) {
+      // Clear ALL downstream conversations to ensure fresh handoff
+      let downstream: string | undefined = nextAgent;
+      while (downstream) {
+        clearConversation(sessionId, downstream);
+        downstream = AGENT_DOWNSTREAM[downstream];
       }
-    } else {
-      // Non-pipeline agents (BA): require HANDOFF block in response
-      const hasHandoff = responseText.includes("### HANDOFF");
-      if (hasHandoff && nextAgent) {
-        console.log(`[auto-advance] ${agentId} → ${nextAgent} (HANDOFF detected)`);
-        endEvent.autoAdvance = { nextAgent };
-      }
+      const reason = (useFast || usePipeline) ? "pipeline completed" : "HANDOFF detected";
+      console.log(`[auto-advance] ${agentId} → ${nextAgent} (${reason})`);
+      endEvent.autoAdvance = { nextAgent };
     }
     res.write(`data: ${JSON.stringify(endEvent)}\n\n`);
     res.end();
+    } finally {
+      clearInterval(heartbeat);
+    }
   } catch (error) {
+    if (heartbeat) clearInterval(heartbeat);
     console.error("Error in /chat/stream:", error);
 
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
 
-    res.write(`data: ${JSON.stringify({ type: "error", message: errorMessage })}\n\n`);
-    res.end();
+    try {
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ type: "error", message: errorMessage })}\n\n`);
+        res.end();
+      }
+    } catch {
+      // Connection already closed
+    }
   }
 });
 
@@ -618,5 +665,9 @@ httpServer.listen(PORT, () => {
     );
   }
 });
+
+// Cleanup prototype dev server on shutdown
+process.on('SIGINT', () => { stopPrototypeServer(); process.exit(0); });
+process.on('SIGTERM', () => { stopPrototypeServer(); process.exit(0); });
 
 export default app;

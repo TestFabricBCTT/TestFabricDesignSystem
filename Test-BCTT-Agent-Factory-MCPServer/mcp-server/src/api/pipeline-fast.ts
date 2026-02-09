@@ -14,6 +14,7 @@ import { type SpawnFn, type ProgressCallback } from "./pipeline.js";
 const AGENT_MAX_TURNS: Record<string, number> = {
   fa: 30,
   da: 25,
+  dsla: 10,
   pa: 15,
 };
 
@@ -99,6 +100,7 @@ REGRAS CRÍTICAS:
 
 5. RESUMO FINAL
    Apresenta entrega organizada:
+   - **BDEV:** [código BDEV recebido do FA — OBRIGATÓRIO, formato BDEVxxxxxxxx]
    - Wireframes criados (lista de ecrãs)
    - Fluxos de exceção definidos
    - Traduções geradas
@@ -108,22 +110,95 @@ REGRAS CRÍTICAS:
 REGRAS CRÍTICAS:
 - Executa TODOS os passos sequencialmente
 - Sections dos wireframes devem ser específicos (não genéricos)
+- Propaga SEMPRE o código BDEV recebido do FA (formato BDEVxxxxxxxx) em TODAS as tools (da_create_wireframes, da_generate_figma_spec, da_generate_ux_flow, da_create_screen_copy) e no HANDOFF
+- O BDEV é o código que começa por "BDEV" (ex: BDEV00000011), NÃO a key Jira (ex: BCTT-297)
+- O resumo final é a resposta que o utilizador vai ver`,
+
+  dsla: `Executa o trabalho COMPLETO do DSLA numa única sessão:
+
+1. ANÁLISE DO HANDOFF
+   Verifica se há "Componentes novos para DSLA" no handoff recebido do DA.
+   Se não há componentes novos, avança directamente para o RESUMO FINAL.
+
+2. VERIFICAÇÃO DE COMPONENTES EXISTENTES
+   Para cada componente identificado, usa dsla_get_component_spec para verificar se já existe no catálogo.
+   Se já existe, salta para o próximo. Se não existe, cria-o no passo seguinte.
+
+3. CRIAÇÃO DE COMPONENTES
+   Para cada componente novo:
+   a. Usa dsla_create_component com: component_name (PascalCase), atomic_level, base_mui_component (componente MUI a wrapar), variants, props
+   b. Usa dsla_generate_stories com: component_name, variants
+   c. Usa dsla_check_accessibility para verificar conformidade WCAG
+
+4. BUILD DO DESIGN SYSTEM
+   Após criar TODOS os componentes, usa dsla_build_design_system para compilar.
+   Se o build FALHAR:
+   - Analisa os erros de TypeScript no output
+   - Corrige os ficheiros usando dsla_create_component (re-cria o componente com código corrigido)
+   - Tenta build novamente (máximo 2 tentativas)
+   O build DEVE ter sucesso antes de avançar para o HANDOFF.
+
+5. RESUMO FINAL
+   Apresenta: componentes criados (ou "Nenhum"), ficheiros escritos, resultado do build, notas para PA.
+
+REGRAS:
+- Usa APENAS tools com prefixo dsla_
+- Segue o padrão forwardRef + MUI wrapper (como Button.tsx): import { X as MuiX } from '@mui/material'
+- Se não há componentes novos, produz HANDOFF imediatamente
+- Build com SUCESSO é OBRIGATÓRIO antes do HANDOFF
 - O resumo final é a resposta que o utilizador vai ver`,
 
   pa: `Executa o trabalho COMPLETO do PA numa única sessão:
 
 1. ANÁLISE
-   Verifica protótipos existentes com pa_list_prototypes. Identifica ecrãs a criar/atualizar, componentes e interações.
+   PRIMEIRO: Extrai o código BDEV do contexto recebido do DA (campo **BDEV:** no handoff). O BDEV tem formato BDEVxxxxxxxx (ex: BDEV00000011).
+   Usa esse BDEV para TODAS as operações. NUNCA uses um BDEV de protótipos existentes.
+   Verifica protótipos existentes com pa_list_prototypes apenas para determinar a versão (v1, v2, etc.).
 
 2. CRIAÇÃO DE PROTÓTIPOS
-   Para cada ecrã: usa pa_create_prototype com HTML/CSS real, componentes do Design System BCTT, todos os estados (default, loading, error, success).
+   Chama pa_create_prototype UMA VEZ com TODOS os ecrãs. O input wireframes deve seguir este formato EXATO:
+   {
+     "bdev_code": "<BDEV do handoff — ex: BDEV00000011>",
+     "journeys": [{"id": "J1", "name": "Consulta Saldo", "screens": ["SCR-001", "SCR-002"], "userStories": ["US001", "US002"]}],
+     "wireframes": [
+       {
+         "screenId": "SCR-001",
+         "screenName": "Consulta de Saldos",
+         "userStory": "US001",
+         "header": {"title": "Minha Conta"},
+         "body": {
+           "sections": [
+             {"type": "info", "components": [
+               {"type": "card", "name": "saldo_disponivel", "valuePT": "Saldo Disponível", "valueEN": "Available Balance"},
+               {"type": "card", "name": "saldo_contabilistico", "valuePT": "Saldo Contabilístico", "valueEN": "Book Balance"}
+             ]},
+             {"type": "actions", "components": [
+               {"type": "button", "name": "ver_movimentos", "valuePT": "Ver Movimentos", "valueEN": "View Transactions"}
+             ]}
+           ]
+         },
+         "footer": {"primaryAction": "Ver Movimentos"}
+       }
+     ]
+   }
+   IMPORTANTE: body.sections é um ARRAY de objetos {type, components[]}. Cada component tem {type, name, valuePT?, valueEN?}.
+   Tipos de componentes válidos: button, textfield, card, text, alert, select, list, checkbox, divider, title.
 
-3. RESUMO FINAL
-   Apresenta protótipos criados, estados cobertos, e próximos passos.
+3. DEPLOY DO PROTÓTIPO
+   Após criar o protótipo com pa_create_prototype, usa pa_deploy_prototype com o bdev_code.
+   Esta tool exporta o projeto Vite+React, instala dependências, e inicia o servidor de desenvolvimento.
+   Retorna URL (ex: http://localhost:5173) — apresenta-o no resumo final para o utilizador testar.
+
+4. RESUMO FINAL
+   Apresenta protótipos criados, número de ecrãs, URL do protótipo em execução, e próximos passos.
 
 REGRAS:
+- O bdev_code vem SEMPRE do handoff do DA (campo **BDEV:**). NUNCA inventes ou reutilizes um BDEV de protótipos existentes
 - Usa APENAS tools com prefixo pa_
-- Gera código React com componentes do Design System BCTT
+- Gera os ecrãs como wireframes estruturados (body.sections.components)
+- Cards do mesmo tipo DEVEM estar todos na MESMA section para ficarem em Grid consistente (nunca deixar cards órfãos fora do grupo)
+- Extrai informação dos wireframes do DA para construir o JSON
+- Após criar o protótipo, faz sempre deploy para o utilizador poder testar
 - O resumo final é a resposta que o utilizador vai ver`,
 };
 

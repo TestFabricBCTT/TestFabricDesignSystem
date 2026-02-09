@@ -370,6 +370,28 @@ export interface Interaction {
 }
 
 // ============================================
+// PROJECT HISTORY (Pipeline-oriented)
+// ============================================
+export type AgentIterationStatus = 'not_started' | 'in_progress' | 'completed';
+
+export interface AgentIteration {
+  agentId: string;
+  status: AgentIterationStatus;
+  messages: ChatMessage[];
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  bdevCode?: string;
+  createdAt: string;
+  updatedAt: string;
+  agents: Record<string, AgentIteration>;
+}
+
+// ============================================
 // APP STATE
 // ============================================
 export interface AppState {

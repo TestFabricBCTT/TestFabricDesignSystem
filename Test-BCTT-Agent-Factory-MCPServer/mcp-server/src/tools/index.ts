@@ -14,6 +14,22 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as crypto from 'crypto';
+
+// ============================================
+// BCTT DESIGN SYSTEM PATH HELPER
+// ============================================
+
+/**
+ * Resolves path to bctt-design-system project (sibling of mcp-server)
+ */
+function getBcttDesignSystemPath(): string {
+  const dsPath = path.resolve(process.cwd(), '..', 'bctt-design-system');
+  if (!fs.existsSync(dsPath)) {
+    throw new Error(`bctt-design-system not found at ${dsPath}`);
+  }
+  return dsPath;
+}
 
 // ============================================
 // DEMO MODE PROTECTIONS
@@ -109,8 +125,10 @@ import {
   type PrototypeSummary,
   type Journey,
   type WireframeScreen,
+  type WireframeElement,
 } from '../prototype/index.js';
 import { comparePrototypes, generateComparisonSummary } from '../prototype/compare.js';
+import { deployPrototype } from '../prototype/export-to-disk.js';
 
 // Tool definitions (Agent tools + Jira tools)
 export const tools: Tool[] = [
@@ -874,16 +892,62 @@ export const tools: Tool[] = [
           items: {
             type: "object",
             properties: {
-              screenId: { type: "string" },
-              screenName: { type: "string" },
-              userStory: { type: "string" },
-              header: { type: "object" },
-              body: { type: "object" },
-              footer: { type: "object" }
+              screenId: { type: "string", description: "ID do ecrã (ex: SCR-001)" },
+              screenName: { type: "string", description: "Nome do ecrã (ex: Consulta de Saldos)" },
+              userStory: { type: "string", description: "User Story associada (ex: US001)" },
+              header: {
+                type: "object",
+                description: "Cabeçalho do ecrã",
+                properties: {
+                  title: { type: "string", description: "Título do ecrã" },
+                  backButton: { type: "boolean" },
+                  closeButton: { type: "boolean" }
+                }
+              },
+              body: {
+                type: "object",
+                description: "Corpo do ecrã com secções e componentes",
+                properties: {
+                  sections: {
+                    type: "array",
+                    description: "Secções do ecrã",
+                    items: {
+                      type: "object",
+                      properties: {
+                        type: { type: "string", description: "Tipo de secção: info, form, list, content, actions" },
+                        components: {
+                          type: "array",
+                          description: "Componentes da secção",
+                          items: {
+                            type: "object",
+                            properties: {
+                              type: { type: "string", description: "Tipo: button, textfield, card, text, alert, select, list, checkbox, divider" },
+                              name: { type: "string", description: "Nome identificador" },
+                              valuePT: { type: "string", description: "Texto em PT" },
+                              valueEN: { type: "string", description: "Texto em EN" }
+                            },
+                            required: ["type", "name"]
+                          }
+                        }
+                      },
+                      required: ["type", "components"]
+                    }
+                  }
+                },
+                required: ["sections"]
+              },
+              footer: {
+                type: "object",
+                description: "Rodapé com ações",
+                properties: {
+                  primaryAction: { type: "string", description: "Texto do botão principal" },
+                  secondaryAction: { type: "string", description: "Texto do botão secundário" }
+                }
+              }
             },
             required: ["screenId", "screenName", "body"]
           },
-          description: "Wireframes do DA"
+          description: "Wireframes do DA. Cada wireframe tem body.sections[].components[] com componentes do Design System."
         },
         approved_by: {
           type: "string",
@@ -972,23 +1036,55 @@ export const tools: Tool[] = [
     }
   },
 
+  {
+    name: "pa_deploy_prototype",
+    description: "PA Agent: Exporta protótipo para projeto Vite+React, instala dependências e inicia servidor local. Retorna URL (http://localhost:5173) para testar.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV"
+        },
+        version: {
+          type: "number",
+          description: "Versão específica (opcional, usa última)"
+        }
+      },
+      required: ["bdev_code"]
+    }
+  },
+
   // ============================================
   // DSLA - DESIGN SYSTEM LIBRARY AGENT TOOLS
   // ============================================
   {
     name: "dsla_create_component",
-    description: "DSLA Agent: Cria componente React seguindo Atomic Design e convenções do Design System.",
+    description: "DSLA Agent: Cria componente React no projecto bctt-design-system. Escreve ficheiros .tsx + index.ts + actualiza barrel export.",
     inputSchema: {
       type: "object",
       properties: {
         component_name: {
           type: "string",
-          description: "Nome do componente (PascalCase)"
+          description: "Nome do componente (PascalCase, ex: Stepper, Skeleton)"
         },
         atomic_level: {
           type: "string",
           enum: ["atom", "molecule", "organism", "template"],
           description: "Nível no Atomic Design"
+        },
+        base_mui_component: {
+          type: "string",
+          description: "Componente MUI base a wrapar (ex: Stepper, Skeleton, Accordion). Default: Box"
+        },
+        variants: {
+          type: "array",
+          items: { type: "string" },
+          description: "Variantes visuais (ex: ['horizontal', 'vertical'])"
+        },
+        design_tokens: {
+          type: "object",
+          description: "Design tokens BCTT a aplicar (ex: { activeColor: '#E00024', fontFamily: 'Inter' })"
         },
         figma_link: {
           type: "string",
@@ -1013,7 +1109,7 @@ export const tools: Tool[] = [
   },
   {
     name: "dsla_generate_stories",
-    description: "DSLA Agent: Gera stories do Storybook para um componente.",
+    description: "DSLA Agent: Gera e escreve ficheiro .stories.tsx no projecto bctt-design-system para Storybook.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1044,12 +1140,126 @@ export const tools: Tool[] = [
       required: ["component_code"]
     }
   },
+  {
+    name: "dsla_get_component_spec",
+    description: "DSLA Agent: Consulta especificação de um componente no catálogo do Design System (35+ specs com props, variantes, a11y, usage).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        component_name: {
+          type: "string",
+          description: "Nome do componente (ex: ButtonPrimary, TextField, Card)"
+        }
+      },
+      required: ["component_name"]
+    }
+  },
+  {
+    name: "dsla_build_design_system",
+    description: "DSLA Agent: Compila o projecto bctt-design-system (npm run build). Chamar DEPOIS de criar todos os componentes.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  },
 
   // ============================================
   // JIRA TOOLS (imported from jira module)
   // ============================================
   ...jiraTools,
 ];
+
+// ============================================
+// INPUT NORMALIZATION (PA tools)
+// ============================================
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+function normalizeComponent(c: any): WireframeElement {
+  if (typeof c === 'string') return { type: 'text', name: c };
+  return {
+    type: c.type || 'text',
+    name: c.name || c.label || c.type || 'component',
+    props: c.props,
+    children: Array.isArray(c.children) ? c.children.map(normalizeComponent) : undefined,
+    i18nKey: c.i18nKey || c.i18n_key,
+    valuePT: c.valuePT || c.value_pt || c.pt,
+    valueEN: c.valueEN || c.value_en || c.en,
+  };
+}
+
+function normalizeBody(body: any): WireframeScreen['body'] {
+  if (!body) return { sections: [] };
+
+  // If body.sections exists and is array, normalize each section
+  if (Array.isArray(body.sections)) {
+    return {
+      sections: body.sections.map((s: any) => ({
+        type: s.type || 'content',
+        components: Array.isArray(s.components) ? s.components.map(normalizeComponent) : [],
+      })),
+    };
+  }
+
+  // If body.components exists (flat list without sections wrapper)
+  if (Array.isArray(body.components)) {
+    return {
+      sections: [{ type: 'content', components: body.components.map(normalizeComponent) }],
+    };
+  }
+
+  // If body has properties that look like component arrays
+  const sections: Array<{ type: string; components: WireframeElement[] }> = [];
+  for (const [key, value] of Object.entries(body)) {
+    if (Array.isArray(value)) {
+      sections.push({ type: key, components: (value as any[]).map(normalizeComponent) });
+    }
+  }
+  if (sections.length > 0) return { sections };
+
+  // Fallback: empty sections
+  return { sections: [] };
+}
+
+function normalizeWireframes(wireframes: any[]): WireframeScreen[] {
+  return wireframes.map((w: any) => ({
+    screenId: w.screenId || w.screen_id || `SCR-${Math.random().toString(36).substr(2, 4)}`,
+    screenName: w.screenName || w.screen_name || w.name || 'Screen',
+    userStory: w.userStory || w.user_story,
+    header: w.header ? {
+      title: w.header.title || w.header.name || '',
+      titlePT: w.header.titlePT || w.header.title_pt,
+      titleEN: w.header.titleEN || w.header.title_en,
+      backButton: w.header.backButton ?? w.header.back_button ?? false,
+      closeButton: w.header.closeButton ?? w.header.close_button ?? false,
+    } : undefined,
+    body: normalizeBody(w.body),
+    footer: w.footer ? {
+      primaryAction: w.footer.primaryAction || w.footer.primary_action || w.footer.primary,
+      primaryActionPT: w.footer.primaryActionPT,
+      primaryActionEN: w.footer.primaryActionEN,
+      secondaryAction: w.footer.secondaryAction || w.footer.secondary_action || w.footer.secondary,
+      secondaryActionPT: w.footer.secondaryActionPT,
+      secondaryActionEN: w.footer.secondaryActionEN,
+    } : undefined,
+    navigation: w.navigation ? {
+      next: w.navigation.next,
+      previous: w.navigation.previous,
+    } : undefined,
+  }));
+}
+
+function normalizeJourneys(journeys: any[]): Journey[] {
+  return journeys.map((j: any) => ({
+    id: j.id || `J${Math.random().toString(36).substr(2, 4)}`,
+    name: j.name || 'Journey',
+    screens: Array.isArray(j.screens) ? j.screens : [],
+    userStories: Array.isArray(j.userStories || j.user_stories) ? (j.userStories || j.user_stories) : [],
+  }));
+}
+
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Tool handlers
 const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<string>> = {
@@ -1309,8 +1519,18 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
 
       // Persist document to temp file for cross-process access (MCP spawns separate processes per phase)
       const tmpDir = os.tmpdir();
-      const docPath = path.join(tmpDir, `fa-doc-${codigo_bdev.replace(/[\[\]]/g, '')}.json`);
-      fs.writeFileSync(docPath, JSON.stringify({ fileName, base64 }));
+      const checksum = crypto.createHash('sha256').update(base64).digest('hex');
+      const docPath = path.join(tmpDir, `fa-doc-${Date.now()}-${codigo_bdev.replace(/[\[\]]/g, '')}.json`);
+      const docPayload = JSON.stringify({ fileName, base64, checksum, timestamp: Date.now() });
+      fs.writeFileSync(docPath, docPayload);
+
+      // Verify write integrity
+      const written = fs.readFileSync(docPath, 'utf-8');
+      const parsed = JSON.parse(written);
+      if (parsed.checksum !== checksum) {
+        throw new Error(`Document write integrity check failed (expected ${checksum}, got ${parsed.checksum})`);
+      }
+      console.error(`[FA] Document saved: ${docPath} (${Math.round(base64.length * 0.75 / 1024)}KB, checksum: ${checksum.substring(0, 12)}...)`);
 
       return JSON.stringify({
         agent: "FA",
@@ -1318,11 +1538,13 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
         success: true,
         document: {
           fileName,
-          mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          checksum,
           sizeKB: Math.round(base64.length * 0.75 / 1024),
           stored: true,
+          // base64 NOT included — truncateOutput (2000 chars) would corrupt it.
+          // jira_bulk_create_with_document reads the full document from temp file.
         },
-        message: `Documento '${fileName}' gerado (${Math.round(base64.length * 0.75 / 1024)}KB). Guardado em memória para anexar ao Jira.`,
+        message: `Documento '${fileName}' gerado (${Math.round(base64.length * 0.75 / 1024)}KB, checksum: ${checksum.substring(0, 12)}). Guardado em memória para anexar ao Jira.`,
         next_step: "Use 'jira_bulk_create_with_document' para criar no Jira com documento anexado automaticamente.",
       }, null, 2);
     } catch (error) {
@@ -2433,12 +2655,11 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
   },
 
   pa_create_prototype: async (args) => {
-    const { bdev_code, journeys, wireframes, approved_by } = args as {
-      bdev_code: string;
-      journeys: Journey[];
-      wireframes: WireframeScreen[];
-      approved_by?: 'FA' | 'Client';
-    };
+    const raw = args as Record<string, unknown>;
+    const bdev_code = raw.bdev_code as string;
+    const wireframes = normalizeWireframes((raw.wireframes as unknown[]) || []);
+    const journeys = normalizeJourneys((raw.journeys as unknown[]) || []);
+    const approved_by = raw.approved_by as 'FA' | 'Client' | undefined;
 
     try {
       const prototype = generatePrototype({
@@ -2664,60 +2885,114 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
     }, null, 2);
   },
 
-  // DSLA Tools
+  pa_deploy_prototype: async (args) => {
+    const { bdev_code, version } = args as { bdev_code: string; version?: number };
+    try {
+      const result = await deployPrototype(bdev_code, version);
+      return JSON.stringify({
+        agent: "PA",
+        action: "deploy_prototype",
+        success: true,
+        url: result.url,
+        outputPath: result.outputPath,
+        fileCount: result.files.length,
+        message: `Protótipo ${bdev_code} a correr em ${result.url}`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "PA",
+        action: "deploy_prototype",
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        message: `Falha ao fazer deploy do protótipo ${bdev_code}`,
+      }, null, 2);
+    }
+  },
+
+  // DSLA Tools — write real files to bctt-design-system project
   dsla_create_component: async (args) => {
-    const { component_name, atomic_level, figma_link, props } = args as {
+    const { component_name, atomic_level, props, base_mui_component, variants, design_tokens } = args as {
       component_name: string;
       atomic_level: string;
-      figma_link?: string;
       props?: Array<{ name: string; type: string; required: boolean; description: string }>;
+      base_mui_component?: string;
+      variants?: string[];
+      design_tokens?: Record<string, string>;
     };
 
-    const componentProps = props || [
-      { name: "variant", type: "'default' | 'primary' | 'secondary'", required: false, description: "Variante visual" },
-      { name: "children", type: "React.ReactNode", required: true, description: "Conteúdo do componente" }
-    ];
+    const dsRoot = getBcttDesignSystemPath();
+    const componentDir = path.join(dsRoot, 'src', 'components', component_name);
+    fs.mkdirSync(componentDir, { recursive: true });
 
+    // Generate props interface
+    const componentProps = props || [
+      { name: 'variant', type: `'${(variants || ['default']).join("' | '")}'`, required: false, description: 'Variante visual' },
+      { name: 'children', type: 'React.ReactNode', required: true, description: 'Conteudo' },
+    ];
     const propsInterface = componentProps
-      .map(p => `  ${p.name}${p.required ? "" : "?"}: ${p.type};`)
-      .join("\n");
+      .map(p => `  /** ${p.description} */\n  ${p.name}${p.required ? '' : '?'}: ${p.type};`)
+      .join('\n');
+
+    // Generate component code (following Button.tsx pattern: forwardRef + MUI wrapper)
+    // Always alias MUI imports to avoid naming conflicts (e.g. Chip vs MuiChip)
+    const muiBase = base_mui_component || 'Box';
+    const muiAlias = `Mui${muiBase}`;
+    const muiPropsAlias = `Mui${muiBase}Props`;
+    const muiImport = `import { ${muiBase} as ${muiAlias}, type ${muiBase}Props as ${muiPropsAlias} } from '@mui/material';`;
 
     const code = `import React from 'react';
-import { styled } from '@mui/material/styles';
-import { Box, BoxProps } from '@mui/material';
+${muiImport}
 
-export interface ${component_name}Props extends Omit<BoxProps, 'children'> {
+export interface ${component_name}Props extends Omit<${muiPropsAlias}, 'variant'> {
 ${propsInterface}
 }
 
-const Styled${component_name} = styled(Box)<${component_name}Props>(({ theme }) => ({
-  // Add component styles here
-}));
+export const ${component_name} = React.forwardRef<HTMLDivElement, ${component_name}Props>(
+  ({ variant = '${(variants || ['default'])[0]}', children, ...props }, ref) => {
+    return (
+      <${muiAlias} ref={ref} {...props}>
+        {children}
+      </${muiAlias}>
+    );
+  }
+);
 
-export const ${component_name}: React.FC<${component_name}Props> = ({
-  variant = 'default',
-  children,
-  ...props
-}) => {
-  return (
-    <Styled${component_name} data-variant={variant} {...props}>
-      {children}
-    </Styled${component_name}>
-  );
-};
+${component_name}.displayName = '${component_name}';
+export default ${component_name};
+`;
 
-export default ${component_name};`;
+    // Write component file
+    fs.writeFileSync(path.join(componentDir, `${component_name}.tsx`), code);
+
+    // Write barrel export
+    const indexCode = `export { ${component_name}, type ${component_name}Props } from './${component_name}';\nexport { default } from './${component_name}';\n`;
+    fs.writeFileSync(path.join(componentDir, 'index.ts'), indexCode);
+
+    // Update main components barrel (append if not already exported)
+    const mainBarrel = path.join(dsRoot, 'src', 'components', 'index.ts');
+    if (fs.existsSync(mainBarrel)) {
+      const barrelContent = fs.readFileSync(mainBarrel, 'utf-8');
+      const exportLine = `\n// ${component_name}\nexport { ${component_name}, type ${component_name}Props } from './${component_name}';\n`;
+      if (!barrelContent.includes(`from './${component_name}'`)) {
+        fs.appendFileSync(mainBarrel, exportLine);
+      }
+    }
 
     return JSON.stringify({
       agent: "DSLA",
       action: "create_component",
+      success: true,
       component: {
         name: component_name,
         atomic_level,
-        figma_link: figma_link || null,
-        path: `src/components/${atomic_level}s/${component_name}/${component_name}.tsx`,
-        code
-      }
+        base_mui_component: muiBase,
+        files_written: [
+          `src/components/${component_name}/${component_name}.tsx`,
+          `src/components/${component_name}/index.ts`,
+          `src/components/index.ts (updated)`,
+        ],
+      },
+      message: `Componente ${component_name} criado em bctt-design-system/src/components/${component_name}/`
     }, null, 2);
   },
 
@@ -2727,36 +3002,53 @@ export default ${component_name};`;
       variants?: string[];
     };
 
-    const storyVariants = variants || ["Default", "Primary", "Secondary"];
+    const dsRoot = getBcttDesignSystemPath();
+    const storyVariants = variants || ['Default', 'Primary', 'Secondary'];
 
     const storiesCode = `import type { Meta, StoryObj } from '@storybook/react';
+import { Stack } from '@mui/material';
 import { ${component_name} } from './${component_name}';
 
 const meta: Meta<typeof ${component_name}> = {
   title: 'Components/${component_name}',
   component: ${component_name},
+  parameters: { layout: 'centered' },
   tags: ['autodocs'],
 };
 
 export default meta;
-type Story = StoryObj<typeof ${component_name}>;
+type Story = StoryObj<typeof meta>;
 
 ${storyVariants.map(v => `export const ${v}: Story = {
-  args: {
-    variant: '${v.toLowerCase()}',
-    children: '${component_name} - ${v}',
-  },
-};`).join("\n\n")}`;
+  args: { variant: '${v.toLowerCase()}', children: '${component_name} - ${v}' },
+};`).join('\n\n')}
+
+export const AllVariants: Story = {
+  render: () => (
+    <Stack direction="row" spacing={2}>
+${storyVariants.map(v => `      <${component_name} variant="${v.toLowerCase()}">${v}</${component_name}>`).join('\n')}
+    </Stack>
+  ),
+};
+`;
+
+    // Ensure directory exists and write story file
+    const componentDir = path.join(dsRoot, 'src', 'components', component_name);
+    if (!fs.existsSync(componentDir)) {
+      fs.mkdirSync(componentDir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(componentDir, `${component_name}.stories.tsx`), storiesCode);
 
     return JSON.stringify({
       agent: "DSLA",
       action: "generate_stories",
+      success: true,
       stories: {
         component: component_name,
-        path: `src/components/**/${component_name}/${component_name}.stories.tsx`,
-        code: storiesCode,
-        variants: storyVariants
-      }
+        file_written: `src/components/${component_name}/${component_name}.stories.tsx`,
+        variants: storyVariants,
+      },
+      message: `Stories criadas para ${component_name} em bctt-design-system`
     }, null, 2);
   },
 
@@ -2781,6 +3073,49 @@ ${storyVariants.map(v => `export const ${v}: Story = {
         "Testar com screen reader (NVDA/VoiceOver)"
       ]
     }, null, 2);
+  },
+
+  dsla_get_component_spec: async (args) => {
+    const { component_name } = args as { component_name: string };
+
+    const spec = getComponentSpec(component_name);
+    if (spec) {
+      return JSON.stringify({ found: true, spec }, null, 2);
+    }
+
+    // Try fuzzy match
+    const allNames = Object.keys(componentSpecs);
+    const match = allNames.find(
+      k => k.toLowerCase().includes(component_name.toLowerCase())
+    );
+
+    return JSON.stringify({
+      found: false,
+      closest_match: match ? { name: match, spec: componentSpecs[match] } : null,
+      available: allNames,
+    }, null, 2);
+  },
+
+  dsla_build_design_system: async () => {
+    const dsRoot = getBcttDesignSystemPath();
+    const { execSync } = await import('child_process');
+    try {
+      execSync('npm run build', { cwd: dsRoot, timeout: 60000, stdio: 'pipe' });
+      return JSON.stringify({
+        agent: "DSLA",
+        action: "build_design_system",
+        success: true,
+        message: 'bctt-design-system compilado com sucesso (dist/ criado)'
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "DSLA",
+        action: "build_design_system",
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        message: 'Falha ao compilar bctt-design-system'
+      }, null, 2);
+    }
   }
 };
 

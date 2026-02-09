@@ -17,6 +17,10 @@ export function getSessionId(): string {
   return currentSessionId;
 }
 
+export function setSessionId(id: string): void {
+  currentSessionId = id;
+}
+
 export function resetSession(): void {
   currentSessionId = null;
 }
@@ -97,56 +101,88 @@ export async function sendMessage(
  */
 export async function* sendMessageStream(
   agentId: string,
-  message: string
+  message: string,
+  externalSignal?: AbortSignal,
 ): AsyncGenerator<{ type: string; content?: string; name?: string; message?: string }> {
   const sessionId = getSessionId();
 
-  const response = await fetch(`${API_BASE_URL}/chat/stream`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      sessionId,
-      agentId,
-      message,
-    }),
-  });
+  // AbortController with inactivity timeout (resets on each data received)
+  const controller = new AbortController();
+  let timeout = setTimeout(() => controller.abort(), 720000); // 12 min initial
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error((error as ApiError).message || 'Failed to send message');
+  // If external signal aborts (e.g. chat closed), abort our controller too
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
   }
 
-  const reader = response.body?.getReader();
-  if (!reader) {
-    throw new Error('No response body');
-  }
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sessionId,
+        agentId,
+        message,
+      }),
+      signal: controller.signal,
+    });
 
-  const decoder = new TextDecoder();
-  let buffer = '';
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error((error as ApiError).message || 'Failed to send message');
+    }
 
-  while (true) {
-    const { done, value } = await reader.read();
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body');
+    }
 
-    if (done) break;
+    const decoder = new TextDecoder();
+    let buffer = '';
 
-    buffer += decoder.decode(value, { stream: true });
+    while (true) {
+      const { done, value } = await reader.read();
 
-    // Parse SSE events
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+      if (done) break;
 
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        try {
-          const data = JSON.parse(line.slice(6));
-          yield data;
-        } catch {
-          // Ignore parse errors
+      // Reset inactivity timeout on each data received (connection is alive)
+      clearTimeout(timeout);
+      timeout = setTimeout(() => controller.abort(), 120000); // 2 min inactivity
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Parse SSE events
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            // Skip heartbeat events (keep-alive from server)
+            if (data.type === 'heartbeat') continue;
+            yield data;
+          } catch {
+            // Ignore parse errors
+          }
         }
       }
     }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      // If aborted by external signal (user closed chat), silently stop
+      if (externalSignal?.aborted) return;
+      throw new Error('Conexão perdida (sem dados há 2 minutos). O agente pode ainda estar a processar — tenta refrescar.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -239,6 +275,66 @@ export async function isApiReady(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// ============================================
+// PROTOTYPE API
+// ============================================
+
+export interface PrototypeSummary {
+  id: string;
+  bdevCode: string;
+  version: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  screenCount: number;
+  approvedBy: string | null;
+}
+
+export interface ExportToDiskResult {
+  success: boolean;
+  outputPath: string;
+  files: string[];
+  command: string;
+}
+
+/**
+ * List prototypes, optionally filtered by BDEV code
+ */
+export async function fetchPrototypes(bdevCode?: string): Promise<PrototypeSummary[]> {
+  const url = bdevCode
+    ? `${API_BASE_URL}/api/prototypes?bdevCode=${encodeURIComponent(bdevCode)}`
+    : `${API_BASE_URL}/api/prototypes`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to list prototypes');
+  }
+
+  const data = await response.json();
+  return data.prototypes;
+}
+
+/**
+ * Export prototype to a standalone Vite+React project on disk
+ */
+export async function exportPrototypeToDisk(
+  bdevCode: string,
+  version?: number
+): Promise<ExportToDiskResult> {
+  const response = await fetch(`${API_BASE_URL}/api/prototypes/${encodeURIComponent(bdevCode)}/export-to-disk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as ApiError).message || 'Failed to export prototype');
+  }
+
+  return response.json();
 }
 
 // Export API base URL for debugging

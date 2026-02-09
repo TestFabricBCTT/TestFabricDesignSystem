@@ -4,11 +4,21 @@ import { theme } from '@/theme/theme';
 import { Layout, Header, Navigation } from '@/components/layout';
 import { AgentList, AgentDetail } from '@/components/agents';
 import { ChatModal } from '@/components/chat';
-import { PhaseInteractionPanel, AgentPickerDialog } from '@/components/interactions';
-import { Agent, PhaseId, Interaction } from '@/types';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { GovernanceDiagram } from '@/components/governance';
+import { ProjectHistoryPanel, PrototypesPanel } from '@/components/interactions';
+import type { ProjectAgentAction } from '@/components/interactions';
+import { Agent, PhaseId } from '@/types';
 import { phases, getPhaseById, getAgentsByPhase, getAgentById } from '@/data/agents';
 import { useChat } from '@/hooks/useChat';
-import { useInteractionHistory } from '@/hooks/useInteractionHistory';
+import { useProjectHistory } from '@/hooks/useProjectHistory';
+import { setSessionId, exportPrototypeToDisk } from '@/services/api';
+
+/** Extract BDEV code from text (e.g. "BDEV123" from agent response) */
+function extractBdevCode(text: string): string | null {
+  const match = text.match(/BDEV\d+/i);
+  return match ? match[0].toUpperCase() : null;
+}
 
 function App() {
   // Phase state
@@ -20,8 +30,8 @@ function App() {
   const [detailAgent, setDetailAgent] = useState<Agent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Agent picker for new iteration
-  const [pickerOpen, setPickerOpen] = useState(false);
+  // Governance diagram state
+  const [governanceOpen, setGovernanceOpen] = useState(false);
 
   // Chat state - using the real useChat hook that calls the API
   const [chatOpen, setChatOpen] = useState(false);
@@ -32,6 +42,7 @@ function App() {
     currentAgent: chatAgent,
     pendingAutoAdvance,
     progress,
+    streamingText,
     openChat,
     closeChat: closeChatHook,
     sendMessage,
@@ -42,48 +53,128 @@ function App() {
     clearAutoAdvance,
   } = useChat();
 
-  // Interaction history
-  const { getByPhase, save, update, remove } = useInteractionHistory();
-  const phaseInteractions = getByPhase(activePhaseId);
+  // Project history
+  const {
+    projects,
+    activeProject,
+    createProject,
+    updateAgentIteration,
+    updateProject,
+    deleteProject,
+    setActiveProject,
+  } = useProjectHistory();
 
-  // Track active interaction for auto-save
-  const activeInteractionId = useRef<string | null>(null);
+  // Ref to track active project ID for use inside closures
+  const activeProjectRef = useRef<string | null>(null);
+  useEffect(() => {
+    activeProjectRef.current = activeProject?.id ?? null;
+  }, [activeProject]);
+
+  // Guard against duplicate auto-advance transitions
+  const isTransitioningRef = useRef(false);
+  const innerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-advance: when an agent produces a HANDOFF, auto-open next agent
   useEffect(() => {
     if (!pendingAutoAdvance) return;
 
+    // Guard: if already transitioning, ignore duplicate
+    if (isTransitioningRef.current) {
+      clearAutoAdvance();
+      return;
+    }
+    isTransitioningRef.current = true;
+
     const nextAgent = getAgentById(pendingAutoAdvance);
     if (!nextAgent) {
       console.warn(`[auto-advance] Agent ${pendingAutoAdvance} not found`);
       clearAutoAdvance();
+      isTransitioningRef.current = false;
       return;
     }
 
-    console.log(`[auto-advance] Transitioning to ${nextAgent.sigla} (${nextAgent.nome})`);
-    clearAutoAdvance();
+    // Mark current agent as completed in project (save its messages)
+    const projId = activeProjectRef.current;
+    if (projId && chatAgent) {
+      const currentMsgs = getCurrentMessages().filter(
+        (m) => m.role === 'user' || m.role === 'assistant',
+      );
+      updateAgentIteration(projId, chatAgent.id, {
+        status: 'completed',
+        messages: currentMsgs,
+        completedAt: new Date().toISOString(),
+      });
 
-    // Close current chat
-    setChatOpen(false);
+      // Extract BDEV code from FA during auto-advance
+      if (chatAgent.id === 'fa') {
+        const allText = currentMsgs.map((m) => m.content).join(' ');
+        const bdev = extractBdevCode(allText);
+        if (bdev) {
+          const currentProject = projects.find((p) => p.id === projId);
+          const currentTitle = currentProject?.title || 'Novo Pedido';
+          const titleWithBdev = currentTitle.startsWith(bdev)
+            ? currentTitle
+            : `${bdev} — ${currentTitle}`;
+          updateProject(projId, { bdevCode: bdev, title: titleWithBdev });
+        }
+      }
+    }
+
+    console.log(`[auto-advance] Transitioning to ${nextAgent.sigla} (${nextAgent.nome})`);
     closeChatHook();
 
-    // Open next agent after a short visual transition
-    setTimeout(() => {
-      openChat(nextAgent);
-      setLiveMode(true);
-      setChatOpen(true);
-      activeInteractionId.current = null;
+    const t1 = setTimeout(() => {
+      try {
+        // Mark next agent as in_progress in project
+        if (projId) {
+          updateAgentIteration(projId, nextAgent.id, {
+            status: 'in_progress',
+            startedAt: new Date().toISOString(),
+          });
+        }
 
-      // Auto-send initial processing message
-      setTimeout(() => {
-        sendMessage('Analisa e processa com base no contexto recebido do agente anterior.');
-      }, 500);
+        openChat(nextAgent);
+        setLiveMode(true);
+        setChatOpen(true);
+
+        // Nested: send message after agent is open
+        const t2 = setTimeout(() => {
+          try {
+            sendMessage('Analisa e processa com base no contexto recebido do agente anterior.');
+          } catch (e) {
+            console.error('[auto-advance] Failed to send message:', e);
+          }
+          clearAutoAdvance();
+          isTransitioningRef.current = false;
+        }, 500);
+        innerTimeoutRef.current = t2;
+      } catch (e) {
+        console.error('[auto-advance] Failed to open next agent:', e);
+        clearAutoAdvance();
+        isTransitioningRef.current = false;
+      }
     }, 800);
-  }, [pendingAutoAdvance, clearAutoAdvance, closeChatHook, openChat, setLiveMode, sendMessage]);
+
+    return () => {
+      clearTimeout(t1);
+      if (innerTimeoutRef.current) clearTimeout(innerTimeoutRef.current);
+      isTransitioningRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAutoAdvance]);
 
   // Phase change handler
   const handlePhaseChange = useCallback((phaseId: string) => {
     setActivePhaseId(phaseId as PhaseId);
+  }, []);
+
+  // Governance diagram handlers
+  const handleGovernanceOpen = useCallback(() => {
+    setGovernanceOpen(true);
+  }, []);
+
+  const handleGovernanceClose = useCallback(() => {
+    setGovernanceOpen(false);
   }, []);
 
   // Agent click handler - open detail modal
@@ -92,13 +183,27 @@ function App() {
     setDetailOpen(true);
   }, []);
 
-  // Chat click handler - open chat modal
+  // Chat click handler - open chat modal with project tracking
+  // Dashboard entry → ALWAYS creates a new project (continue existing via History panel)
   const handleChatClick = useCallback((agent: Agent) => {
+    const project = createProject('Novo Pedido');
+    setSessionId(project.id);
+    activeProjectRef.current = project.id;
+
+    // Mark agent as in_progress
+    const projId = activeProjectRef.current;
+    if (projId) {
+      updateAgentIteration(projId, agent.id, {
+        status: 'in_progress',
+        startedAt: new Date().toISOString(),
+      });
+    }
+
     openChat(agent);
+    setLiveMode(true);
     setChatOpen(true);
     setDetailOpen(false);
-    activeInteractionId.current = null;
-  }, [openChat]);
+  }, [openChat, setLiveMode, createProject, updateAgentIteration]);
 
   // Close detail modal
   const handleDetailClose = useCallback(() => {
@@ -106,38 +211,49 @@ function App() {
     setDetailAgent(null);
   }, []);
 
-  // Close chat modal - auto-save interaction
+  // Close chat modal - auto-save to project
   const handleChatClose = useCallback(() => {
     const currentMsgs = getCurrentMessages();
     const liveMessages = currentMsgs.filter((m) => m.role === 'user' || m.role === 'assistant');
+    const projId = activeProjectRef.current;
 
-    if (chatAgent && isLiveMode && liveMessages.length > 1) {
-      // Extract a title from the first user message
-      const firstUserMsg = liveMessages.find((m) => m.role === 'user');
-      const title = firstUserMsg
-        ? firstUserMsg.content.substring(0, 60) + (firstUserMsg.content.length > 60 ? '...' : '')
-        : `Conversa com ${chatAgent.nome}`;
+    if (chatAgent && projId && liveMessages.length > 1) {
+      // If still loading, keep as in_progress (stream will be aborted by closeChatHook)
+      const status = isLoading ? 'in_progress' : 'completed';
+      updateAgentIteration(projId, chatAgent.id, {
+        status,
+        messages: liveMessages,
+        ...(status === 'completed' ? { completedAt: new Date().toISOString() } : {}),
+      });
 
-      if (activeInteractionId.current) {
-        // Update existing interaction
-        update(activeInteractionId.current, liveMessages, title);
-      } else {
-        // Save new interaction
-        const interaction = save({
-          phaseId: activePhaseId,
-          agentId: chatAgent.id,
-          agentSigla: chatAgent.sigla,
-          title,
-          messages: liveMessages,
-        });
-        activeInteractionId.current = interaction.id;
+      // Extract title from BA's first user message
+      if (chatAgent.id === 'ba') {
+        const firstUserMsg = liveMessages.find((m) => m.role === 'user');
+        if (firstUserMsg) {
+          const title = firstUserMsg.content.substring(0, 60) +
+            (firstUserMsg.content.length > 60 ? '...' : '');
+          updateProject(projId, { title });
+        }
+      }
+
+      // Extract BDEV code from FA responses and update project title
+      if (chatAgent.id === 'fa') {
+        const allText = liveMessages.map((m) => m.content).join(' ');
+        const bdev = extractBdevCode(allText);
+        if (bdev) {
+          const currentProject = projects.find((p) => p.id === projId);
+          const currentTitle = currentProject?.title || 'Novo Pedido';
+          const titleWithBdev = currentTitle.startsWith(bdev)
+            ? currentTitle
+            : `${bdev} — ${currentTitle}`;
+          updateProject(projId, { bdevCode: bdev, title: titleWithBdev });
+        }
       }
     }
 
     setChatOpen(false);
-    closeChatHook();
-    activeInteractionId.current = null;
-  }, [chatAgent, isLiveMode, activePhaseId, getCurrentMessages, save, update, closeChatHook]);
+    closeChatHook(); // This now aborts the SSE stream (S1)
+  }, [chatAgent, isLoading, getCurrentMessages, updateAgentIteration, updateProject, closeChatHook, projects]);
 
   // Toggle live mode
   const handleToggleLiveMode = useCallback(() => {
@@ -156,34 +272,97 @@ function App() {
     alert(`A funcionalidade de download (${type}) será implementada com o MCP Server.`);
   }, []);
 
-  // Resume an interaction from history
-  const handleResumeInteraction = useCallback((interaction: Interaction) => {
-    const agent = getAgentById(interaction.agentId);
-    if (!agent) return;
+  // Project history handlers
+  const handleSelectProject = useCallback((projectId: string) => {
+    setActiveProject(projectId);
+    const project = projects.find((p) => p.id === projectId);
+    if (project) {
+      setSessionId(project.id);
+      activeProjectRef.current = project.id;
+    }
+  }, [projects, setActiveProject]);
 
-    resumeWithMessages(agent, interaction.messages);
-    activeInteractionId.current = interaction.id;
-    setChatOpen(true);
-  }, [resumeWithMessages]);
+  const handleNewProject = useCallback(() => {
+    const project = createProject('Novo Pedido');
+    setSessionId(project.id);
+    activeProjectRef.current = project.id;
 
-  // New iteration - open agent picker
-  const handleNewIteration = useCallback(() => {
-    setPickerOpen(true);
-  }, []);
+    // Open BA to start
+    const ba = getAgentById('ba');
+    if (ba) {
+      updateAgentIteration(project.id, 'ba', {
+        status: 'in_progress',
+        startedAt: new Date().toISOString(),
+      });
+      openChat(ba);
+      setLiveMode(true);
+      setChatOpen(true);
+    }
+  }, [createProject, updateAgentIteration, openChat, setLiveMode]);
 
-  // Agent picked for new iteration
-  const handleAgentPicked = useCallback((agent: Agent) => {
-    setPickerOpen(false);
-    openChat(agent);
-    toggleLiveMode(); // Start in live mode
-    setChatOpen(true);
-    activeInteractionId.current = null;
-  }, [openChat, toggleLiveMode]);
+  const handleRenameProject = useCallback((id: string, newTitle: string) => {
+    updateProject(id, { title: newTitle });
+  }, [updateProject]);
 
-  // Delete an interaction
-  const handleDeleteInteraction = useCallback((id: string) => {
-    remove(id);
-  }, [remove]);
+  const handleAgentAction = useCallback((action: ProjectAgentAction) => {
+    const project = projects.find((p) => p.id === action.projectId);
+    if (!project) return;
+
+    // Set this project as active + set session
+    setActiveProject(project.id);
+    setSessionId(project.id);
+    activeProjectRef.current = project.id;
+
+    if (action.type === 'view' || action.type === 'continue') {
+      const agent = getAgentById(action.agentId);
+      if (!agent) return;
+
+      const iteration = project.agents[action.agentId];
+      if (iteration && iteration.messages.length > 0) {
+        resumeWithMessages(agent, iteration.messages);
+      } else {
+        openChat(agent);
+        setLiveMode(true);
+      }
+      setChatOpen(true);
+    } else if (action.type === 'start') {
+      const agent = getAgentById(action.agentId);
+      if (!agent) return;
+
+      updateAgentIteration(project.id, action.agentId, {
+        status: 'in_progress',
+        startedAt: new Date().toISOString(),
+      });
+      openChat(agent);
+      setLiveMode(true);
+      setChatOpen(true);
+    } else if (action.type === 'launch-prototype') {
+      // Open PA chat and ask it to deploy
+      const pa = getAgentById('pa');
+      if (!pa) return;
+
+      const iteration = project.agents['pa'];
+      if (iteration && iteration.messages.length > 0) {
+        resumeWithMessages(pa, iteration.messages);
+      } else {
+        openChat(pa);
+      }
+      setLiveMode(true);
+      setChatOpen(true);
+      // Send deploy command after a brief delay
+      setTimeout(() => {
+        sendMessage(`Faz deploy do protótipo ${action.bdevCode}`);
+      }, 500);
+    } else if (action.type === 'export-prototype') {
+      exportPrototypeToDisk(action.bdevCode)
+        .then((result) => {
+          alert(`Protótipo exportado para: ${result.outputPath}`);
+        })
+        .catch((err) => {
+          alert(`Erro ao exportar: ${err.message}`);
+        });
+    }
+  }, [projects, setActiveProject, updateAgentIteration, openChat, setLiveMode, resumeWithMessages, sendMessage]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -207,8 +386,16 @@ function App() {
             agents={activeAgents}
             onAgentClick={handleAgentClick}
             onChatClick={handleChatClick}
+            onGovernanceClick={handleGovernanceOpen}
           />
         </Box>
+
+        {/* Governance Diagram Modal */}
+        <GovernanceDiagram
+          open={governanceOpen}
+          phaseId={activePhaseId}
+          onClose={handleGovernanceClose}
+        />
 
         {/* Agent Detail Modal */}
         <AgentDetail
@@ -218,36 +405,37 @@ function App() {
           onChat={handleChatClick}
         />
 
-        {/* Chat Modal - Now using real API via useChat hook */}
-        <ChatModal
-          open={chatOpen}
-          agent={chatAgent}
-          messages={messages}
-          isLiveMode={isLiveMode}
-          isLoading={isLoading}
-          onClose={handleChatClose}
-          onSend={handleSendMessage}
-          onToggleLiveMode={handleToggleLiveMode}
-          onDownload={handleDownload}
-          progress={progress ?? undefined}
+        {/* Chat Modal - wrapped in ErrorBoundary for crash recovery */}
+        <ErrorBoundary key={chatAgent?.id || 'none'} onReset={() => { setChatOpen(false); closeChatHook(); }}>
+          <ChatModal
+            open={chatOpen}
+            agent={chatAgent}
+            messages={messages}
+            isLiveMode={isLiveMode}
+            isLoading={isLoading}
+            onClose={handleChatClose}
+            onSend={handleSendMessage}
+            onToggleLiveMode={handleToggleLiveMode}
+            onDownload={handleDownload}
+            progress={progress ?? undefined}
+            streamingText={streamingText || undefined}
+          />
+        </ErrorBoundary>
+
+        {/* Project History Panel - FAB + Drawer */}
+        <ProjectHistoryPanel
+          projects={projects}
+          activeProject={activeProject}
+          onSelectProject={handleSelectProject}
+          onNewProject={handleNewProject}
+          onDeleteProject={deleteProject}
+          onRenameProject={handleRenameProject}
+          onAgentAction={handleAgentAction}
         />
 
-        {/* Phase Interaction Panel - FAB + Drawer per phase */}
-        <PhaseInteractionPanel
-          phase={activePhase}
-          interactions={phaseInteractions}
-          onResume={handleResumeInteraction}
-          onNewIteration={handleNewIteration}
-          onDelete={handleDeleteInteraction}
-        />
+        {/* Prototypes Panel - visible when PA agent is active */}
+        <PrototypesPanel agentId={chatAgent?.id} />
 
-        {/* Agent Picker for new iteration */}
-        <AgentPickerDialog
-          open={pickerOpen}
-          agents={activeAgents}
-          onClose={() => setPickerOpen(false)}
-          onSelect={handleAgentPicked}
-        />
       </Layout>
     </ThemeProvider>
   );

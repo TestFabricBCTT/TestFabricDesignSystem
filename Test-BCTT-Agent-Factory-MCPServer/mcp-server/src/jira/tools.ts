@@ -4,6 +4,7 @@ import { FAStructure, AcceptanceCriterion } from './types.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as crypto from 'crypto';
 
 // ============================================
 // JIRA TOOL DEFINITIONS
@@ -776,21 +777,48 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
       const client = getJiraClient();
       const result = await client.createFromFAStructure(structure);
 
-      // Attach document to Epic — auto-read from temp file if not provided directly
-      let docBase64 = document_base64;
+      // Attach document to Epic — ALWAYS read from temp file (never trust document_base64
+      // parameter because truncateOutput corrupts large base64 strings in tool responses)
+      let docBase64: string | undefined;
       let docName = document_name;
-      if (!docBase64) {
+      if (true) {
         try {
           const tmpDir = os.tmpdir();
-          const docFiles = fs.readdirSync(tmpDir).filter((f: string) => f.startsWith('fa-doc-'));
+          const docFiles = fs.readdirSync(tmpDir)
+            .filter((f: string) => f.startsWith('fa-doc-'))
+            .sort()
+            .reverse(); // newest first (timestamp in filename)
           if (docFiles.length > 0) {
-            const latest = docFiles.sort().pop()!;
-            const stored = JSON.parse(fs.readFileSync(path.join(tmpDir, latest), 'utf-8'));
-            docBase64 = stored.base64;
-            docName = docName || stored.fileName;
+            const stored = JSON.parse(fs.readFileSync(path.join(tmpDir, docFiles[0]), 'utf-8'));
+            // Validate integrity via checksum
+            if (stored.checksum) {
+              const actual = crypto.createHash('sha256').update(stored.base64).digest('hex');
+              if (actual !== stored.checksum) {
+                console.error(`[Jira] Document checksum MISMATCH! Expected ${stored.checksum.substring(0, 12)}, got ${actual.substring(0, 12)}. File may be corrupted.`);
+              } else {
+                docBase64 = stored.base64;
+                docName = docName || stored.fileName;
+                console.error(`[Jira] Document loaded from temp file (${docFiles[0]}, checksum OK)`);
+              }
+            } else {
+              // Legacy temp file without checksum — use as-is
+              docBase64 = stored.base64;
+              docName = docName || stored.fileName;
+              console.error(`[Jira] Document loaded from temp file (${docFiles[0]}, no checksum)`);
+            }
+          }
+          // Cleanup old temp files (>1 hour)
+          for (const f of docFiles.slice(1)) {
+            try {
+              const filePath = path.join(tmpDir, f);
+              const stat = fs.statSync(filePath);
+              if (Date.now() - stat.mtimeMs > 3600000) {
+                fs.unlinkSync(filePath);
+              }
+            } catch {}
           }
         } catch (e) {
-          // Ignore — document attachment is optional
+          console.error('[Jira] Failed to read document from temp file:', e);
         }
       }
       let attachmentResult: { success: boolean; filename?: string; error?: string } | null = null;

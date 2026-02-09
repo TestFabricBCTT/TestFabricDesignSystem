@@ -59,6 +59,10 @@ export interface WireframeScreen {
     secondaryActionPT?: string;
     secondaryActionEN?: string;
   };
+  navigation?: {
+    next?: string;
+    previous?: string;
+  };
 }
 
 export interface PrototypeInput {
@@ -83,12 +87,40 @@ function generateScreenCode(screen: WireframeScreen): string {
   const imports = new Set<string>(['Box', 'Typography']);
   const bodyComponents: string[] = [];
 
-  // Process body sections
-  for (const section of screen.body.sections) {
-    for (const component of section.components) {
-      const { code, importList } = generateComponentCode(component, screen.screenId);
-      bodyComponents.push(code);
-      importList.forEach(i => imports.add(i));
+  // Process body sections (defensive: handle missing/malformed body)
+  // Cards consecutivos na mesma secção são agrupados em Grid horizontal (2 por row)
+  for (const section of (screen.body?.sections || [])) {
+    const components = section.components || [];
+    let ci = 0;
+    while (ci < components.length) {
+      if (components[ci].type.toLowerCase() === 'card') {
+        // Collect consecutive cards in this section
+        const cardGroup: WireframeElement[] = [];
+        while (ci < components.length && components[ci].type.toLowerCase() === 'card') {
+          cardGroup.push(components[ci]);
+          ci++;
+        }
+        if (cardGroup.length >= 2) {
+          // Wrap in Grid for horizontal layout (2 per row on mobile 390px)
+          imports.add('Grid');
+          const gridItems = cardGroup.map(card => {
+            const { code: cardCode, importList } = generateComponentCode(card, screen.screenId);
+            importList.forEach(imp => imports.add(imp));
+            return `<Grid item xs={6}>\n      ${cardCode}\n    </Grid>`;
+          });
+          bodyComponents.push(`<Grid container spacing={2}>\n    ${gridItems.join('\n    ')}\n  </Grid>`);
+        } else {
+          // Single card, render normally (full width)
+          const { code: cardCode, importList } = generateComponentCode(cardGroup[0], screen.screenId);
+          importList.forEach(imp => imports.add(imp));
+          bodyComponents.push(cardCode);
+        }
+      } else {
+        const { code: compCode, importList } = generateComponentCode(components[ci], screen.screenId);
+        bodyComponents.push(compCode);
+        importList.forEach(i => imports.add(i));
+        ci++;
+      }
     }
   }
 
@@ -98,29 +130,34 @@ function generateScreenCode(screen: WireframeScreen): string {
     imports.add('Button');
     const buttons: string[] = [];
     if (screen.footer.secondaryAction) {
-      buttons.push(`        <Button variant="outlined" fullWidth>
+      const secondaryOnClick = screen.navigation?.previous
+        ? `onClick={() => navigate('/${screen.navigation!.previous!.toLowerCase().replace(/[^a-z0-9]/g, '-')}')}`
+        : `onClick={() => navigate(-1)}`;
+      buttons.push(`        <Button variant="outlined" fullWidth ${secondaryOnClick}>
           {t('${screen.screenId}.footer.secondary')}
         </Button>`);
     }
     if (screen.footer.primaryAction) {
-      buttons.push(`        <Button variant="contained" color="primary" fullWidth>
+      const nextPath = screen.navigation?.next
+        ? `/${screen.navigation.next.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
+        : '/';
+      buttons.push(`        <Button variant="contained" color="primary" fullWidth onClick={() => navigate('${nextPath}')}>
           {t('${screen.screenId}.footer.primary')}
         </Button>`);
     }
     footerCode = `
       {/* Footer Actions */}
       <Box sx={{
-        position: 'fixed',
+        position: 'sticky',
         bottom: 0,
-        left: 0,
-        right: 0,
         p: 2,
         bgcolor: 'background.paper',
         borderTop: 1,
         borderColor: 'divider',
         display: 'flex',
         flexDirection: 'column',
-        gap: 1,
+        gap: 2,
+        zIndex: 10,
       }}>
 ${buttons.join('\n')}
       </Box>`;
@@ -143,7 +180,7 @@ ${buttons.join('\n')}
           </IconButton>`
       : '';
     headerCode = `
-      <AppBar position="fixed" color="default" elevation={0}>
+      <AppBar position="sticky" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Toolbar>
           ${backButton}
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -151,8 +188,7 @@ ${buttons.join('\n')}
           </Typography>
           ${closeButton}
         </Toolbar>
-      </AppBar>
-      <Toolbar /> {/* Spacer for fixed header */}`;
+      </AppBar>`;
   }
 
   const code = `/**
@@ -181,11 +217,11 @@ export const ${componentName}: React.FC<${componentName}Props> = () => {
   const navigate = useNavigate();
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'greyblue.100', pb: 10 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       ${headerCode}
 
       {/* Body Content */}
-      <Box sx={{ p: 2, maxWidth: 600, mx: 'auto' }}>
+      <Box sx={{ flex: 1, p: 2 }}>
 ${bodyComponents.map(c => '        ' + c).join('\n\n')}
       </Box>
       ${footerCode}
@@ -212,16 +248,23 @@ function generateComponentCode(
   const i18nKey = element.i18nKey || `${screenId}.${element.type}.${element.name}`;
 
   switch (element.type.toLowerCase()) {
-    case 'button':
+    case 'button': {
       imports.push('Button');
+      const targetScreen = element.props?.nextScreen as string | undefined;
+      const buttonOnClick = targetScreen
+        ? ` onClick={() => navigate('/${targetScreen.toLowerCase().replace(/[^a-z0-9]/g, '-')}')}`
+        : '';
       code = `<Button
   variant="${element.props?.variant || 'contained'}"
   color="${element.props?.color || 'primary'}"
   fullWidth
+  sx={{ mb: 2 }}
+ ${buttonOnClick}
 >
   {t('${i18nKey}')}
 </Button>`;
       break;
+    }
 
     case 'textfield':
     case 'input':
@@ -236,21 +279,27 @@ function generateComponentCode(
 />`;
       break;
 
-    case 'card':
+    case 'card': {
       imports.push('Card', 'CardContent');
+      const cardTarget = element.props?.nextScreen as string | undefined;
+      const cardClickProps = cardTarget
+        ? ` onClick={() => navigate('/${cardTarget.toLowerCase().replace(/[^a-z0-9]/g, '-')}')} sx={{ mb: 2, cursor: 'pointer', '&:hover': { boxShadow: 3 } }}`
+        : ` sx={{ mb: 2 }}`;
       const cardChildren = element.children
         ? element.children.map(c => {
             const result = generateComponentCode(c, screenId, indent + 2);
             result.importList.forEach(i => imports.push(i));
             return result.code;
           }).join('\n')
-        : `<Typography>{t('${i18nKey}')}</Typography>`;
-      code = `<Card sx={{ mb: 2 }}>
+        : `<Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>{t('${i18nKey}.label')}</Typography>
+    <Typography variant="h5" color="text.primary">{t('${i18nKey}.value')}</Typography>`;
+      code = `<Card${cardClickProps}>
   <CardContent>
     ${cardChildren}
   </CardContent>
 </Card>`;
       break;
+    }
 
     case 'title':
     case 'heading':
@@ -405,12 +454,35 @@ function extractTranslations(wireframe: WireframeScreen): { pt: Record<string, s
     }
   }
 
-  // Body component translations
+  // Body component translations (with fallback when DA doesn't provide valuePT/valueEN)
   function processElements(elements: WireframeElement[], prefix: string) {
     for (const element of elements) {
       const key = element.i18nKey || `${prefix}.${element.type}.${element.name}`;
-      if (element.valuePT) pt[key] = element.valuePT;
-      if (element.valueEN) en[key] = element.valueEN;
+
+      // Generate humanized fallback from component name (e.g. "otp_input" → "Otp input")
+      const fallbackLabel = element.name
+        .replace(/_/g, ' ')
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/^./, c => c.toUpperCase());
+
+      if (element.type === 'textfield' || element.type === 'input') {
+        pt[`${key}.label`] = element.valuePT || fallbackLabel;
+        en[`${key}.label`] = element.valueEN || fallbackLabel;
+        pt[`${key}.placeholder`] = (element.props?.placeholderPT as string) || '';
+        en[`${key}.placeholder`] = (element.props?.placeholderEN as string) || '';
+        pt[`${key}.helper`] = (element.props?.helperPT as string) || '';
+        en[`${key}.helper`] = (element.props?.helperEN as string) || '';
+      } else if (element.type === 'card' && !element.children?.length) {
+        // Cards without children get label + value translations for mock data
+        pt[`${key}.label`] = element.valuePT || fallbackLabel;
+        en[`${key}.label`] = element.valueEN || fallbackLabel;
+        pt[`${key}.value`] = (element.props?.mockValue as string) || '€ 0,00';
+        en[`${key}.value`] = (element.props?.mockValueEN as string) || '€ 0.00';
+      } else {
+        pt[key] = element.valuePT || fallbackLabel;
+        en[key] = element.valueEN || fallbackLabel;
+      }
 
       // Process children recursively
       if (element.children) {
@@ -419,8 +491,8 @@ function extractTranslations(wireframe: WireframeScreen): { pt: Record<string, s
     }
   }
 
-  for (const section of wireframe.body.sections) {
-    processElements(section.components, wireframe.screenId);
+  for (const section of (wireframe.body?.sections || [])) {
+    processElements(section.components || [], wireframe.screenId);
   }
 
   return { pt, en };

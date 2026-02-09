@@ -1,5 +1,7 @@
 import React from 'react';
 import { Button as MuiButton, ButtonProps as MuiButtonProps, CircularProgress } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { colors } from '../../theme/bcttTheme';
 
 export interface ButtonProps extends Omit<MuiButtonProps, 'variant'> {
   /**
@@ -95,7 +97,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           // Ghost variant specific styles
           ...(variant === 'ghost' && {
             '&:hover': {
-              backgroundColor: 'rgba(224, 0, 36, 0.04)',
+              backgroundColor: alpha(colors.primary.main, 0.04),
             },
           }),
         }}
