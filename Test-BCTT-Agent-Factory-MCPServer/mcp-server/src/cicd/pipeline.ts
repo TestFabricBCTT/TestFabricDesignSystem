@@ -10,7 +10,7 @@ import path from 'path';
 import { runCQE, CQEReport } from '../quality/cqe.js';
 import * as git from '../git/index.js';
 
-const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || 'c:\\Rodrigo\\TestFabricDesignSystem';
+const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || path.resolve(__dirname, '..', '..', '..', '..');
 const MCP_SERVER_ROOT = path.resolve(process.cwd());
 
 // ============================================

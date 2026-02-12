@@ -362,7 +362,7 @@ async function runDeploySteps(
   try {
     const projects = ['TestAgentFactoryCore', 'TestAgentFactoryMiddleware', 'TestAgentFactoryDigitalChannels'];
     const results: string[] = [];
-    const WORKSPACE = process.env.WORKSPACE_ROOT || 'c:\\Rodrigo\\TestFabricDesignSystem';
+    const WORKSPACE = process.env.WORKSPACE_ROOT || path.resolve(__dirname, '..', '..', '..', '..');
     for (const proj of projects) {
       const projPath = path.join(WORKSPACE, proj);
       if (!fs.existsSync(path.join(projPath, 'package.json'))) continue;

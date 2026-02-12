@@ -7,7 +7,7 @@
 import { simpleGit, SimpleGit } from "simple-git";
 import path from "path";
 
-const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || "c:\\Rodrigo\\TestFabricDesignSystem";
+const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || path.resolve(__dirname, '..', '..', '..', '..');
 
 // Project paths
 const PROJECTS: Record<string, string> = {

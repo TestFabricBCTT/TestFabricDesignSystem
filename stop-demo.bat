@@ -28,7 +28,7 @@ taskkill /FI "WINDOWTITLE eq Core API" /F 2>nul
 echo [8/8] Stopping Docker containers...
 docker info >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
-    cd /d c:\Rodrigo\TestFabricDesignSystem\Test-BCTT-Agent-Factory-MCPServer\mcp-server
+    cd /d %~dp0Test-BCTT-Agent-Factory-MCPServer\mcp-server
     docker compose down 2>nul
 ) else (
     echo        Docker Desktop not running — skipping.

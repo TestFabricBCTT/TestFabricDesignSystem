@@ -1,0 +1,19 @@
+[submodule "TestAgentFactoryCore"]
+	path = TestAgentFactoryCore
+	url = https://github.com/TestFabricBCTT/TestAgentFactoryCore.git
+
+[submodule "TestAgentFactoryDigitalChannels"]
+	path = TestAgentFactoryDigitalChannels
+	url = https://github.com/TestFabricBCTT/TestAgentFactoryDigitalChannels.git
+
+[submodule "TestAgentFactoryDigitalChannelsWithErrors"]
+	path = TestAgentFactoryDigitalChannelsWithErrors
+	url = https://github.com/TestFabricBCTT/TestAgentFactoryDigitalChannelsWithErrors.git
+
+[submodule "TestAgentFactoryMiddleware"]
+	path = TestAgentFactoryMiddleware
+	url = https://github.com/TestFabricBCTT/TestAgentFactoryMiddleware.git
+
+[submodule "TestAgentFactoryUnitTest"]
+	path = TestAgentFactoryUnitTest
+	url = https://github.com/TestFabricBCTT/TestAgentFactoryUnitTest.git

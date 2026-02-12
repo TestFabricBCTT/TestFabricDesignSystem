@@ -1,1 +1,14 @@
 Test-BCTT-Agent-Factory-MCPServer/mcp-server/src/claude-mcp-config.json
+
+# Keycloak tokens (sensitive)
+*kc_token*
+
+# Temp files with encoded paths
+C\357\200\272Users*
+
+# IDE / Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

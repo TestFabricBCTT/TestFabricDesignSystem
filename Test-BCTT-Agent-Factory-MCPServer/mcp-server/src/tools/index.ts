@@ -50,7 +50,7 @@ function getBcttDesignSystemPath(): string {
 // WORKSPACE & PROJECT PATHS (Phase 2)
 // ============================================
 
-const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || 'c:\\Rodrigo\\TestFabricDesignSystem';
+const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || path.resolve(__dirname, '..', '..', '..', '..');
 const MCP_SERVER_ROOT = path.resolve(process.cwd());
 
 /**
