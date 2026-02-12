@@ -1,6 +1,6 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { getJiraClient } from './client.js';
-import { FAStructure, AcceptanceCriterion } from './types.js';
+import { FAStructure, AcceptanceCriterion, CreateBugInput } from './types.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -278,6 +278,101 @@ export const jiraTools: Tool[] = [
         }
       },
       required: ["issue_key", "file_name", "file_base64"]
+    }
+  },
+  {
+    name: "jira_create_bug",
+    description: "Cria um Bug no Jira. Usado para reportar erros encontrados no código (frontend ou backend). O bug-watcher pode detectar estes bugs e despoletar agentes FBS/BBS para corrigi-los.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        epic_key: {
+          type: "string",
+          description: "Key do Epic pai (opcional, ex: 'BCTT-336')"
+        },
+        summary: {
+          type: "string",
+          description: "Título/resumo do bug"
+        },
+        description: {
+          type: "string",
+          description: "Descrição detalhada do bug"
+        },
+        severity: {
+          type: "string",
+          enum: ["critical", "major", "minor"],
+          description: "Severidade do bug"
+        },
+        component: {
+          type: "string",
+          enum: ["frontend", "backend", "bff", "middleware", "core"],
+          description: "Componente afectado"
+        },
+        steps_to_reproduce: {
+          type: "array",
+          items: { type: "string" },
+          description: "Passos para reproduzir o bug"
+        },
+        expected_behavior: {
+          type: "string",
+          description: "Comportamento esperado"
+        },
+        actual_behavior: {
+          type: "string",
+          description: "Comportamento actual (errado)"
+        },
+        labels: {
+          type: "array",
+          items: { type: "string" },
+          description: "Labels adicionais (ex: 'frontend-bug', 'backend-bug')"
+        }
+      },
+      required: ["summary", "description", "severity", "component"]
+    }
+  },
+  {
+    name: "jira_create_task",
+    description: "Cria uma Task no Jira. Usado para tarefas técnicas ou operacionais.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        epic_key: {
+          type: "string",
+          description: "Key do Epic pai (opcional)"
+        },
+        summary: {
+          type: "string",
+          description: "Título/resumo da task"
+        },
+        description: {
+          type: "string",
+          description: "Descrição da task"
+        },
+        labels: {
+          type: "array",
+          items: { type: "string" },
+          description: "Labels (ex: 'fase2', 'batch3')"
+        }
+      },
+      required: ["summary"]
+    }
+  },
+  {
+    name: "jira_add_comment",
+    description: "Adiciona um comentário a uma issue no Jira. Útil para reportar progresso de agentes, resultados de testes, etc.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Key da issue (ex: 'BCTT-123')"
+        },
+        comment: {
+          type: "string",
+          description: "Texto do comentário"
+        }
+      },
+      required: ["issue_key", "comment"]
     }
   },
   {
@@ -703,6 +798,106 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
         issue_key,
         attachment: result[0] || { filename: file_name },
         issue_url: `${process.env.JIRA_BASE_URL}/browse/${issue_key}`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  jira_create_bug: async (args) => {
+    try {
+      const { epic_key, summary, description, severity, component, steps_to_reproduce, expected_behavior, actual_behavior, labels } = args as {
+        epic_key?: string;
+        summary: string;
+        description: string;
+        severity: 'critical' | 'major' | 'minor';
+        component: 'frontend' | 'backend' | 'bff' | 'middleware' | 'core';
+        steps_to_reproduce?: string[];
+        expected_behavior?: string;
+        actual_behavior?: string;
+        labels?: string[];
+      };
+
+      const client = getJiraClient();
+      const input: CreateBugInput = {
+        epicKey: epic_key,
+        summary,
+        description,
+        severity,
+        component,
+        stepsToReproduce: steps_to_reproduce,
+        expectedBehavior: expected_behavior,
+        actualBehavior: actual_behavior,
+        labels,
+      };
+
+      const bug = await client.createBug(input);
+      const bugUrl = `${process.env.JIRA_BASE_URL}/browse/${bug.key}`;
+
+      return JSON.stringify({
+        success: true,
+        bug_key: bug.key,
+        bug_url: bugUrl,
+        message: `Bug criado: ${bug.key} — ${summary}`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  jira_create_task: async (args) => {
+    try {
+      const { epic_key, summary, description, labels } = args as {
+        epic_key?: string;
+        summary: string;
+        description?: string;
+        labels?: string[];
+      };
+
+      const client = getJiraClient();
+      const task = await client.createTask({
+        epicKey: epic_key,
+        summary,
+        description,
+        labels,
+      });
+
+      const taskUrl = `${process.env.JIRA_BASE_URL}/browse/${task.key}`;
+
+      return JSON.stringify({
+        success: true,
+        task_key: task.key,
+        task_url: taskUrl,
+        message: `Task criada: ${task.key} — ${summary}`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  jira_add_comment: async (args) => {
+    try {
+      const { issue_key, comment } = args as {
+        issue_key: string;
+        comment: string;
+      };
+
+      const client = getJiraClient();
+      const result = await client.addComment(issue_key, comment);
+
+      return JSON.stringify({
+        success: true,
+        comment_id: result.id,
+        message: `Comentário adicionado a ${issue_key}`,
       }, null, 2);
     } catch (error) {
       return JSON.stringify({

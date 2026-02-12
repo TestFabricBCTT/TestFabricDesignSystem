@@ -1,0 +1,568 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1100" width="1400" height="1100" font-family="Arial, Helvetica, sans-serif">
+
+  <!-- ========== DEFINITIONS ========== -->
+  <defs>
+    <!-- Gradients for system boxes -->
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/>
+      <stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/>
+      <stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/>
+      <stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/>
+      <stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9C27B0"/>
+      <stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="gradAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFA000"/>
+      <stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/>
+      <stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+
+    <!-- Drop shadow filters -->
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+
+    <!-- Arrowhead markers -->
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+    <marker id="arrowGrey" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#90A4AE"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4CAF50"/>
+    </marker>
+  </defs>
+
+  <!-- ========== BACKGROUND ========== -->
+  <rect width="1400" height="1100" rx="0" fill="url(#bgGrad)"/>
+  <!-- Subtle grid pattern -->
+  <g opacity="0.03">
+    <line x1="0" y1="0" x2="0" y2="1100" stroke="#000" stroke-width="1"/>
+    <line x1="50" y1="0" x2="50" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="100" y1="0" x2="100" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="150" y1="0" x2="150" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="200" y1="0" x2="200" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="250" y1="0" x2="250" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="300" y1="0" x2="300" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="350" y1="0" x2="350" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="400" y1="0" x2="400" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="450" y1="0" x2="450" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="500" y1="0" x2="500" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="550" y1="0" x2="550" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="600" y1="0" x2="600" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="650" y1="0" x2="650" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="700" y1="0" x2="700" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="750" y1="0" x2="750" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="800" y1="0" x2="800" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="850" y1="0" x2="850" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="900" y1="0" x2="900" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="950" y1="0" x2="950" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1000" y1="0" x2="1000" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1050" y1="0" x2="1050" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1100" y1="0" x2="1100" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1150" y1="0" x2="1150" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1200" y1="0" x2="1200" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1250" y1="0" x2="1250" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1300" y1="0" x2="1300" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1350" y1="0" x2="1350" y2="1100" stroke="#000" stroke-width="0.5"/>
+    <line x1="1400" y1="0" x2="1400" y2="1100" stroke="#000" stroke-width="0.5"/>
+  </g>
+
+  <!-- ========================================================================== -->
+  <!-- SECTION 1: TITLE BAR (y:0-72)                                              -->
+  <!-- ========================================================================== -->
+  <rect x="0" y="0" width="1400" height="72" fill="#263238" opacity="0.95"/>
+  <text x="700" y="32" text-anchor="middle" fill="#FFFFFF" font-size="20" font-weight="700" letter-spacing="0.5">BDEV00000011 &#8212; Digital Channels Deep Dive</text>
+  <text x="700" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12" font-weight="400" letter-spacing="0.3">Microsservi&#231;os, P&#225;ginas, Rotas, Cache &amp; Estrat&#233;gia de Dados</text>
+  <!-- Decorative accent line -->
+  <rect x="490" y="62" width="420" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  <!-- ========================================================================== -->
+  <!-- SECTION 2: FRONTEND LAYER (y:100-440) — Blue gradient header               -->
+  <!-- ========================================================================== -->
+  <g filter="url(#shadow)">
+    <!-- Main container -->
+    <rect x="30" y="100" width="1340" height="340" rx="10" fill="#FFFFFF" stroke="#BBDEFB" stroke-width="1"/>
+    <!-- Header bar -->
+    <rect x="30" y="100" width="1340" height="42" rx="10" fill="url(#gradBlue)"/>
+    <rect x="30" y="130" width="1340" height="12" fill="url(#gradBlue)"/>
+    <!-- Icon and title -->
+    <text x="50" y="128" fill="#FFFFFF" font-size="16">&#128187;</text>
+    <text x="72" y="127" fill="#FFFFFF" font-size="14" font-weight="700">Frontend &#8212; React + Vite</text>
+    <!-- Port badge -->
+    <rect x="250" y="110" width="52" height="20" rx="10" fill="#FFFFFF" opacity="0.3"/>
+    <text x="276" y="124" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="700">:5173</text>
+    <!-- System tag -->
+    <rect x="1282" y="110" width="76" height="20" rx="4" fill="#FFFFFF" opacity="0.25"/>
+    <text x="1320" y="124" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="600">FRONTEND</text>
+  </g>
+
+  <!-- ===== LoginPage Sub-box (x:60-330) ===== -->
+  <g filter="url(#shadowLight)">
+    <rect x="60" y="155" width="270" height="270" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <!-- Sub-header -->
+    <rect x="60" y="155" width="270" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="60" y="175" width="270" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="74" y="174" fill="#1565C0" font-size="11" font-weight="700">LoginPage</text>
+    <!-- Route badge -->
+    <rect x="260" y="159" width="58" height="18" rx="9" fill="#1976D2"/>
+    <text x="289" y="172" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">/login</text>
+    <!-- Content -->
+    <text x="74" y="202" fill="#37474F" font-size="10">&#9654; Form: email + password</text>
+    <text x="74" y="220" fill="#37474F" font-size="10">&#9654; POST /api/auth/login</text>
+    <text x="74" y="242" fill="#37474F" font-size="10" font-weight="600">&#9654; Cache writes:</text>
+    <rect x="82" y="250" width="230" height="16" rx="3" fill="#FFF8E1" stroke="#FFE082" stroke-width="0.5"/>
+    <text x="88" y="262" fill="#546E7A" font-size="9" font-family="Consolas, monospace">localStorage.setItem('access_token')</text>
+    <rect x="82" y="270" width="230" height="16" rx="3" fill="#FFF8E1" stroke="#FFE082" stroke-width="0.5"/>
+    <text x="88" y="282" fill="#546E7A" font-size="9" font-family="Consolas, monospace">localStorage.setItem('user')</text>
+    <text x="74" y="304" fill="#78909C" font-size="9" font-style="italic">Auth: Nenhuma (p&#225;gina p&#250;blica)</text>
+    <!-- Tech pills -->
+    <rect x="74" y="316" width="30" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="89" y="328" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">MUI</text>
+    <rect x="110" y="316" width="56" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="138" y="328" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">TextField</text>
+    <rect x="172" y="316" width="46" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="195" y="328" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Button</text>
+  </g>
+
+  <!-- ===== LandingPage Sub-box (x:350-680) ===== -->
+  <g filter="url(#shadowLight)">
+    <rect x="350" y="155" width="330" height="270" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="350" y="155" width="330" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="350" y="175" width="330" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="364" y="174" fill="#1565C0" font-size="11" font-weight="700">LandingPage</text>
+    <!-- Route badge -->
+    <rect x="624" y="159" width="44" height="18" rx="9" fill="#1976D2"/>
+    <text x="646" y="172" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">/</text>
+    <!-- Content -->
+    <text x="364" y="202" fill="#37474F" font-size="10">&#9654; Dashboard: saldos, contas, movimentos</text>
+    <text x="364" y="220" fill="#37474F" font-size="10">&#9654; GET /api/accounts</text>
+    <text x="364" y="238" fill="#37474F" font-size="10">&#9654; GET /api/accounts/:id/movements</text>
+    <text x="364" y="260" fill="#37474F" font-size="10" font-weight="600">&#9654; Cache reads:</text>
+    <rect x="372" y="268" width="230" height="16" rx="3" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.5"/>
+    <text x="378" y="280" fill="#546E7A" font-size="9" font-family="Consolas, monospace">localStorage.getItem('user')</text>
+    <text x="364" y="304" fill="#78909C" font-size="9" font-style="italic">Auth: ProtectedRoute (Bearer token)</text>
+    <!-- Tech pills -->
+    <rect x="364" y="316" width="46" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="387" y="328" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">AppBar</text>
+    <rect x="416" y="316" width="34" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="433" y="328" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Grid</text>
+    <rect x="456" y="316" width="38" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="475" y="328" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Table</text>
+    <rect x="500" y="316" width="36" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="518" y="328" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Card</text>
+  </g>
+
+  <!-- ===== ProtectedRoute Sub-box (x:700-920) ===== -->
+  <g filter="url(#shadowLight)">
+    <rect x="700" y="155" width="220" height="270" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="1.2"/>
+    <rect x="700" y="155" width="220" height="28" rx="8" fill="#FF9800" opacity="0.15"/>
+    <rect x="700" y="175" width="220" height="8" fill="#FF9800" opacity="0.15"/>
+    <text x="714" y="174" fill="#E65100" font-size="11" font-weight="700">ProtectedRoute</text>
+    <!-- Guard badge -->
+    <rect x="860" y="159" width="48" height="18" rx="9" fill="#F57C00"/>
+    <text x="884" y="172" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">GUARD</text>
+    <!-- Content -->
+    <text x="714" y="202" fill="#37474F" font-size="10">&#9654; Verifica access_token</text>
+    <text x="722" y="218" fill="#546E7A" font-size="9">em localStorage</text>
+    <text x="714" y="240" fill="#37474F" font-size="10">&#9654; Se ausente &#8594; redirect /login</text>
+    <text x="714" y="262" fill="#37474F" font-size="10">&#9654; Se presente &#8594; render children</text>
+    <text x="714" y="290" fill="#78909C" font-size="9" font-style="italic">Padr&#227;o: HOC wrapper</text>
+    <!-- Security icon -->
+    <rect x="714" y="306" width="180" height="22" rx="4" fill="#FFF8E1" stroke="#FFE082" stroke-width="0.5"/>
+    <text x="804" y="321" text-anchor="middle" fill="#E65100" font-size="9" font-weight="600">&#128274; Componente de seguran&#231;a</text>
+  </g>
+
+  <!-- ===== api.ts Sub-box (x:940-1340) ===== -->
+  <g filter="url(#shadowLight)">
+    <rect x="940" y="155" width="400" height="270" rx="8" fill="#ECEFF1" stroke="#B0BEC5" stroke-width="0.8"/>
+    <rect x="940" y="155" width="400" height="28" rx="8" fill="#607D8B" opacity="0.12"/>
+    <rect x="940" y="175" width="400" height="8" fill="#607D8B" opacity="0.12"/>
+    <text x="954" y="174" fill="#37474F" font-size="11" font-weight="700">api.ts &#8212; API Service</text>
+    <!-- Module badge -->
+    <rect x="1274" y="159" width="54" height="18" rx="9" fill="#607D8B"/>
+    <text x="1301" y="172" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">MODULE</text>
+    <!-- Content -->
+    <rect x="954" y="192" width="370" height="16" rx="3" fill="#FAFAFA" stroke="#E0E0E0" stroke-width="0.5"/>
+    <text x="960" y="204" fill="#546E7A" font-size="9" font-family="Consolas, monospace">BFF_URL = '/api' (proxy Vite)</text>
+    <text x="954" y="228" fill="#37474F" font-size="10">&#9654; request() helper function</text>
+    <text x="954" y="248" fill="#37474F" font-size="10">&#9654; Headers:</text>
+    <rect x="962" y="256" width="360" height="16" rx="3" fill="#FAFAFA" stroke="#E0E0E0" stroke-width="0.5"/>
+    <text x="968" y="268" fill="#546E7A" font-size="9" font-family="Consolas, monospace">Authorization: Bearer, x-user-client-id</text>
+    <text x="954" y="292" fill="#37474F" font-size="10">&#9654; Auto-401: limpa localStorage + redirect /login</text>
+    <text x="954" y="316" fill="#37474F" font-size="10" font-weight="600">Methods:</text>
+    <rect x="1024" y="306" width="48" height="16" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.5"/>
+    <text x="1048" y="318" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">login()</text>
+    <rect x="1078" y="306" width="80" height="16" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.5"/>
+    <text x="1118" y="318" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">getAccounts()</text>
+    <rect x="1164" y="306" width="92" height="16" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.5"/>
+    <text x="1210" y="318" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">getMovements()</text>
+    <!-- Tech pills -->
+    <rect x="954" y="336" width="40" height="16" rx="8" fill="#CFD8DC"/>
+    <text x="974" y="348" text-anchor="middle" fill="#37474F" font-size="8" font-weight="600">Fetch</text>
+    <rect x="1000" y="336" width="38" height="16" rx="8" fill="#CFD8DC"/>
+    <text x="1019" y="348" text-anchor="middle" fill="#37474F" font-size="8" font-weight="600">JSON</text>
+  </g>
+
+  <!-- ========================================================================== -->
+  <!-- SECTION 3: BFF LAYER (y:460-690) — Orange gradient header                  -->
+  <!-- ========================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="460" width="1340" height="230" rx="10" fill="#FFFFFF" stroke="#FFE0B2" stroke-width="1"/>
+    <rect x="30" y="460" width="1340" height="42" rx="10" fill="url(#gradOrange)"/>
+    <rect x="30" y="490" width="1340" height="12" fill="url(#gradOrange)"/>
+    <text x="50" y="488" fill="#FFFFFF" font-size="16">&#9881;</text>
+    <text x="72" y="487" fill="#FFFFFF" font-size="14" font-weight="700">BFF &#8212; Backend for Frontend (Express)</text>
+    <!-- Port badge -->
+    <rect x="340" y="470" width="52" height="20" rx="10" fill="#FFFFFF" opacity="0.3"/>
+    <text x="366" y="484" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="700">:4020</text>
+    <!-- System tag -->
+    <rect x="1230" y="470" width="128" height="20" rx="4" fill="#FFFFFF" opacity="0.25"/>
+    <text x="1294" y="484" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="600">MICROSERVICES</text>
+  </g>
+
+  <!-- ===== Auth Service Sub-box (x:60-440) ===== -->
+  <g filter="url(#shadowLight)">
+    <rect x="60" y="515" width="380" height="160" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.8"/>
+    <rect x="60" y="515" width="380" height="28" rx="8" fill="#FF9800" opacity="0.12"/>
+    <rect x="60" y="535" width="380" height="8" fill="#FF9800" opacity="0.12"/>
+    <text x="74" y="534" fill="#E65100" font-size="11" font-weight="700">Auth Service</text>
+    <!-- Mount path badge -->
+    <rect x="342" y="519" width="86" height="18" rx="9" fill="#F57C00"/>
+    <text x="385" y="532" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">/api/auth</text>
+    <!-- Content -->
+    <rect x="74" y="552" width="350" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="82" y="565" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="114" y="565" fill="#37474F" font-size="9">/login</text>
+    <text x="74" y="590" fill="#37474F" font-size="10">&#9654; Downstream: &#8594; Middleware /api/v1/auth/login</text>
+    <text x="74" y="610" fill="#37474F" font-size="10">&#9654; Error handling: 502 SERVICE_UNAVAILABLE</text>
+    <text x="74" y="630" fill="#37474F" font-size="10">&#9654; Headers forwarded: Content-Type</text>
+    <!-- Tech pills -->
+    <rect x="74" y="648" width="50" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="99" y="660" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">Express</text>
+    <rect x="130" y="648" width="46" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="153" y="660" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">Router</text>
+  </g>
+
+  <!-- ===== Accounts Service Sub-box (x:460-940) ===== -->
+  <g filter="url(#shadowLight)">
+    <rect x="460" y="515" width="480" height="160" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.8"/>
+    <rect x="460" y="515" width="480" height="28" rx="8" fill="#FF9800" opacity="0.12"/>
+    <rect x="460" y="535" width="480" height="8" fill="#FF9800" opacity="0.12"/>
+    <text x="474" y="534" fill="#E65100" font-size="11" font-weight="700">Accounts Service</text>
+    <!-- Mount path badge -->
+    <rect x="816" y="519" width="112" height="18" rx="9" fill="#F57C00"/>
+    <text x="872" y="532" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">/api/accounts</text>
+    <!-- Content — Route 1 -->
+    <rect x="474" y="552" width="450" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="482" y="565" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="507" y="565" fill="#37474F" font-size="9">/  &#8594;  MW /api/v1/accounts?clientId=...</text>
+    <!-- Route 2 -->
+    <rect x="474" y="574" width="450" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="482" y="587" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="507" y="587" fill="#37474F" font-size="9">/:id/movements  &#8594;  MW /api/v1/movements?accountId=...</text>
+    <!-- Details -->
+    <text x="474" y="612" fill="#37474F" font-size="10">&#9654; Headers: Authorization, x-user-client-id</text>
+    <text x="474" y="632" fill="#37474F" font-size="10">&#9654; Error handling: proxy errors &#8594; 502</text>
+    <!-- Tech pills -->
+    <rect x="474" y="648" width="50" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="499" y="660" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">Express</text>
+    <rect x="530" y="648" width="46" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="553" y="660" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">Router</text>
+    <rect x="582" y="648" width="40" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="602" y="660" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">Axios</text>
+  </g>
+
+  <!-- ===== Health Sub-box (x:960-1340) ===== -->
+  <g filter="url(#shadowLight)">
+    <rect x="960" y="515" width="380" height="160" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.8"/>
+    <rect x="960" y="515" width="380" height="28" rx="8" fill="#FF9800" opacity="0.12"/>
+    <rect x="960" y="535" width="380" height="8" fill="#FF9800" opacity="0.12"/>
+    <text x="974" y="534" fill="#E65100" font-size="11" font-weight="700">Health</text>
+    <!-- Route -->
+    <rect x="974" y="552" width="350" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="982" y="565" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="1007" y="565" fill="#37474F" font-size="9">/health</text>
+    <!-- Response -->
+    <text x="974" y="590" fill="#37474F" font-size="10">Returns:</text>
+    <rect x="974" y="598" width="350" height="30" rx="4" fill="#FAFAFA" stroke="#E0E0E0" stroke-width="0.5"/>
+    <text x="982" y="612" fill="#546E7A" font-size="9" font-family="Consolas, monospace">{ status: 'ok',</text>
+    <text x="990" y="624" fill="#546E7A" font-size="9" font-family="Consolas, monospace">  service: 'digital-channels-bff' }</text>
+    <text x="974" y="655" fill="#78909C" font-size="9" font-style="italic">Endpoint de monitoriza&#231;&#227;o</text>
+  </g>
+
+  <!-- ========================================================================== -->
+  <!-- SECTION 4: SOCKET.IO EVENTS PANEL (y:710-820, x:30-670)                   -->
+  <!-- ========================================================================== -->
+  <g filter="url(#shadowLight)">
+    <rect x="30" y="710" width="640" height="110" rx="8" fill="#FAFAFA" stroke="#CE93D8" stroke-width="1.5" stroke-dasharray="6 3"/>
+    <!-- Title bar -->
+    <rect x="30" y="710" width="640" height="28" rx="8" fill="#9C27B0" opacity="0.08"/>
+    <rect x="30" y="730" width="640" height="8" fill="#9C27B0" opacity="0.08"/>
+    <text x="44" y="730" fill="#6A1B9A" font-size="12" font-weight="700">&#9889; Socket.IO Events &#8212; An&#225;lise de Estado</text>
+    <!-- Event table -->
+    <rect x="44" y="745" width="300" height="14" rx="2" fill="#F3E5F5"/>
+    <text x="50" y="756" fill="#6A1B9A" font-size="8" font-weight="700">Evento</text>
+    <text x="200" y="756" fill="#6A1B9A" font-size="8" font-weight="700">Fluxo</text>
+    <text x="290" y="756" fill="#6A1B9A" font-size="8" font-weight="700">Estado</text>
+    <!-- Event 1 -->
+    <text x="50" y="773" fill="#37474F" font-size="9" font-family="Consolas, monospace">movement.created</text>
+    <text x="200" y="773" fill="#546E7A" font-size="9">Core &#8594; Frontend</text>
+    <text x="290" y="773" fill="#D32F2F" font-size="9" font-weight="600">&#10060; N&#195;O CONSUMIDO</text>
+    <!-- Event 2 -->
+    <text x="50" y="789" fill="#37474F" font-size="9" font-family="Consolas, monospace">balance.updated</text>
+    <text x="200" y="789" fill="#546E7A" font-size="9">Core &#8594; Frontend</text>
+    <text x="290" y="789" fill="#D32F2F" font-size="9" font-weight="600">&#10060; N&#195;O CONSUMIDO</text>
+    <!-- Event 3 -->
+    <text x="50" y="805" fill="#37474F" font-size="9" font-family="Consolas, monospace">account.status.changed</text>
+    <text x="200" y="805" fill="#546E7A" font-size="9">Core &#8594; Frontend</text>
+    <text x="290" y="805" fill="#D32F2F" font-size="9" font-weight="600">&#10060; N&#195;O CONSUMIDO</text>
+    <!-- Warning badge -->
+    <rect x="400" y="750" width="256" height="28" rx="6" fill="#FFEBEE" stroke="#EF9A9A" stroke-width="0.8"/>
+    <text x="410" y="769" fill="#C62828" font-size="9" font-weight="700">&#9888; LACUNA: Frontend n&#227;o tem</text>
+    <text x="410" y="781" fill="#C62828" font-size="8">Socket.IO client activo</text>
+    <!-- Note -->
+    <rect x="400" y="788" width="256" height="22" rx="4" fill="#FFF8E1" stroke="#FFE082" stroke-width="0.5"/>
+    <text x="410" y="803" fill="#78909C" font-size="8" font-style="italic">socket.io-client est&#225; nas deps mas n&#227;o &#233; usado</text>
+  </g>
+
+  <!-- ========================================================================== -->
+  <!-- SECTION 5: CACHE STRATEGY PANEL (y:710-820, x:690-1370)                   -->
+  <!-- ========================================================================== -->
+  <g filter="url(#shadowLight)">
+    <rect x="690" y="710" width="680" height="110" rx="8" fill="#FAFAFA" stroke="#4CAF50" stroke-width="1.5"/>
+    <!-- Title bar -->
+    <rect x="690" y="710" width="680" height="28" rx="8" fill="#4CAF50" opacity="0.08"/>
+    <rect x="690" y="730" width="680" height="8" fill="#4CAF50" opacity="0.08"/>
+    <text x="704" y="730" fill="#2E7D32" font-size="12" font-weight="700">&#128190; Cache Strategy &#8212; localStorage</text>
+    <!-- CLIENT-ONLY badge -->
+    <rect x="1280" y="714" width="78" height="18" rx="9" fill="#388E3C"/>
+    <text x="1319" y="727" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">CLIENT-ONLY</text>
+    <!-- Table header -->
+    <rect x="704" y="745" width="650" height="14" rx="2" fill="#E8F5E9"/>
+    <text x="710" y="756" fill="#2E7D32" font-size="8" font-weight="700">Key</text>
+    <text x="830" y="756" fill="#2E7D32" font-size="8" font-weight="700">Escrito por</text>
+    <text x="960" y="756" fill="#2E7D32" font-size="8" font-weight="700">Lido por</text>
+    <text x="1130" y="756" fill="#2E7D32" font-size="8" font-weight="700">Limpo em</text>
+    <text x="1270" y="756" fill="#2E7D32" font-size="8" font-weight="700">TTL</text>
+    <!-- Row 1: access_token -->
+    <text x="710" y="775" fill="#37474F" font-size="9" font-family="Consolas, monospace">access_token</text>
+    <text x="830" y="775" fill="#546E7A" font-size="9">LoginPage</text>
+    <text x="960" y="775" fill="#546E7A" font-size="9">api.ts, ProtectedRoute</text>
+    <text x="1130" y="775" fill="#546E7A" font-size="9">logout, 401</text>
+    <text x="1270" y="775" fill="#78909C" font-size="9">Nenhum</text>
+    <!-- Row 2: user (JSON) -->
+    <text x="710" y="795" fill="#37474F" font-size="9" font-family="Consolas, monospace">user (JSON)</text>
+    <text x="830" y="795" fill="#546E7A" font-size="9">LoginPage</text>
+    <text x="960" y="795" fill="#546E7A" font-size="9">LandingPage, api.ts</text>
+    <text x="1130" y="795" fill="#546E7A" font-size="9">logout, 401</text>
+    <text x="1270" y="795" fill="#78909C" font-size="9">Nenhum</text>
+    <!-- Note -->
+    <text x="704" y="814" fill="#78909C" font-size="8" font-style="italic">Sem cache server-side. Sem sessionStorage. Sem in-memory cache.</text>
+  </g>
+
+  <!-- ========================================================================== -->
+  <!-- SECTION 6: DATA FLOW STRATEGY PANEL (y:840-970)                            -->
+  <!-- ========================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="840" width="1340" height="130" rx="10" fill="#FAFAFA" stroke="#CFD8DC" stroke-width="1"/>
+    <rect x="30" y="840" width="1340" height="32" rx="10" fill="#455A64" opacity="0.06"/>
+    <rect x="30" y="864" width="1340" height="8" fill="#455A64" opacity="0.06"/>
+    <text x="50" y="862" fill="#37474F" font-size="12" font-weight="700">&#128260; Data Flow Strategy</text>
+    <!-- API-ONLY strategy badge -->
+    <rect x="230" y="848" width="80" height="22" rx="11" fill="url(#gradAmber)"/>
+    <text x="270" y="863" text-anchor="middle" fill="#FFFFFF" font-size="10" font-weight="700">API-ONLY</text>
+  </g>
+
+  <!-- Swim lane diagram: full request flow -->
+  <g>
+    <!-- Step 1: User Action -->
+    <rect x="60" y="885" width="100" height="30" rx="15" fill="#E3F2FD" stroke="#90CAF9" stroke-width="1"/>
+    <text x="110" y="905" text-anchor="middle" fill="#1565C0" font-size="9" font-weight="600">User Action</text>
+    <!-- Arrow 1→2 -->
+    <line x1="160" y1="900" x2="195" y2="900" stroke="#37474F" stroke-width="1.5" marker-end="url(#arrowRest)"/>
+    <!-- Step 2: React Component -->
+    <rect x="200" y="885" width="130" height="30" rx="15" fill="#E3F2FD" stroke="#90CAF9" stroke-width="1"/>
+    <text x="265" y="905" text-anchor="middle" fill="#1565C0" font-size="9" font-weight="600">React Component</text>
+    <!-- Arrow 2→3 -->
+    <line x1="330" y1="900" x2="365" y2="900" stroke="#37474F" stroke-width="1.5" marker-end="url(#arrowRest)"/>
+    <!-- Step 3: api.ts -->
+    <rect x="370" y="885" width="110" height="30" rx="15" fill="#ECEFF1" stroke="#B0BEC5" stroke-width="1"/>
+    <text x="425" y="905" text-anchor="middle" fill="#37474F" font-size="9" font-weight="600">api.ts (fetch)</text>
+    <!-- Arrow 3→4 -->
+    <line x1="480" y1="900" x2="515" y2="900" stroke="#37474F" stroke-width="1.5" marker-end="url(#arrowRest)"/>
+    <!-- Step 4: BFF -->
+    <rect x="520" y="885" width="100" height="30" rx="15" fill="#FFF3E0" stroke="#FFCC80" stroke-width="1"/>
+    <text x="570" y="905" text-anchor="middle" fill="#E65100" font-size="9" font-weight="600">BFF :4020</text>
+    <!-- Arrow 4→5 -->
+    <line x1="620" y1="900" x2="655" y2="900" stroke="#37474F" stroke-width="1.5" marker-end="url(#arrowRest)"/>
+    <!-- Step 5: Middleware -->
+    <rect x="660" y="885" width="130" height="30" rx="15" fill="#FFF3E0" stroke="#FFCC80" stroke-width="1"/>
+    <text x="725" y="905" text-anchor="middle" fill="#E65100" font-size="9" font-weight="600">Middleware :4010</text>
+    <!-- Arrow 5→6 -->
+    <line x1="790" y1="900" x2="825" y2="900" stroke="#37474F" stroke-width="1.5" marker-end="url(#arrowRest)"/>
+    <!-- Step 6: Core -->
+    <rect x="830" y="885" width="100" height="30" rx="15" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="1"/>
+    <text x="880" y="905" text-anchor="middle" fill="#2E7D32" font-size="9" font-weight="600">Core :4001</text>
+  </g>
+
+  <!-- Sub-text items (what's missing) -->
+  <g>
+    <text x="60" y="940" fill="#D32F2F" font-size="10">&#10007; Sem event-driven updates</text>
+    <text x="290" y="940" fill="#D32F2F" font-size="10">&#10007; Sem WebSocket consumption</text>
+    <text x="540" y="940" fill="#D32F2F" font-size="10">&#10007; Sem optimistic updates</text>
+    <text x="760" y="940" fill="#D32F2F" font-size="10">&#10007; Sem background polling</text>
+  </g>
+
+  <!-- Recommendation box -->
+  <g>
+    <rect x="960" y="878" width="396" height="40" rx="8" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.8"/>
+    <text x="974" y="896" fill="#2E7D32" font-size="9" font-weight="600">&#128161; Recomenda&#231;&#227;o:</text>
+    <text x="974" y="912" fill="#546E7A" font-size="9" font-style="italic">Considerar padr&#227;o hybrid &#8212; consumir eventos</text>
+    <text x="974" y="924" fill="#546E7A" font-size="8" font-style="italic">Socket.IO para actualiza&#231;&#245;es real-time de saldos e movimentos</text>
+  </g>
+
+  <!-- ========================================================================== -->
+  <!-- SECTION 7: LEGEND (y:985-1085)                                             -->
+  <!-- ========================================================================== -->
+  <g>
+    <rect x="30" y="985" width="1340" height="100" rx="10" fill="#FFFFFF" stroke="#CFD8DC" stroke-width="1" filter="url(#shadow)"/>
+    <rect x="30" y="985" width="1340" height="28" rx="10" fill="#263238" opacity="0.06"/>
+    <rect x="30" y="1005" width="1340" height="8" fill="#263238" opacity="0.06"/>
+    <text x="700" y="1005" text-anchor="middle" fill="#37474F" font-size="12" font-weight="700">LEGENDA</text>
+
+    <!-- Column 1: Componentes -->
+    <text x="56" y="1026" fill="#37474F" font-size="10" font-weight="700">Componentes</text>
+    <rect x="56" y="1034" width="12" height="12" rx="3" fill="url(#gradBlue)"/>
+    <text x="74" y="1044" fill="#37474F" font-size="9">P&#225;ginas (Frontend)</text>
+    <rect x="56" y="1050" width="12" height="12" rx="3" fill="url(#gradOrange)"/>
+    <text x="74" y="1060" fill="#37474F" font-size="9">BFF Services</text>
+    <rect x="56" y="1066" width="12" height="12" rx="3" fill="url(#gradGrey)"/>
+    <text x="74" y="1076" fill="#37474F" font-size="9">Modules</text>
+
+    <!-- Separator -->
+    <line x1="250" y1="1018" x2="250" y2="1080" stroke="#ECEFF1" stroke-width="1"/>
+
+    <!-- Column 2: Ligacoes -->
+    <text x="276" y="1026" fill="#37474F" font-size="10" font-weight="700">Liga&#231;&#245;es</text>
+    <line x1="276" y1="1040" x2="316" y2="1040" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+    <text x="330" y="1044" fill="#37474F" font-size="9">REST API (s&#243;lida)</text>
+    <line x1="276" y1="1056" x2="316" y2="1056" stroke="#7B1FA2" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowSocket)"/>
+    <text x="330" y="1060" fill="#37474F" font-size="9">Socket.IO (n&#227;o consumido)</text>
+    <line x1="276" y1="1072" x2="316" y2="1072" stroke="#4CAF50" stroke-width="1.5" stroke-dasharray="3 2" marker-end="url(#arrowGreen)"/>
+    <text x="330" y="1076" fill="#37474F" font-size="9">Cache read/write</text>
+
+    <!-- Separator -->
+    <line x1="560" y1="1018" x2="560" y2="1080" stroke="#ECEFF1" stroke-width="1"/>
+
+    <!-- Column 3: Estado -->
+    <text x="586" y="1026" fill="#37474F" font-size="10" font-weight="700">Estado</text>
+    <text x="586" y="1044" fill="#2E7D32" font-size="10">&#10003;</text>
+    <text x="602" y="1044" fill="#37474F" font-size="9">Implementado</text>
+    <text x="586" y="1060" fill="#D32F2F" font-size="10">&#10060;</text>
+    <text x="602" y="1060" fill="#37474F" font-size="9">N&#227;o implementado</text>
+    <text x="586" y="1076" fill="#FF8F00" font-size="10">&#9888;</text>
+    <text x="602" y="1076" fill="#37474F" font-size="9">Lacuna</text>
+
+    <!-- Separator -->
+    <line x1="790" y1="1018" x2="790" y2="1080" stroke="#ECEFF1" stroke-width="1"/>
+
+    <!-- Column 4: Estrategia -->
+    <text x="816" y="1026" fill="#37474F" font-size="10" font-weight="700">Estrat&#233;gia</text>
+    <rect x="816" y="1032" width="70" height="16" rx="8" fill="url(#gradAmber)"/>
+    <text x="851" y="1044" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">API-ONLY</text>
+    <text x="892" y="1044" fill="#37474F" font-size="9">(actual)</text>
+    <rect x="816" y="1052" width="54" height="16" rx="8" fill="url(#gradGreen)"/>
+    <text x="843" y="1064" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">Hybrid</text>
+    <text x="876" y="1064" fill="#37474F" font-size="9">(recomendado)</text>
+
+    <!-- Separator -->
+    <line x1="1040" y1="1018" x2="1040" y2="1080" stroke="#ECEFF1" stroke-width="1"/>
+
+    <!-- Column 5: Portas -->
+    <text x="1066" y="1026" fill="#37474F" font-size="10" font-weight="700">Portas</text>
+    <rect x="1066" y="1034" width="36" height="14" rx="7" fill="#1976D2"/>
+    <text x="1084" y="1045" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:5173</text>
+    <text x="1108" y="1045" fill="#37474F" font-size="9">Frontend</text>
+    <rect x="1066" y="1052" width="36" height="14" rx="7" fill="#F57C00"/>
+    <text x="1084" y="1063" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:4020</text>
+    <text x="1108" y="1063" fill="#37474F" font-size="9">BFF</text>
+    <rect x="1066" y="1070" width="36" height="14" rx="7" fill="#F57C00"/>
+    <text x="1084" y="1081" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:4010</text>
+    <text x="1108" y="1081" fill="#37474F" font-size="9">MW</text>
+    <rect x="1180" y="1034" width="36" height="14" rx="7" fill="#388E3C"/>
+    <text x="1198" y="1045" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:4001</text>
+    <text x="1222" y="1045" fill="#37474F" font-size="9">Core</text>
+
+    <!-- Bottom bar -->
+    <rect x="30" y="1073" width="1340" height="12" rx="0" fill="#263238" opacity="0.04"/>
+    <text x="700" y="1081" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; Gerado automaticamente &#8212; 2026-02-11</text>
+  </g>
+
+  <!-- ========================================================================== -->
+  <!-- CONNECTION ARROWS BETWEEN SECTIONS                                         -->
+  <!-- ========================================================================== -->
+
+  <!-- LoginPage → Auth Service: solid arrow "POST /api/auth/login" -->
+  <line x1="195" y1="425" x2="195" y2="515" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+  <rect x="110" y="448" width="136" height="16" rx="4" fill="#FFFFFF" stroke="#B0BEC5" stroke-width="0.8"/>
+  <text x="114" y="460" fill="#E65100" font-size="8" font-weight="700">POST</text>
+  <text x="143" y="460" fill="#37474F" font-size="8">/api/auth/login</text>
+
+  <!-- LandingPage → Accounts Service: solid arrow "GET /api/accounts" -->
+  <line x1="515" y1="425" x2="620" y2="515" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+  <rect x="530" y="450" width="114" height="16" rx="4" fill="#FFFFFF" stroke="#B0BEC5" stroke-width="0.8"/>
+  <text x="534" y="462" fill="#1565C0" font-size="8" font-weight="700">GET</text>
+  <text x="556" y="462" fill="#37474F" font-size="8">/api/accounts</text>
+
+  <!-- ProtectedRoute → api.ts: dotted green arrow "reads access_token" -->
+  <line x1="920" y1="290" x2="940" y2="260" stroke="#4CAF50" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrowGreen)"/>
+  <rect x="880" y="260" width="110" height="14" rx="3" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.5"/>
+  <text x="886" y="270" fill="#2E7D32" font-size="7" font-weight="600">reads access_token</text>
+
+  <!-- Auth Service → downstream: solid arrow "→ MW :4010" -->
+  <line x1="250" y1="675" x2="250" y2="710" stroke="#37474F" stroke-width="1.5" marker-end="url(#arrowRest)" opacity="0.5"/>
+  <rect x="200" y="685" width="72" height="14" rx="3" fill="#FFFFFF" stroke="#B0BEC5" stroke-width="0.5"/>
+  <text x="206" y="695" fill="#37474F" font-size="8" font-weight="600">&#8594; MW :4010</text>
+
+  <!-- Accounts Service → downstream: solid arrow "→ MW :4010" -->
+  <line x1="700" y1="675" x2="700" y2="710" stroke="#37474F" stroke-width="1.5" marker-end="url(#arrowRest)" opacity="0.5"/>
+  <rect x="650" y="685" width="72" height="14" rx="3" fill="#FFFFFF" stroke="#B0BEC5" stroke-width="0.5"/>
+  <text x="656" y="695" fill="#37474F" font-size="8" font-weight="600">&#8594; MW :4010</text>
+
+  <!-- Core events → Frontend (long dashed purple): Socket.IO NOT CONSUMED -->
+  <path d="M 1350 960 C 1380 800, 1380 500, 1200 250 C 1100 130, 700 105, 400 130" stroke="#7B1FA2" stroke-width="1.8" fill="none" stroke-dasharray="8 4" marker-end="url(#arrowSocket)" opacity="0.5"/>
+  <!-- Red X on the arrow -->
+  <rect x="1290" y="530" width="80" height="38" rx="6" fill="#FFEBEE" stroke="#EF9A9A" stroke-width="0.8"/>
+  <text x="1330" y="547" text-anchor="middle" fill="#C62828" font-size="9" font-weight="700">&#10007; Socket.IO</text>
+  <text x="1330" y="562" text-anchor="middle" fill="#C62828" font-size="8">n&#227;o consumido</text>
+
+  <!-- Event labels along the purple dashed arrow -->
+  <rect x="1322" y="440" width="60" height="36" rx="4" fill="#F3E5F5" stroke="#CE93D8" stroke-width="0.5" opacity="0.9"/>
+  <text x="1328" y="453" fill="#6A1B9A" font-size="7">movement.*</text>
+  <text x="1328" y="465" fill="#6A1B9A" font-size="7">balance.*</text>
+  <text x="1328" y="475" fill="#6A1B9A" font-size="7">account.*</text>
+
+</svg>

@@ -33,9 +33,14 @@ const bancoCTTColors = {
     fa: '#10B981', // Functional Agent - Green
     da: '#F59E0B', // Design Agent - Amber
     dsla: '#8B5CF6', // DSLA - Purple
-    fda: '#EC4899', // Frontend Dev Agent - Pink
-    bda: '#8B5CF6', // Backend Dev Agent - Purple
+    pa: '#9333EA', // Prototype Agent - Violet
+    fda: '#EC4899', // Frontend Dev Agent - Pink (legacy)
+    bda: '#8B5CF6', // Backend Dev Agent - Purple (legacy)
+    taa: '#7C3AED', // Technical Architecture Agent - Violet
+    fde: '#EC4899', // Frontend Dev Engineer - Pink
+    bde: '#8B5CF6', // Backend Dev Engineer - Purple
     fbs: '#EF4444', // Frontend Bug Solver - Red
+    bbs: '#DC2626', // Backend Bug Solver - Red dark
     ute: '#06B6D4', // Unit Tester - Cyan
     lte: '#14B8A6', // Load Tester - Teal
     cqa: '#84CC16', // Code Quality Agent - Lime

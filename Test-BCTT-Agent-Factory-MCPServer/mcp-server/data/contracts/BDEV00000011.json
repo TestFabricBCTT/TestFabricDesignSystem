@@ -1,0 +1,343 @@
+{
+  "version": "1.0",
+  "bdev_code": "BDEV00000011",
+  "generated_at": "2026-02-11T16:16:06.068Z",
+  "generated_by": "TAA",
+  "apis": [
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "description": "Autenticação do utilizador. Retorna JWT token com claims (sub, roles, clientId).",
+      "request_body": {
+        "username": "string (email)",
+        "password": "string"
+      },
+      "response_body": {
+        "access_token": "string (JWT)",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+        "user": {
+          "sub": "string",
+          "email": "string",
+          "roles": [
+            "string"
+          ],
+          "clientId": "string"
+        }
+      },
+      "error_codes": [
+        "VALIDATION_ERROR (400)",
+        "UNAUTHORIZED (401)"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/accounts",
+      "description": "Lista contas do cliente autenticado. Middleware filtra por clientId do JWT. Query param opcional: clientId.",
+      "request_body": {},
+      "response_body": {
+        "items": [
+          {
+            "id": "string (UUID)",
+            "clientId": "string",
+            "iban": "string (PT50...)",
+            "type": "checking | savings",
+            "status": "no_access | readonly | fullaccess",
+            "balance": "number",
+            "clientName": "string",
+            "createdAt": "string (ISO)"
+          }
+        ]
+      },
+      "error_codes": [
+        "UNAUTHORIZED (401)",
+        "FORBIDDEN (403)"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/accounts/:accountId",
+      "description": "Detalhe de uma conta específica com saldos.",
+      "request_body": {},
+      "response_body": {
+        "id": "string (UUID)",
+        "clientId": "string",
+        "iban": "string",
+        "type": "checking | savings",
+        "status": "no_access | readonly | fullaccess",
+        "balance": "number",
+        "clientName": "string",
+        "available": "number",
+        "accounting": "number",
+        "createdAt": "string (ISO)"
+      },
+      "error_codes": [
+        "UNAUTHORIZED (401)",
+        "FORBIDDEN (403)",
+        "NOT_FOUND (404)"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/movements",
+      "description": "Lista movimentos de uma conta. Query params: accountId (obrigatório), page, limit.",
+      "request_body": {},
+      "response_body": {
+        "items": [
+          {
+            "id": "string (UUID)",
+            "accountId": "string",
+            "type": "debit | credit | cativo",
+            "amount": "number",
+            "date": "string (YYYY-MM-DD)",
+            "description": "string",
+            "balanceAfter": "number",
+            "createdAt": "string (ISO)"
+          }
+        ]
+      },
+      "error_codes": [
+        "UNAUTHORIZED (401)",
+        "FORBIDDEN (403)",
+        "BAD_REQUEST (400)"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/movements",
+      "description": "Cria um novo movimento numa conta (débito, crédito ou cativo).",
+      "request_body": {
+        "accountId": "string (UUID)",
+        "type": "debit | credit | cativo",
+        "amount": "number (>0)",
+        "date": "string (YYYY-MM-DD)",
+        "description": "string (opcional)"
+      },
+      "response_body": {
+        "id": "string (UUID)",
+        "accountId": "string",
+        "type": "string",
+        "amount": "number",
+        "date": "string",
+        "description": "string",
+        "balanceAfter": "number",
+        "createdAt": "string (ISO)"
+      },
+      "error_codes": [
+        "VALIDATION_ERROR (400)",
+        "UNAUTHORIZED (401)",
+        "NOT_FOUND (404)"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/transfers",
+      "description": "Executa transferência entre contas internas. Cria 2 movimentos (débito na origem, crédito no destino).",
+      "request_body": {
+        "fromAccountId": "string (UUID)",
+        "toAccountId": "string (UUID)",
+        "amount": "number (>0)",
+        "description": "string (opcional)"
+      },
+      "response_body": {
+        "transferId": "string (UUID)",
+        "fromMovementId": "string (UUID)",
+        "toMovementId": "string (UUID)",
+        "amount": "number",
+        "date": "string (YYYY-MM-DD)",
+        "status": "completed"
+      },
+      "error_codes": [
+        "VALIDATION_ERROR (400)",
+        "UNAUTHORIZED (401)",
+        "FORBIDDEN (403)",
+        "NOT_FOUND (404)",
+        "INSUFFICIENT_BALANCE (400)"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients",
+      "description": "Lista todos os clientes (Backoffice). Requer role backoffice-admin.",
+      "request_body": {},
+      "response_body": {
+        "items": [
+          {
+            "id": "string",
+            "name": "string",
+            "nif": "string",
+            "email": "string",
+            "createdAt": "string (ISO)"
+          }
+        ]
+      },
+      "error_codes": [
+        "UNAUTHORIZED (401)",
+        "FORBIDDEN (403)"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/:clientId",
+      "description": "Detalhe de um cliente específico.",
+      "request_body": {},
+      "response_body": {
+        "id": "string",
+        "name": "string",
+        "nif": "string",
+        "email": "string",
+        "createdAt": "string (ISO)"
+      },
+      "error_codes": [
+        "UNAUTHORIZED (401)",
+        "NOT_FOUND (404)"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients",
+      "description": "Cria novo cliente (Backoffice).",
+      "request_body": {
+        "name": "string",
+        "nif": "string (9 dígitos)",
+        "email": "string (email válido)"
+      },
+      "response_body": {
+        "id": "string",
+        "name": "string",
+        "nif": "string",
+        "email": "string",
+        "createdAt": "string (ISO)"
+      },
+      "error_codes": [
+        "VALIDATION_ERROR (400)",
+        "CONFLICT (409)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/clients/:clientId",
+      "description": "Actualiza dados de um cliente (Backoffice).",
+      "request_body": {
+        "name": "string (opcional)",
+        "nif": "string (opcional)",
+        "email": "string (opcional)"
+      },
+      "response_body": {
+        "id": "string",
+        "name": "string",
+        "nif": "string",
+        "email": "string",
+        "createdAt": "string (ISO)"
+      },
+      "error_codes": [
+        "NOT_FOUND (404)",
+        "CONFLICT (409)"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "movement.created",
+      "source": "Core API",
+      "target": "DigitalChannels (frontend)",
+      "payload": {
+        "id": "string (UUID)",
+        "accountId": "string",
+        "type": "debit | credit | cativo",
+        "amount": "number",
+        "date": "string",
+        "description": "string",
+        "balanceAfter": "number"
+      }
+    },
+    {
+      "name": "balance.updated",
+      "source": "Core API",
+      "target": "DigitalChannels (frontend)",
+      "payload": {
+        "accountId": "string",
+        "newBalance": "number",
+        "available": "number",
+        "accounting": "number"
+      }
+    },
+    {
+      "name": "account.status.changed",
+      "source": "Core API",
+      "target": "DigitalChannels (frontend)",
+      "payload": {
+        "accountId": "string",
+        "oldStatus": "string",
+        "newStatus": "string"
+      }
+    },
+    {
+      "name": "digital_access.created",
+      "source": "Core API",
+      "target": "Middleware",
+      "payload": {
+        "clientId": "string",
+        "username": "string",
+        "status": "active"
+      }
+    }
+  ],
+  "shared_types": {
+    "Client": {
+      "id": "string",
+      "name": "string",
+      "nif": "string",
+      "email": "string",
+      "createdAt": "string (ISO 8601)"
+    },
+    "Account": {
+      "id": "string",
+      "clientId": "string",
+      "iban": "string",
+      "type": "'checking' | 'savings'",
+      "status": "'no_access' | 'readonly' | 'fullaccess'",
+      "balance": "number",
+      "createdAt": "string (ISO 8601)"
+    },
+    "Movement": {
+      "id": "string",
+      "accountId": "string",
+      "type": "'debit' | 'credit' | 'cativo'",
+      "amount": "number",
+      "date": "string (YYYY-MM-DD)",
+      "description": "string",
+      "balanceAfter": "number",
+      "createdAt": "string (ISO 8601)"
+    },
+    "Balance": {
+      "accountId": "string",
+      "available": "number",
+      "accounting": "number",
+      "updatedAt": "string (ISO 8601)"
+    },
+    "AuthToken": {
+      "accessToken": "string",
+      "tokenType": "'Bearer'",
+      "expiresIn": "number (seconds)",
+      "user": {
+        "sub": "string",
+        "email": "string",
+        "roles": "string[]",
+        "clientId": "string"
+      }
+    },
+    "TransferResult": {
+      "transferId": "string",
+      "fromMovementId": "string",
+      "toMovementId": "string",
+      "amount": "number",
+      "date": "string",
+      "status": "'completed'"
+    },
+    "ApiError": {
+      "error": "string (error code)",
+      "message": "string (human readable)"
+    }
+  }
+}

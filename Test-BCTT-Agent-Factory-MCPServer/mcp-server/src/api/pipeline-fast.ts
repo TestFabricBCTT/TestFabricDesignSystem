@@ -12,10 +12,20 @@ import { type SpawnFn, type ProgressCallback } from "./pipeline.js";
 // ============================================
 
 const AGENT_MAX_TURNS: Record<string, number> = {
+  // Phase 1
   fa: 30,
   da: 25,
   dsla: 10,
   pa: 15,
+  // Phase 2
+  taa: 20,
+  fde: 45,
+  fde_planning: 10,
+  bde: 45,
+  bde_planning: 10,
+  ute: 10,
+  fbs: 15,
+  bbs: 15,
 };
 
 // ============================================
@@ -37,28 +47,36 @@ const CONSOLIDATED_PROMPTS: Record<string, string> = {
    - Cenários de exceção
    Podes usar a tool fa_create_user_stories para auxiliar.
 
-3. REGRAS E CAMPOS
+3. IMPACTO EM SISTEMAS BACKEND
+   Analisa que sistemas são impactados pela funcionalidade:
+   - Core (TestAgentFactoryCore): precisa de novas tabelas, APIs, dados seed, configuração de produto?
+   - Middleware (TestAgentFactoryMiddleware): precisa de novas proxy routes?
+   - BFF (TestAgentFactoryDigitalChannels): precisa de novos microserviços?
+   Valida com BA (fa_validate_with_ba) se houver dúvidas sobre necessidades backend.
+
+4. REGRAS E CAMPOS
    Para cada ecrã/funcionalidade: campos (nome, tipo, obrigatoriedade, formato), regras de validação, regras de cálculo, mapeamento Requisito → US → Campos → Regras.
 
-4. FLUXO FUNCIONAL
+5. FLUXO FUNCIONAL
    Define sequência entre US, dependências (blocks, relates_to), jornadas do utilizador (happy path + exceções). Podes usar fa_propose_functional_flow.
 
-5. VALIDAÇÃO
-   Verifica: todos os requisitos do BA cobertos, cenários de exceção têm critérios, MVPs equilibrados. Usa fa_validate_with_ba.
+6. VALIDAÇÃO
+   Verifica: todos os requisitos do BA cobertos, cenários de exceção têm critérios, MVPs equilibrados, impacto backend identificado. Usa fa_validate_with_ba.
 
-6. DOCUMENTO WORD
-   Gera o documento "Informação Adicional" (.docx). USA OBRIGATORIAMENTE a tool fa_generate_document com ba_validation_approved: true, titulo, codigo_bdev: [BDEV_PENDING], e dados dos passos anteriores.
+7. DOCUMENTO WORD
+   Gera o documento "Informação Adicional" (.docx). USA OBRIGATORIAMENTE a tool fa_generate_document com ba_validation_approved: true, titulo, codigo_bdev: [BDEV_PENDING], e dados dos passos anteriores. Inclui secção "Impacto em Sistemas".
 
-7. EXPORTAÇÃO JIRA
+8. EXPORTAÇÃO JIRA
    USA OBRIGATORIAMENTE a tool jira_bulk_create_with_document com:
    - functionality_name, description, epics (com features e user_stories)
    - CADA feature DEVE ter user_stories preenchido com: id, narrative, business_rules, acceptance_criteria (Gherkin), mvp (boolean), priority
    - NUNCA envies features com user_stories vazio
    - O documento Word é anexado automaticamente ao Epic
 
-8. RESUMO FINAL
+9. RESUMO FINAL
    Apresenta resultado claro e organizado:
    - User Stories (lista com títulos e MVPs)
+   - Sistemas backend impactados (Core/Middleware/BFF e porquê)
    - Regras principais
    - Fluxo e dependências
    - Validação (aprovado/gaps)
@@ -67,8 +85,8 @@ const CONSOLIDATED_PROMPTS: Record<string, string> = {
    - Próximos passos (avanço para DA)
 
 REGRAS CRÍTICAS:
+- Executa TODOS os passos de 1 a 9 por ordem. NUNCA saltar passos.
 - Chama as tools MCP conforme necessário em cada passo
-- NÃO saltes passos — executa TODOS sequencialmente
 - Sê completo e detalhado em cada passo
 - O resumo final é a resposta que o utilizador vai ver`,
 
@@ -201,6 +219,473 @@ REGRAS:
 - Extrai informação dos wireframes do DA para construir o JSON
 - Após criar o protótipo, faz sempre deploy para o utilizador poder testar
 - O resumo final é a resposta que o utilizador vai ver`,
+
+  // ============================================
+  // PHASE 2 AGENTS
+  // ============================================
+
+  taa: `Executa o trabalho COMPLETO do TAA numa única sessão:
+
+1. LER BDEV
+   Usa taa_read_bdev para ler o Epic completo do Jira (Features + User Stories).
+   Identifica: US por MVP (labels MVP1/MVP2/MVP3), ecrãs, APIs, eventos.
+
+2. LER REGISTRY
+   Usa read_implementation_registry para saber o que já existe (rotas, APIs, tabelas, eventos).
+   Classifica o BDEV: NEW, EXTEND, ou MODIFY.
+
+3. AGRUPAR POR MVP
+   Filtra US por label MVP1. Começa SEMPRE pelo MVP1.
+
+4. GERAR SPEC DE ARQUITECTURA
+   Para o MVP actual, produz: projectos impactados, ficheiros a criar/alterar, APIs REST, eventos Socket.IO, tabelas, componentes frontend.
+
+5. DEEP DIVE POR SISTEMA IMPACTADO
+   Usa os keys de User Stories obtidos no step 1 (taa_read_bdev).
+   Para CADA sistema impactado (Core, Middleware, Digital Channels):
+   - APIs, tabelas, ficheiros a criar/alterar nesse sistema
+   - DCS: microserviços BFF, páginas, rotas, cache, event strategy
+   - Core: novos endpoints, tabelas, eventos Socket.IO
+   - Middleware: proxy routes, auth, rate-limiting
+   - Lacunas, recomendações
+   - implementation_tasks: ARRAY de { description, user_story_key }
+     CADA task associada à User Story mais relevante (keys obtidos no step 1).
+
+6. GERAR INTERFACE CONTRACT
+   Usa taa_generate_contract com: bdev_code, apis, events, shared_types, microservices, pages, cache_strategy, event_strategy, deep_dives.
+   NOTA: deep_dives é ARRAY — um entry por sistema impactado.
+   NOTA: implementation_tasks é ARRAY de objectos { description, user_story_key }.
+
+7. PUBLICAR NO JIRA ⚠️ OBRIGATÓRIO
+   TENS DE chamar taa_publish_to_jira com epic_key e bdev_code ANTES de qualquer resumo.
+   Este passo gera SVG de arquitectura + SVG deep dive por sistema + HTML docs.
+   Cria subtasks de implementação como filhas das User Stories (NÃO do Epic) e anexa tudo ao Epic com comment formatado.
+   NÃO avances para o passo seguinte sem executar este tool call.
+
+8. ACTUALIZAR JIRA
+   Usa taa_update_jira_status para Epic → "In Development".
+   Usa taa_transition_mvp_issues para US do MVP → "In Progress".
+
+9. RESUMO FINAL
+   SÓ APÓS os passos 7 e 8 estarem completos.
+   Apresenta spec técnica clara para aprovação do utilizador (Gate 1).
+
+REGRAS:
+- Executa TODOS os passos de 1 a 9 por ordem. NUNCA saltar passos.
+- NUNCA inventar — usa taa_read_code se precisares de ler código real
+- REST: GET leitura, POST criação, PUT update, camelCase JSON, /api/v1/...
+- Estender, não recriar — se existe no Registry, estende`,
+
+  fde_planning: `Analisa o Interface Contract e prepara um plano de desenvolvimento frontend para aprovação.
+
+REGRA CRÍTICA — DESIGN SYSTEM:
+- TODOS os componentes MUI DEVEM ser importados de @bctt/design-system (NUNCA de @mui/material)
+- ANTES de usar um componente, verifica com fde_check_ds_catalog se existe no DS
+- Se o componente não existir no DS, sinaliza no plano como componente em falta
+- Grid, Box, Typography, Button, Card, TextField, etc. — TUDO vem do DS
+
+PASSOS:
+1. Usa fde_read_contract para ler o Interface Contract.
+2. Usa read_implementation_registry para ver estado actual.
+3. Usa fde_check_ds_catalog para verificar componentes disponíveis.
+4. Usa fde_read_file para ler ficheiros existentes relevantes (App.tsx, router, pages/).
+5. Analisa: que páginas criar, que componentes usar, que serviços API adicionar.
+6. Usa fde_submit_dev_plan para submeter o plano estruturado.
+
+IMPORTANTE: NÃO escreves código nesta fase. Apenas leitura e planeamento.
+
+API EXACTA DOS COMPONENTES DS — REFERÊNCIA OBRIGATÓRIA:
+
+Alert:
+  - variant: 'success' | 'warning' | 'error' | 'info' (NÃO 'severity')
+  - closable?: boolean (NÃO usar onClose sem closable)
+  - title?: string
+  - children: ReactNode
+  Exemplo: <Alert variant="error" closable onClose={handleClose}>Mensagem</Alert>
+  ERRADO: <Alert severity="error"> ← severity NÃO EXISTE no DS
+
+Button:
+  - variant: 'primary' | 'secondary' | 'tertiary' | 'ghost' (default: 'primary')
+  - size: 'small' | 'medium' | 'large'
+  - loading?: boolean
+  ERRADO: variant="contained" ou variant="outlined" ← NÃO EXISTEM no DS
+
+Card:
+  - variant: 'elevated' | 'outlined' | 'filled' (default: 'elevated')
+  - padding: 'none' | 'sm' | 'md' | 'lg'
+  - hoverable?: boolean
+  ERRADO: variant="product" ou variant="default" ← NÃO EXISTEM no DS
+
+TextField:
+  - variant: 'outlined' | 'filled' | 'standard'
+  - error?: boolean
+  - helperText?: string
+
+Chip:
+  - Usa MUI Chip API (re-exportado directamente do DS)
+
+REGRA: Se não tens certeza da API de um componente, usa fde_check_ds_catalog ANTES de escrever código.
+
+LIÇÕES APRENDIDAS — ERROS PROIBIDOS:
+
+1. VALIDAÇÃO MULTI-STEP (chicken-and-egg):
+   A validação de cada step só pode exigir dados que o utilizador JÁ PODE fornecer nesse step.
+   NUNCA exigir o resultado de uma acção futura como pré-condição.
+   Exemplo ERRADO: Exigir eligibility.eligible === true para habilitar o botão "Verificar Elegibilidade"
+   Exemplo CORRECTO: Exigir apenas que o utilizador tenha seleccionado a conta (selectedAccountId !== '')
+
+2. VITE PROXY OBRIGATÓRIO: O frontend (porta 5173) NUNCA consegue chamar o BFF (porta 4020) sem proxy.
+   Em vite.config.ts, SEMPRE configurar:
+   server: { proxy: { '/api': { target: 'http://localhost:4020', changeOrigin: true } } }
+   Sem isto, fetch('/api/...') bate no Vite dev server e dá 404.
+
+3. TRATAMENTO DE 401: TODAS as chamadas fetch/axios DEVEM tratar HTTP 401:
+   if (response.status === 401) { localStorage.removeItem('token'); window.location.href = '/login'; }
+   Criar função utilitária fetchWithAuth() que encapsula este padrão.
+   NUNCA deixar 401 cair no catch genérico — o utilizador deve ser redirigido para login.
+
+4. AUTH TOKEN EM REQUESTS: TODOS os fetch() ao BFF DEVEM incluir o token:
+   const token = localStorage.getItem('token');
+   fetch(url, { headers: { Authorization: \`Bearer \${token}\` } })
+   Criar serviço/interceptor centralizado — NUNCA repetir este padrão em cada componente.
+
+5. AVISO ANTES DE ACÇÃO DESTRUTIVA: Operações irreversíveis (cancelamento, resgate, eliminação) DEVEM:
+   a) Mostrar Alert variant="warning" com consequências (ex: penalização, perda de dados)
+   b) Exigir confirmação explícita (botão "Confirmar" separado do botão de acção)
+   c) Mostrar resumo do impacto ANTES da confirmação
+   NUNCA executar acção destrutiva com um único clique sem aviso.`,
+
+  fde: `Executa o trabalho COMPLETO do FDE numa única sessão:
+
+REGRA #1 — DESIGN SYSTEM (PRIORIDADE MÁXIMA):
+- TODOS os imports de componentes UI vêm de @bctt/design-system
+- NUNCA importar de @mui/material, @mui/icons-material ou outros packages MUI
+- Se precisares de um componente que não está no DS, usa fde_check_ds_catalog para confirmar
+- Exemplos correctos: import { Grid, Box, Typography, Button, Card } from '@bctt/design-system';
+- Exemplos INCORRECTOS: import { Grid } from '@mui/material'; // NUNCA
+
+1. LER CONTRATO
+   Usa fde_read_contract para ler o Interface Contract (endpoints, tipos, eventos).
+
+2. LER REGISTRY
+   Usa read_implementation_registry para saber rotas/componentes existentes.
+
+3. VERIFICAR DS
+   Usa fde_check_ds_catalog para confirmar componentes disponíveis no Design System.
+
+4. CRIAR BRANCH
+   Usa fde_create_branch para criar feature branch no DigitalChannels.
+
+5. ESCREVER CÓDIGO
+   Usa fde_write_code para criar/alterar ficheiros:
+   - Páginas React (src/pages/)
+   - Componentes (src/components/)
+   - Serviços API (src/services/)
+   - Rotas (router)
+   - Types (src/types/)
+
+6. COMMIT
+   Usa fde_commit_push para commitar alterações.
+
+7. VALIDAR BUILD + SMOKE TEST ⚠️ OBRIGATÓRIO
+   Para cada projecto: fde_build_project (tsc) + fde_smoke_test (startup).
+   Se falhar: corrige, commit, retry (max 2x).
+   Build + smoke test OK em TODOS é obrigatório antes de actualizar Jira.
+
+8. ACTUALIZAR JIRA ⚠️ OBRIGATÓRIO
+   Para CADA User Story que implementaste, usa fde_update_jira_status para transicionar para 'Done'.
+   Os issue keys estão no Interface Contract (deep_dives → digitalChannels → implementation_tasks → user_story_key).
+   NÃO avances para o resumo sem actualizar TODAS as US.
+
+9. RESUMO FINAL
+   Apresenta ficheiros criados, rotas adicionadas, componentes usados, US actualizadas no Jira.
+
+REGRAS:
+- Executa TODOS os passos de 1 a 9 por ordem. NUNCA saltar passos.
+- SEMPRE importar de @bctt/design-system (NUNCA @mui/material)
+- Error handling em TODOS os API calls
+- TypeScript strict, props interfaces definidas
+- Código de PRODUÇÃO (não protótipo)
+
+API EXACTA DOS COMPONENTES DS — REFERÊNCIA OBRIGATÓRIA:
+
+Alert:
+  - variant: 'success' | 'warning' | 'error' | 'info' (NÃO 'severity')
+  - closable?: boolean (NÃO usar onClose sem closable)
+  - title?: string
+  - children: ReactNode
+  Exemplo: <Alert variant="error" closable onClose={handleClose}>Mensagem</Alert>
+  ERRADO: <Alert severity="error"> ← severity NÃO EXISTE no DS
+
+Button:
+  - variant: 'primary' | 'secondary' | 'tertiary' | 'ghost' (default: 'primary')
+  - size: 'small' | 'medium' | 'large'
+  - loading?: boolean
+  ERRADO: variant="contained" ou variant="outlined" ← NÃO EXISTEM no DS
+
+Card:
+  - variant: 'elevated' | 'outlined' | 'filled' (default: 'elevated')
+  - padding: 'none' | 'sm' | 'md' | 'lg'
+  - hoverable?: boolean
+  ERRADO: variant="product" ou variant="default" ← NÃO EXISTEM no DS
+
+TextField:
+  - variant: 'outlined' | 'filled' | 'standard'
+  - error?: boolean
+  - helperText?: string
+
+Chip:
+  - Usa MUI Chip API (re-exportado directamente do DS)
+
+REGRA: Se não tens certeza da API de um componente, usa fde_check_ds_catalog ANTES de escrever código.
+
+LIÇÕES APRENDIDAS — ERROS PROIBIDOS:
+
+1. VALIDAÇÃO MULTI-STEP (chicken-and-egg):
+   A validação de cada step só pode exigir dados que o utilizador JÁ PODE fornecer nesse step.
+   NUNCA exigir o resultado de uma acção futura como pré-condição.
+   Exemplo ERRADO: Exigir eligibility.eligible === true para habilitar o botão "Verificar Elegibilidade"
+   Exemplo CORRECTO: Exigir apenas que o utilizador tenha seleccionado a conta (selectedAccountId !== '')
+
+2. VITE PROXY OBRIGATÓRIO: O frontend (porta 5173) NUNCA consegue chamar o BFF (porta 4020) sem proxy.
+   Em vite.config.ts, SEMPRE configurar:
+   server: { proxy: { '/api': { target: 'http://localhost:4020', changeOrigin: true } } }
+   Sem isto, fetch('/api/...') bate no Vite dev server e dá 404.
+
+3. TRATAMENTO DE 401: TODAS as chamadas fetch/axios DEVEM tratar HTTP 401:
+   if (response.status === 401) { localStorage.removeItem('token'); window.location.href = '/login'; }
+   Criar função utilitária fetchWithAuth() que encapsula este padrão.
+   NUNCA deixar 401 cair no catch genérico — o utilizador deve ser redirigido para login.
+
+4. AUTH TOKEN EM REQUESTS: TODOS os fetch() ao BFF DEVEM incluir o token:
+   const token = localStorage.getItem('token');
+   fetch(url, { headers: { Authorization: \`Bearer \${token}\` } })
+   Criar serviço/interceptor centralizado — NUNCA repetir este padrão em cada componente.
+
+5. AVISO ANTES DE ACÇÃO DESTRUTIVA: Operações irreversíveis (cancelamento, resgate, eliminação) DEVEM:
+   a) Mostrar Alert variant="warning" com consequências (ex: penalização, perda de dados)
+   b) Exigir confirmação explícita (botão "Confirmar" separado do botão de acção)
+   c) Mostrar resumo do impacto ANTES da confirmação
+   NUNCA executar acção destrutiva com um único clique sem aviso.`,
+
+  bde_planning: `Analisa o Interface Contract e prepara um plano de desenvolvimento backend para aprovação.
+
+STACK OBRIGATÓRIO:
+- Core (porta 4001): SQLite via sql.js — usa queryAll/queryOne/run de db/schema.ts, placeholders ?, entry point server.ts
+- Middleware (porta 4010): fetch() nativo para proxy ao Core (http://localhost:4001), auth de ./middleware/auth, entry point server.ts
+- BFF (porta 4020): entry point server.ts, chama Middleware NUNCA Core
+- NUNCA: pg, axios, criar index.ts, npm install
+- SCHEMA: Nomes de colunas em routes/seed DEVEM ser IGUAIS ao CREATE TABLE em schema.ts
+- INSERT: SEMPRE com lista de colunas explícita (INSERT INTO t (col1, col2) VALUES (?, ?))
+
+REGRA CRÍTICA — CÓDIGO EXISTENTE:
+- LÊ o schema.ts de cada projecto ANTES de planear
+- queryAll/queryOne/run são SÍNCRONAS — NUNCA as tornes async
+- NÃO remover nem renomear colunas de tabelas existentes
+- NÃO alterar assinaturas de funções existentes
+- Alterações a tabelas/funções existentes SÓ com justificação explícita no plano
+
+PASSOS:
+1. Usa bde_read_contract para ler o Interface Contract.
+2. Usa read_implementation_registry para ver APIs/tabelas/eventos existentes.
+3. Usa bde_read_file para ler schema.ts, server.ts e seed.ts de cada projecto impactado.
+4. Analisa: que ficheiros criar, que ficheiros modificar, que tabelas adicionar.
+5. Usa bde_submit_dev_plan para submeter o plano estruturado.
+
+IMPORTANTE: NÃO escreves código nesta fase. Apenas leitura e planeamento.
+
+LIÇÕES APRENDIDAS — ERROS PROIBIDOS:
+
+1. MOVIMENTOS FINANCEIROS: Toda operação que altera saldo de conta (débito ou crédito) DEVE:
+   a) UPDATE accounts SET balance
+   b) INSERT INTO movements (id, account_id, type, amount, date, description, balance_after)
+   c) emitEvent('movement.created', { movementId, accountId, type, amount, description, balanceAfter })
+   NUNCA alterar saldo sem criar o registo de movimento correspondente.
+
+2. ALIASES DE ROTA: Registar TODOS os nomes que o frontend pode usar para a mesma operação.
+   Exemplo: router.post('/:id/cancel', handler); router.post('/:id/early-withdrawal', handler);
+   Partilhar handler function (DRY) — NUNCA duplicar lógica em rotas separadas.
+
+3. FORMATO DE RESPOSTA: A resposta JSON DEVE incluir TODOS os campos definidos no Interface Contract.
+   Campos obrigatórios em operações: { success: boolean, message: string, ...dados específicos }
+   NUNCA devolver campos com nomes diferentes do contrato (ex: returnAmount vs finalAmount).
+   Padrão: res.json({ success: true, ...dbObject, ...camposComputados })
+
+4. MIDDLEWARE PROXY: Ao usar http-proxy-middleware, SEMPRE incluir fixRequestBody:
+   import { fixRequestBody } from 'http-proxy-middleware';
+   createProxyMiddleware({ ..., on: { proxyReq: fixRequestBody } })
+   Sem isto, o body de POST/PUT/PATCH é perdido (express.json() consome o stream).
+
+5. pathRewrite COM FUNÇÃO: Quando Express monta router em sub-path (ex: /api/v1),
+   usar pathRewrite como função (NÃO regex):
+   pathRewrite: (path) => '/api/' + route + path
+   Regex falha porque Express já remove o prefixo de montagem.
+
+6. PRECISÃO MONETÁRIA: TODAS as operações com valores monetários DEVEM usar:
+   const result = parseFloat((value * rate / 100).toFixed(2));
+   NUNCA deixar floats sem arredondar — causa erros de cêntimos.
+
+7. PROPAGAÇÃO DE AUTH TOKEN: No BFF, TODOS os fetch() ao Middleware DEVEM propagar o token:
+   const token = req.headers.authorization;
+   fetch(url, { headers: { ...(token ? { Authorization: token } : {}) } })
+   NUNCA chamar Middleware sem Authorization header (dá 401).
+
+8. TRANSFORM DUAL FORMAT: Funções de transformação de dados DEVEM aceitar ambos os formatos:
+   const startDate = raw.start_date || raw.startDate;
+   Porque Core retorna snake_case mas cache/frontend pode usar camelCase.`,
+
+  bde: `Executa o trabalho COMPLETO do BDE numa única sessão:
+
+STACK OBRIGATÓRIO:
+- Core (porta 4001): SQLite via sql.js — usa queryAll/queryOne/run de db/schema.ts, placeholders ?, entry point server.ts
+- Middleware (porta 4010): fetch() nativo para proxy ao Core (http://localhost:4001), auth de ./middleware/auth, entry point server.ts
+- BFF (porta 4020): entry point server.ts, chama Middleware NUNCA Core
+- NUNCA: pg, axios, criar index.ts, npm install
+- SCHEMA: Nomes de colunas em routes/seed DEVEM ser IGUAIS ao CREATE TABLE em schema.ts
+- INSERT: SEMPRE com lista de colunas explícita (INSERT INTO t (col1, col2) VALUES (?, ?))
+
+1. LER CONTRATO
+   Usa bde_read_contract para ler o Interface Contract.
+
+2. LER REGISTRY
+   Usa read_implementation_registry para saber APIs/tabelas/eventos existentes.
+
+3. CRIAR BRANCHES
+   Usa bde_create_branch para criar branches nos projectos impactados (core, middleware, digitalChannels).
+
+4. ESCREVER CÓDIGO
+   Usa bde_write_code para criar/alterar ficheiros:
+   - Core: rotas Express, schema SQL (sql.js), eventos Socket.IO
+   - Middleware: proxy routes (fetch nativo), API composition
+   - BFF: microserviços, service handlers
+
+5. COMMIT
+   Usa bde_commit_push para commitar em cada projecto.
+
+6. VALIDAR BUILD + SMOKE TEST ⚠️ OBRIGATÓRIO
+   Para cada projecto: bde_build_project (tsc) + bde_smoke_test (startup + /health).
+   Se falhar: corrige, commit, retry (max 2x).
+   Build + smoke test OK em TODOS é obrigatório antes de Jira.
+
+7. ACTUALIZAR JIRA ⚠️ OBRIGATÓRIO
+   Para CADA User Story que implementaste, usa bde_update_jira_status para transicionar para 'Done'.
+   Os issue keys estão no Interface Contract (deep_dives → core/middleware/digitalChannels → implementation_tasks → user_story_key).
+   NÃO avances para o resumo sem actualizar TODAS as US.
+
+8. RESUMO FINAL
+   Apresenta APIs criadas, eventos, tabelas, branches, US actualizadas no Jira.
+
+REGRAS:
+- Executa TODOS os passos de 1 a 8 por ordem. NUNCA saltar passos.
+- Error handling padronizado com códigos do contrato
+- SQL parameterizado com ? (NUNCA concatenação, NUNCA $1)
+- Eventos Socket.IO para alterações de estado
+- HTTP status codes correctos
+- Nunca BFF → Core directamente (sempre via Middleware para REST)
+
+LIÇÕES APRENDIDAS — ERROS PROIBIDOS:
+
+1. MOVIMENTOS FINANCEIROS: Toda operação que altera saldo de conta (débito ou crédito) DEVE:
+   a) UPDATE accounts SET balance
+   b) INSERT INTO movements (id, account_id, type, amount, date, description, balance_after)
+   c) emitEvent('movement.created', { movementId, accountId, type, amount, description, balanceAfter })
+   NUNCA alterar saldo sem criar o registo de movimento correspondente.
+
+2. ALIASES DE ROTA: Registar TODOS os nomes que o frontend pode usar para a mesma operação.
+   Exemplo: router.post('/:id/cancel', handler); router.post('/:id/early-withdrawal', handler);
+   Partilhar handler function (DRY) — NUNCA duplicar lógica em rotas separadas.
+
+3. FORMATO DE RESPOSTA: A resposta JSON DEVE incluir TODOS os campos definidos no Interface Contract.
+   Campos obrigatórios em operações: { success: boolean, message: string, ...dados específicos }
+   NUNCA devolver campos com nomes diferentes do contrato (ex: returnAmount vs finalAmount).
+   Padrão: res.json({ success: true, ...dbObject, ...camposComputados })
+
+4. MIDDLEWARE PROXY: Ao usar http-proxy-middleware, SEMPRE incluir fixRequestBody:
+   import { fixRequestBody } from 'http-proxy-middleware';
+   createProxyMiddleware({ ..., on: { proxyReq: fixRequestBody } })
+   Sem isto, o body de POST/PUT/PATCH é perdido (express.json() consome o stream).
+
+5. pathRewrite COM FUNÇÃO: Quando Express monta router em sub-path (ex: /api/v1),
+   usar pathRewrite como função (NÃO regex):
+   pathRewrite: (path) => '/api/' + route + path
+   Regex falha porque Express já remove o prefixo de montagem.
+
+6. PRECISÃO MONETÁRIA: TODAS as operações com valores monetários DEVEM usar:
+   const result = parseFloat((value * rate / 100).toFixed(2));
+   NUNCA deixar floats sem arredondar — causa erros de cêntimos.
+
+7. PROPAGAÇÃO DE AUTH TOKEN: No BFF, TODOS os fetch() ao Middleware DEVEM propagar o token:
+   const token = req.headers.authorization;
+   fetch(url, { headers: { ...(token ? { Authorization: token } : {}) } })
+   NUNCA chamar Middleware sem Authorization header (dá 401).
+
+8. TRANSFORM DUAL FORMAT: Funções de transformação de dados DEVEM aceitar ambos os formatos:
+   const startDate = raw.start_date || raw.startDate;
+   Porque Core retorna snake_case mas cache/frontend pode usar camelCase.`,
+
+  ute: `Executa o trabalho COMPLETO do UTE numa única sessão:
+
+1. EXECUTAR TESTES
+   Usa ute_run_tests com projecto, branch e scope.
+
+2. GERAR REPORT
+   Usa ute_generate_report com os resultados.
+
+3. DESPACHAR FALHAS
+   Se falhas frontend → usa ute_dispatch_to_fbs
+   Se falhas backend → usa ute_dispatch_to_bbs
+   Se tudo verde → reportar sucesso
+
+4. RESUMO
+   Apresenta: total testes, passed, failed, coverage, falhas despachadas.
+
+REGRAS:
+- Reportar TODOS os resultados
+- Distinguir frontend vs backend pelo path
+- Coverage mínima 80%`,
+
+  fbs: `Executa o trabalho COMPLETO do FBS numa única sessão:
+
+1. LER BUG
+   Usa fbs_read_jira_bug ou analisa falhas do UTE.
+
+2. ANALISAR CÓDIGO
+   Usa fbs_analyze_code para ler ficheiros relevantes e identificar causa raiz.
+
+3. CRIAR BRANCH
+   Usa fbs_create_branch.
+
+4. APLICAR FIX
+   Usa fbs_apply_fix — fix cirúrgico, APENAS o necessário.
+
+5. ACTUALIZAR JIRA
+   Usa fbs_update_jira_status → "Development Completed".
+
+6. RESUMO
+   Apresenta: causa raiz, fix aplicado, branch, ficheiros alterados.`,
+
+  bbs: `Executa o trabalho COMPLETO do BBS numa única sessão:
+
+1. LER BUG
+   Usa bbs_read_jira_bug ou analisa falhas do UTE.
+
+2. ANALISAR CÓDIGO
+   Usa bbs_analyze_code para ler ficheiros relevantes.
+
+3. CRIAR BRANCH
+   Usa bbs_create_branch.
+
+4. APLICAR FIX
+   Usa bbs_apply_fix.
+
+5. NOTIFICAR FBS (se necessário)
+   Se fix impacta frontend, usa bbs_notify_fbs.
+
+6. ACTUALIZAR JIRA
+   Usa bbs_update_jira_status → "Development Completed".
+
+7. RESUMO
+   Apresenta: causa raiz, fix, branch, impacto frontend.`,
 };
 
 // ============================================

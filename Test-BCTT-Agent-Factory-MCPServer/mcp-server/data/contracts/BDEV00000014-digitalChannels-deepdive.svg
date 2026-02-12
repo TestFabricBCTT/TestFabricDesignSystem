@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1508" width="1400" height="1508" font-family="Arial, Helvetica, sans-serif">
+  
+  <defs>
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/><stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/><stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/><stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9C27B0"/><stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/><stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="1508" fill="url(#bgGrad)"/>
+
+  <!-- Title -->
+  <rect x="0" y="0" width="1400" height="72" fill="#263238" opacity="0.95"/>
+  <text x="700" y="32" text-anchor="middle" fill="#FFF" font-size="20" font-weight="700">BDEV00000014 &#8212; Digital Channels Deep Dive</text>
+  <text x="700" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12">Análise detalhada &#8212; 2026-02-12</text>
+  <rect x="520" y="62" width="360" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  
+  <!-- Frontend Container -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="100" width="1320" height="320" rx="10" fill="#FFF" stroke="#BBDEFB" stroke-width="1"/>
+    <rect x="40" y="100" width="1320" height="42" rx="10" fill="url(#gradBlue)"/>
+    <rect x="40" y="130" width="1320" height="12" fill="url(#gradBlue)"/>
+    <text x="60" y="128" fill="#FFF" font-size="16">&#128187;</text>
+    <text x="82" y="127" fill="#FFF" font-size="14" font-weight="700">Frontend &#8212; Páginas</text>
+    <rect x="1280" y="110" width="68" height="20" rx="4" fill="#FFF" opacity="0.25"/>
+    <text x="1314" y="124" text-anchor="middle" fill="#FFF" font-size="9" font-weight="600">:5173</text>
+  </g>
+  
+  <g filter="url(#shadowLight)">
+    <rect x="60" y="155" width="300" height="140" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="60" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="60" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="74" y="174" fill="#1565C0" font-size="11" font-weight="700">TermDepositsPage</text>
+    <rect x="74" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="80" y="196" fill="#1565C0" font-size="8" font-weight="600">/term-deposits</text>
+    <rect x="280" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="314" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="74" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/term-deposits/:accountId</text>
+    <text x="74" y="252" fill="#2E7D32" font-size="9">&#128190; reads product-info</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="380" y="155" width="300" height="202" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="380" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="380" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="394" y="174" fill="#1565C0" font-size="11" font-weight="700">CreateTermDepositPage</text>
+    <rect x="394" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="400" y="196" fill="#1565C0" font-size="8" font-weight="600">/term-deposits/new</text>
+    <rect x="600" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="634" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="394" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/term-deposits/product-info</text>
+    <text x="394" y="236" fill="#37474F" font-size="10">&#9654; POST /api/v1/term-deposits/simulate</text>
+    <text x="394" y="252" fill="#37474F" font-size="10">&#9654; GET /api/v1/term-deposits/eligibility/:accountId</text>
+    <text x="394" y="268" fill="#37474F" font-size="10">&#9654; POST /api/v1/term-deposits</text>
+    <text x="394" y="300" fill="#2E7D32" font-size="9">&#128190; reads product-info</text>
+    <text x="394" y="314" fill="#2E7D32" font-size="9">&#128190; writes product-info</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="700" y="155" width="300" height="158" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="700" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="700" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="714" y="174" fill="#1565C0" font-size="11" font-weight="700">TermDepositDetailPage</text>
+    <rect x="714" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="720" y="196" fill="#1565C0" font-size="8" font-weight="600">/term-deposits/:id</text>
+    <rect x="920" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="954" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="714" y="220" fill="#37474F" font-size="10">&#9654; PUT /api/v1/term-deposits/:id/reinforce</text>
+    <text x="714" y="236" fill="#37474F" font-size="10">&#9654; DELETE /api/v1/term-deposits/:id/redeem</text>
+    <text x="714" y="252" fill="#37474F" font-size="10">&#9654; PUT /api/v1/term-deposits/:id/renew</text>
+    
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="1020" y="155" width="300" height="140" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="1020" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="1020" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="1034" y="174" fill="#1565C0" font-size="11" font-weight="700">TermDepositHistoryPage</text>
+    <rect x="1034" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="1040" y="196" fill="#1565C0" font-size="8" font-weight="600">/term-deposits/history</text>
+    <rect x="1240" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="1274" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="1034" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/term-deposits/history/:accountId</text>
+    
+  </g>
+  
+  <!-- Microservices Container -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="460" width="1320" height="196" rx="10" fill="#FFF" stroke="#FFE0B2" stroke-width="1"/>
+    <rect x="40" y="460" width="1320" height="42" rx="10" fill="url(#gradOrange)"/>
+    <rect x="40" y="490" width="1320" height="12" fill="url(#gradOrange)"/>
+    <text x="60" y="488" fill="#FFF" font-size="16">&#128274;</text>
+    <text x="82" y="487" fill="#FFF" font-size="14" font-weight="700">Microserviços</text>
+  </g>
+  
+  <g filter="url(#shadowLight)">
+    <rect x="60" y="515" width="400" height="136" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.8"/>
+    <rect x="60" y="515" width="400" height="28" rx="8" fill="#FF9800" opacity="0.12"/>
+    <text x="74" y="534" fill="#E65100" font-size="11" font-weight="700">term-deposits-bff</text>
+    <rect x="340" y="519" width="108" height="18" rx="9" fill="#F57C00"/>
+    <text x="394" y="532" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">/api/bff/term-deposits</text>
+    
+    <text x="74" y="550" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="550" fill="#37474F" font-size="9">/check-available-funds/:accountId &#8594; http://core:8080/api/v1/term-deposits/eligibility/:accountId</text>
+    <text x="74" y="568" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="568" fill="#37474F" font-size="9">/summary/:accountId &#8594; http://core:8080/api/v1/term-deposits/:accountId</text>
+  </g>
+  
+  <!-- Events Panel -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="696" width="640" height="180" rx="10" fill="#FFF" stroke="#CE93D8" stroke-width="1" stroke-dasharray="6 3"/>
+    <text x="60" y="720" fill="#6A1B9A" font-size="13" font-weight="700">&#9889; Socket.IO Events</text>
+    
+    <text x="80" y="756" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="776" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.reinforced — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="796" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.redeemed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="816" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.renewed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="836" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> termDeposit.matured — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="866" fill="#C62828" font-size="9" font-weight="600">Padrão: HYBRID</text>
+  </g>
+  
+  <!-- Cache Panel -->
+  <g filter="url(#shadow)">
+    <rect x="720" y="696" width="640" height="120" rx="10" fill="#FFF" stroke="#A5D6A7" stroke-width="1"/>
+    <text x="740" y="720" fill="#2E7D32" font-size="13" font-weight="700">&#128190; Cache Strategy &#8212; localStorage</text>
+    
+    <text x="740" y="756" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">product-info</tspan> — CreateTermDepositPage &#8594; CreateTermDepositPage, TermDepositsPage | TTL: 86400s</text>
+    <text x="740" y="786" fill="#78909C" font-size="9" font-style="italic">Product info é estático (taxas, prazos, montante mínimo) — cachear 24h para reduzir calls desnecessárias.</text>
+  </g>
+  
+  <!-- Implementation Tasks -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="916" width="1320" height="248" rx="10" fill="#FFF" stroke="#B0BEC5" stroke-width="1"/>
+    <text x="60" y="940" fill="#37474F" font-size="13" font-weight="700">&#9776; Tarefas de Implementação (11)</text>
+    <text x="80" y="966" fill="#37474F" font-size="10">&#9654; Criar microserviço BFF term-deposits-bff (Node.js/Express) com rotas /check-available-funds/:accountId e /summary/:accountId <tspan fill="#78909C" font-size="8">(BCTT-393)</tspan></text>
+  <text x="80" y="984" fill="#37474F" font-size="10">&#9654; Criar página TermDepositsPage (/term-deposits) com lista de DPNs activos e botão 'Criar Novo' <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="1002" fill="#37474F" font-size="10">&#9654; Criar página CreateTermDepositPage (/term-deposits/new) com form (account, amount, termMonths, autoRenew) + SimulatorWidget <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="1020" fill="#37474F" font-size="10">&#9654; Criar página TermDepositDetailPage (/term-deposits/:id) com detalhe do DPN e botões de acção (reforçar, mobilizar, renovar) <tspan fill="#78909C" font-size="8">(BCTT-395)</tspan></text>
+  <text x="80" y="1038" fill="#37474F" font-size="10">&#9654; Criar página TermDepositHistoryPage (/term-deposits/history) com tabela de histórico de operações <tspan fill="#78909C" font-size="8">(BCTT-398)</tspan></text>
+  <text x="80" y="1056" fill="#37474F" font-size="10">&#9654; Implementar Socket.IO listener para evento termDeposit.matured e exibir notificação in-app <tspan fill="#78909C" font-size="8">(BCTT-399)</tspan></text>
+  <text x="80" y="1074" fill="#37474F" font-size="10">&#9654; Implementar cache de product-info no localStorage (TTL 24h, invalidar no logout) <tspan fill="#78909C" font-size="8">(BCTT-391)</tspan></text>
+  <text x="80" y="1092" fill="#37474F" font-size="10">&#9654; Adicionar validação de form (amount &gt;= minimumAmount, termMonths válido) usando Yup <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="1110" fill="#37474F" font-size="10">&#9654; Adicionar componente NotificationBanner no Design System para notificações de vencimento <tspan fill="#78909C" font-size="8">(BCTT-399)</tspan></text>
+  <text x="80" y="1128" fill="#37474F" font-size="10">&#9654; Adicionar testes E2E (Cypress) para fluxo completo de constituição <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="1146" fill="#37474F" font-size="10">&#9654; Adicionar Suspense + ErrorBoundary em todas as páginas de term-deposits <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  </g>
+  
+  <!-- Strategy + Gaps -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="1184" width="1320" height="284" rx="10" fill="#FFF" stroke="#CFD8DC" stroke-width="1"/>
+    <text x="60" y="1208" fill="#37474F" font-size="13" font-weight="700">&#128260; Análise</text>
+    <rect x="130" y="1194" width="120" height="24" rx="12" fill="#1565C0"/>
+    <text x="190" y="1211" text-anchor="middle" fill="#FFF" font-size="11" font-weight="700">HYBRID</text>
+    <text x="80" y="1244" fill="#37474F" font-size="10">Frontend SPA (React) com 4 páginas: TermDepositsPage (lista), CreateTermDepositPage (form constituição), TermDepositDetailPage (detalhe + acções), TermDepositHistoryPage (histórico). BFF term-deposits-bff agrega dados de Core (term-deposits + accounts) para optimizar UI. Socket.IO listener para evento termDeposit.matured (notificação in-app). LocalStorage cache de product-info (24h TTL).</text>
+    <text x="80" y="1284" fill="#C62828" font-size="9">&#9888; Falta componente de notificação visual in-app (toast/banner) para evento matured</text>
+  <text x="80" y="1300" fill="#C62828" font-size="9">&#9888; Falta validação de input no form (amount &gt;= minimumAmount, termMonths válido)</text>
+  <text x="80" y="1316" fill="#C62828" font-size="9">&#9888; Falta loading states e error handling em todas as páginas</text>
+  <text x="80" y="1332" fill="#C62828" font-size="9">&#9888; Falta testes E2E (Cypress) para fluxo completo de constituição</text>
+    <text x="80" y="1368" fill="#1565C0" font-size="9">&#128161; Adicionar componente NotificationBanner no Design System para exibir notificações de vencimento</text>
+  <text x="80" y="1384" fill="#1565C0" font-size="9">&#128161; Adicionar biblioteca de validação (Yup ou Zod) no form de CreateTermDepositPage</text>
+  <text x="80" y="1400" fill="#1565C0" font-size="9">&#128161; Adicionar Suspense + ErrorBoundary em todas as páginas</text>
+  <text x="80" y="1416" fill="#1565C0" font-size="9">&#128161; Adicionar testes E2E (Cypress) para fluxo: consulta product-info → simula → constitui → verifica lista</text>
+  <text x="80" y="1432" fill="#1565C0" font-size="9">&#128161; Adicionar analytics tracking (Google Analytics) para medir conversão (simulação → constituição)</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="700" y="1498" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; TAA Deep Dive &#8212; 2026-02-12</text>
+</svg>

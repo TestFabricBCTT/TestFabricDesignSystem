@@ -3,7 +3,7 @@
 // ============================================
 
 // Tipos base
-export type AgentId = 'ba' | 'fa' | 'da' | 'pa' | 'dsla' | 'fda' | 'bda' | 'fbs' | 'ute' | 'lte' | 'cqa' | 'monitor';
+export type AgentId = 'ba' | 'fa' | 'da' | 'pa' | 'dsla' | 'fda' | 'bda' | 'fde' | 'bde' | 'taa' | 'fbs' | 'bbs' | 'ute' | 'lte' | 'cqa' | 'monitor';
 export type PhaseId = 'concepcao' | 'desenvolvimento' | 'producao';
 export type AIProvider = 'Anthropic' | 'Google' | 'Microsoft' | 'Microsoft / OpenAI';
 export type AILogo = 'claude' | 'gemini' | 'copilot' | 'mscopilot' | 'claude-copilot';
@@ -386,6 +386,8 @@ export interface Project {
   id: string;
   title: string;
   bdevCode?: string;
+  phaseId?: PhaseId;
+  mvp?: string;
   createdAt: string;
   updatedAt: string;
   agents: Record<string, AgentIteration>;

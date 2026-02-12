@@ -337,5 +337,291 @@ export async function exportPrototypeToDisk(
   return response.json();
 }
 
+// ============================================
+// PHASE 2 — DEVELOPMENT API
+// ============================================
+
+export interface BdevAvailable {
+  key: string;
+  summary: string;
+  status: string;
+  labels: string[];
+}
+
+export interface BugWatcherStatus {
+  running: boolean;
+  pollIntervalMs: number;
+  lastPollAt: string | null;
+  pollCount: number;
+  detectedBugs: Array<{
+    key: string;
+    summary: string;
+    component: 'frontend' | 'backend';
+    severity: string;
+    status: string;
+  }>;
+}
+
+/**
+ * Fetch BDEVs available for Phase 2 (status "Ready for Development")
+ */
+export async function fetchBdevsAvailable(): Promise<BdevAvailable[]> {
+  const response = await fetch(`${API_BASE_URL}/jira/bdevs-available`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch available BDEVs');
+  }
+  const data = await response.json();
+  return data.bdevs || [];
+}
+
+/**
+ * Approve architecture spec (Gate 1: TAA → FDE+BDE)
+ */
+export async function approveArchitecture(bdevCode: string): Promise<void> {
+  const sessionId = getSessionId();
+  const response = await fetch(`${API_BASE_URL}/workflow/approve-architecture`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, bdevCode }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as ApiError).message || 'Failed to approve architecture');
+  }
+}
+
+/**
+ * Approve or reject a dev plan (BDE/FDE planning gate)
+ */
+export async function approveDevPlan(
+  agentId: string,
+  approved: boolean,
+  comments?: string
+): Promise<{ success: boolean; nextAgent: string | null }> {
+  const sessionId = getSessionId();
+  const response = await fetch(`${API_BASE_URL}/workflow/approve-dev-plan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, agentId, approved, comments }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as ApiError).message || 'Failed to approve dev plan');
+  }
+  return response.json();
+}
+
+/**
+ * Approve development (Gate 2: Review → CI/CD)
+ */
+export async function approveDevelopment(bdevCode: string): Promise<void> {
+  const sessionId = getSessionId();
+  const response = await fetch(`${API_BASE_URL}/workflow/approve-development`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, bdevCode }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as ApiError).message || 'Failed to approve development');
+  }
+}
+
+/**
+ * Approve merge (Gate 3: Merge → Deploy)
+ */
+export async function approveMerge(bdevCode: string): Promise<void> {
+  const sessionId = getSessionId();
+  const response = await fetch(`${API_BASE_URL}/workflow/approve-merge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, bdevCode }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as ApiError).message || 'Failed to approve merge');
+  }
+}
+
+/**
+ * Advance to next MVP (Gate MVP)
+ */
+export async function advanceMvp(bdevCode: string, currentMvp: string): Promise<void> {
+  const sessionId = getSessionId();
+  const response = await fetch(`${API_BASE_URL}/workflow/advance-mvp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, bdevCode, currentMvp }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as ApiError).message || 'Failed to advance MVP');
+  }
+}
+
+/**
+ * Get bug watcher status
+ */
+export async function getBugWatcherStatus(): Promise<BugWatcherStatus> {
+  const response = await fetch(`${API_BASE_URL}/bug-watcher/status`);
+  if (!response.ok) {
+    throw new Error('Failed to get bug watcher status');
+  }
+  return response.json();
+}
+
+/**
+ * Start bug watcher
+ */
+export async function startBugWatcher(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/bug-watcher/start`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error('Failed to start bug watcher');
+  }
+}
+
+/**
+ * Stop bug watcher
+ */
+export async function stopBugWatcher(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/bug-watcher/stop`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error('Failed to stop bug watcher');
+  }
+}
+
+/**
+ * Reset bug environment (git reset + Jira reset)
+ */
+export async function resetBugEnvironment(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/bug-watcher/reset-environment`, { method: 'POST' });
+  if (!response.ok) {
+    throw new Error('Failed to reset bug environment');
+  }
+}
+
+// ============================================
+// CI/CD PIPELINE API
+// ============================================
+
+export interface CICDStep {
+  id: string;
+  name: string;
+  status: 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
+  startedAt?: string;
+  completedAt?: string;
+  duration?: number;
+  output?: string;
+  report?: object;
+}
+
+export interface CICDPipeline {
+  id: string;
+  bdev: string;
+  mvp: string;
+  branch: string;
+  triggeredAt: string;
+  status: 'idle' | 'running' | 'passed' | 'failed';
+  steps: CICDStep[];
+  completedAt?: string;
+}
+
+/**
+ * Get CI/CD pipeline status
+ */
+export async function getCICDStatus(): Promise<CICDPipeline | null> {
+  const response = await fetch(`${API_BASE_URL}/cicd/status`);
+  if (!response.ok) {
+    throw new Error('Failed to get CI/CD status');
+  }
+  const data = await response.json();
+  return data.status === 'idle' ? null : data;
+}
+
+/**
+ * Trigger CI/CD pipeline
+ */
+export async function triggerCICD(bdev: string, mvp: string, branch: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/cicd/trigger`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bdev, mvp, branch }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as ApiError).message || 'Failed to trigger CI/CD');
+  }
+}
+
+/**
+ * Get CI/CD report
+ */
+export async function getCICDReport(): Promise<object | null> {
+  const response = await fetch(`${API_BASE_URL}/cicd/report`);
+  if (!response.ok) {
+    throw new Error('Failed to get CI/CD report');
+  }
+  return response.json();
+}
+
+// ============================================
+// DEPLOY API
+// ============================================
+
+export interface DeployServiceStatus {
+  name: string;
+  port: number;
+  status: string;
+  pid?: number;
+}
+
+export interface DeployStatus {
+  status: 'idle' | 'deploying' | 'deployed' | 'failed' | 'rolling_back';
+  bdev?: string;
+  mvp?: string;
+  branch?: string;
+  startedAt?: string;
+  completedAt?: string;
+  steps: Array<{
+    id: string;
+    name: string;
+    status: string;
+    output?: string;
+    duration?: number;
+  }>;
+  services: DeployServiceStatus[];
+}
+
+export interface HealthCheckResult {
+  name: string;
+  port: number;
+  status: 'healthy' | 'unhealthy' | 'stopped';
+  responseTime?: number;
+  error?: string;
+}
+
+/**
+ * Get deploy status
+ */
+export async function getDeployStatusAPI(): Promise<DeployStatus> {
+  const response = await fetch(`${API_BASE_URL}/deploy/status`);
+  if (!response.ok) {
+    throw new Error('Failed to get deploy status');
+  }
+  return response.json();
+}
+
+/**
+ * Get deploy health check
+ */
+export async function getDeployHealth(): Promise<HealthCheckResult[]> {
+  const response = await fetch(`${API_BASE_URL}/deploy/health`);
+  if (!response.ok) {
+    throw new Error('Failed to get deploy health');
+  }
+  const data = await response.json();
+  return data.services;
+}
+
 // Export API base URL for debugging
 export { API_BASE_URL };

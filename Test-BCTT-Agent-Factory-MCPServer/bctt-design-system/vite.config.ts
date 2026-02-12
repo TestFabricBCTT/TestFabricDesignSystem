@@ -17,7 +17,7 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['react', 'react-dom', '@emotion/react', '@emotion/styled', '@mui/material', '@mui/icons-material'],
+      external: (id) => ['react', 'react-dom', '@emotion/react', '@emotion/styled', '@mui/material', '@mui/icons-material'].some(dep => id === dep || id.startsWith(dep + '/')),
       output: {
         globals: {
           react: 'React',

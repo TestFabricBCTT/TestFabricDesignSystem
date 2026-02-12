@@ -186,11 +186,208 @@ const concepcaoGovernance: GovernancePhase = {
 };
 
 // ============================================
+// FASE 02 — DESENVOLVIMENTO
+// ============================================
+
+const desenvolvimentoGovernance: GovernancePhase = {
+  phaseId: 'desenvolvimento',
+  title: 'Fase 02 — Desenvolvimento Automatizado',
+  description: 'Pipeline de implementação: o TAA analisa o BDEV, gera a spec e o Interface Contract, e despacha FDE + BDE em paralelo. Após code review, o UTE testa e o CI/CD valida antes do merge. Agentes correm via Claude Code CLI.',
+  nodes: [
+    {
+      id: 'dev-user',
+      sigla: 'Dev',
+      nome: 'Utilizador / Apresentador',
+      cor: '#64748B',
+      x: 5,
+      y: 50,
+      description: 'Selecciona BDEV disponível (status "Ready for Development") e aprova gates ao longo do pipeline.',
+      isExternal: true,
+    },
+    {
+      id: 'taa',
+      sigla: 'TAA',
+      nome: 'Technical Architecture Agent',
+      cor: '#7C3AED',
+      x: 18,
+      y: 50,
+      description: 'Lê BDEV do Jira, agrupa US por MVP, gera spec técnica e Interface Contract. Despacha FDE + BDE após Gate 1.',
+    },
+    {
+      id: 'gate1',
+      sigla: 'G1',
+      nome: 'Gate 1 — Arquitectura',
+      cor: '#F59E0B',
+      x: 32,
+      y: 50,
+      description: 'Aprovação manual da spec técnica e Interface Contract pelo utilizador.',
+      isExternal: true,
+    },
+    {
+      id: 'fde',
+      sigla: 'FDE',
+      nome: 'Frontend Dev Engineer',
+      cor: '#EC4899',
+      x: 46,
+      y: 25,
+      description: 'Escreve código React de produção no DigitalChannels. Importa de @bctt/design-system. Segue Interface Contract.',
+    },
+    {
+      id: 'bde',
+      sigla: 'BDE',
+      nome: 'Backend Dev Engineer',
+      cor: '#8B5CF6',
+      x: 46,
+      y: 75,
+      description: 'Escreve código Node.js/Express de produção (Core + Middleware + BFF). Segue Interface Contract.',
+    },
+    {
+      id: 'gate2',
+      sigla: 'G2',
+      nome: 'Gate 2 — Code Review',
+      cor: '#F59E0B',
+      x: 60,
+      y: 50,
+      description: 'Review do código, diff viewer, deploy preview (porta 5174). Aprovação manual.',
+      isExternal: true,
+    },
+    {
+      id: 'ute',
+      sigla: 'UTE',
+      nome: 'Unit Tester Executer',
+      cor: '#06B6D4',
+      x: 74,
+      y: 50,
+      description: 'Executa Vitest com coverage, gera report, despacha falhas ao FBS/BBS. Usa Haiku (ultra-rápido).',
+    },
+    {
+      id: 'fbs',
+      sigla: 'FBS',
+      nome: 'Frontend Bug Solver',
+      cor: '#EF4444',
+      x: 88,
+      y: 25,
+      description: 'Analisa bugs frontend, cria feature branch com fix, devolve ao UTE. Actualiza Jira.',
+    },
+    {
+      id: 'bbs',
+      sigla: 'BBS',
+      nome: 'Backend Bug Solver',
+      cor: '#DC2626',
+      x: 88,
+      y: 75,
+      description: 'Analisa bugs backend, cria feature branch com fix, notifica FBS se impactar frontend.',
+    },
+    {
+      id: 'jira-dev',
+      sigla: 'JIRA',
+      nome: 'Jira Cloud',
+      cor: '#0052CC',
+      x: 18,
+      y: 12,
+      description: 'BDEVs, Features, User Stories com labels MVP1/MVP2/MVP3. TAA lê e actualiza estados.',
+      isExternal: true,
+    },
+  ],
+  edges: [
+    {
+      from: 'dev-user',
+      to: 'taa',
+      label: 'BDEV seleccionado',
+      description: 'Utilizador selecciona BDEV com status "Ready for Development" no Workshop UI.',
+    },
+    {
+      from: 'taa',
+      to: 'jira-dev',
+      label: 'Lê User Stories',
+      description: 'TAA lê Epic, Features e US do Jira. Agrupa por MVP. Actualiza Epic para "In Development".',
+      isAutomatic: true,
+    },
+    {
+      from: 'taa',
+      to: 'gate1',
+      label: 'Plano técnico',
+      description: 'Spec de arquitectura + Interface Contract apresentados ao utilizador para aprovação.',
+      isAutomatic: true,
+    },
+    {
+      from: 'gate1',
+      to: 'fde',
+      label: 'FDE aprovado',
+      description: 'Gate 1 aprovado — FDE recebe Interface Contract e wireframes do DA.',
+      isAutomatic: true,
+    },
+    {
+      from: 'gate1',
+      to: 'bde',
+      label: 'BDE aprovado',
+      description: 'Gate 1 aprovado — BDE recebe Interface Contract e Registry. FDE+BDE em paralelo.',
+      isAutomatic: true,
+    },
+    {
+      from: 'fde',
+      to: 'gate2',
+      label: 'PR frontend',
+      description: 'FDE completa código frontend — feature branch pronto para review.',
+    },
+    {
+      from: 'bde',
+      to: 'gate2',
+      label: 'PR backend',
+      description: 'BDE completa código backend — feature branch pronto para review. Gate 2 abre quando ambos terminam.',
+    },
+    {
+      from: 'gate2',
+      to: 'ute',
+      label: 'Código aprovado',
+      description: 'Gate 2 aprovado — UTE arranca testes no feature branch.',
+      isAutomatic: true,
+    },
+    {
+      from: 'ute',
+      to: 'fbs',
+      label: 'Bugs frontend',
+      description: 'UTE detecta falhas frontend — despacha ao FBS para correcção. Condicional (só se falhar).',
+    },
+    {
+      from: 'ute',
+      to: 'bbs',
+      label: 'Bugs backend',
+      description: 'UTE detecta falhas backend — despacha ao BBS para correcção. Condicional (só se falhar).',
+    },
+    {
+      from: 'fbs',
+      to: 'ute',
+      label: 'Re-teste',
+      description: 'FBS aplica fix e devolve feature branch ao UTE para re-teste.',
+      isAutomatic: true,
+    },
+    {
+      from: 'bbs',
+      to: 'ute',
+      label: 'Re-teste',
+      description: 'BBS aplica fix e devolve feature branch ao UTE para re-teste.',
+      isAutomatic: true,
+    },
+  ],
+  governanceRules: [
+    'Gate 1 — Aprovação manual da spec técnica e Interface Contract antes de despachar FDE+BDE',
+    'FDE e BDE correm em PARALELO (Promise.all) — Gate 2 só abre quando ambos terminam',
+    'Gate 2 — Code review com diff viewer + deploy preview (porta 5174) antes de testes',
+    'FBS e BBS só são activados se o UTE detectar falhas — loop condicional de correcção',
+    'Bug Watcher — polling Jira cada 30s para bugs com labels frontend-bug/backend-bug',
+    'Interface Contract — FDE e BDE seguem exactamente os endpoints/tipos definidos pelo TAA',
+    'Todos os agentes Fase 2 correm via Claude Code CLI (não pela webapp) — webapp é dashboard',
+  ],
+};
+
+// ============================================
 // REGISTRY
 // ============================================
 
 const governanceData: Record<string, GovernancePhase> = {
   concepcao: concepcaoGovernance,
+  desenvolvimento: desenvolvimentoGovernance,
 };
 
 export function getGovernanceByPhase(phaseId: PhaseId): GovernancePhase | undefined {

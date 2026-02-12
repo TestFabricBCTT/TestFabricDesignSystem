@@ -1,0 +1,79 @@
+# =============================================================================
+# Agent Factory Demo — Docker Compose
+# Services: Nginx (reverse proxy), SonarQube (code quality), Keycloak (IdP)
+#
+# Usage:
+#   docker compose up -d        # Start all containers
+#   docker compose down          # Stop all containers
+#   docker compose logs -f       # Follow logs
+#
+# URLs (require hosts file entries):
+#   www.DCsCreatedbyAI.pt        → DigitalChannels Frontend (5173)
+#   fix.DCsCreatedbyAI.pt        → Bug Fix Preview (5174)
+#   backoffice.DCsCreatedbyAI.pt → Core Backoffice (4002)
+#   api.DCsCreatedbyAI.pt        → Middleware API Gateway (4010)
+#   sonarqube.DCsCreatedbyAI.pt  → SonarQube Dashboard (9000)
+#   auth.DCsCreatedbyAI.pt       → Keycloak Admin Console (8080)
+#   workshop.DCsCreatedbyAI.pt   → Workshop Agent Factory (3000)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Nginx — Reverse Proxy for custom URLs
+  # Maps *.DCsCreatedbyAI.pt to localhost ports via host.docker.internal
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: agent-factory-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # SonarQube — Code Quality Analysis
+  # First access: admin/admin → forced password change → use sonar1234
+  # Create projects: agent-factory-core, agent-factory-middleware, agent-factory-dc
+  # ---------------------------------------------------------------------------
+  sonarqube:
+    image: sonarqube:community
+    container_name: agent-factory-sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Keycloak — Identity Provider (OIDC / OAuth2)
+  # Admin console: auth.DCsCreatedbyAI.pt (admin/admin1234)
+  # Realm "bctt" auto-imported with seed users on first start
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: agent-factory-keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin1234
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=false
+    command: start-dev --import-realm
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./keycloak/bctt-realm.json:/opt/keycloak/data/import/bctt-realm.json:ro
+    restart: unless-stopped
+
+volumes:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  keycloak_data:

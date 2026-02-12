@@ -1,0 +1,49 @@
+{
+  "lastUpdated": null,
+  "projects": {
+    "digitalChannels": {
+      "routes": [
+        {
+          "path": "/login",
+          "component": "LoginPage",
+          "bdev": "BASE"
+        },
+        {
+          "path": "/",
+          "component": "LandingPage",
+          "bdev": "BASE"
+        }
+      ],
+      "components": [],
+      "services": [
+        "auth-service"
+      ]
+    },
+    "middleware": {
+      "apis": [
+        {
+          "method": "POST",
+          "path": "/api/v1/auth/login",
+          "bdev": "BASE"
+        }
+      ]
+    },
+    "core": {
+      "tables": [
+        "clients",
+        "accounts",
+        "movements",
+        "balances",
+        "digital_access"
+      ],
+      "events": [
+        "movement.created",
+        "balance.updated",
+        "account.status.changed",
+        "digital_access.created"
+      ]
+    }
+  },
+  "bdevs": [],
+  "components": {}
+}

@@ -1,0 +1,614 @@
+{
+  "version": "2.1",
+  "bdev_code": "BDEV00000014",
+  "generated_at": "2026-02-12T12:37:36.554Z",
+  "generated_by": "TAA",
+  "apis": [
+    {
+      "method": "GET",
+      "path": "/api/v1/term-deposits/product-info",
+      "description": "Retorna informação do produto DPN (taxas, prazos disponíveis, montante mínimo)",
+      "request_body": {},
+      "response_body": {
+        "interestRates": [
+          {
+            "termMonths": 3,
+            "rate": 2.5
+          },
+          {
+            "termMonths": 6,
+            "rate": 2.8
+          },
+          {
+            "termMonths": 12,
+            "rate": 3.1
+          }
+        ],
+        "minimumAmount": 1000,
+        "penaltyRate": 0.5,
+        "currency": "EUR"
+      },
+      "error_codes": [
+        "500"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/term-deposits/simulate",
+      "description": "Simula cenário de depósito (retorna juros esperados)",
+      "request_body": {
+        "amount": 5000,
+        "termMonths": 12
+      },
+      "response_body": {
+        "amount": 5000,
+        "termMonths": 12,
+        "interestRate": 3.1,
+        "expectedInterest": 155,
+        "maturityAmount": 5155,
+        "maturityDate": "2026-01-15"
+      },
+      "error_codes": [
+        "400",
+        "500"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/term-deposits/eligibility/:accountId",
+      "description": "Verifica se a conta é elegível e retorna saldo disponível",
+      "request_body": {},
+      "response_body": {
+        "eligible": true,
+        "availableBalance": 12000,
+        "accountId": "12345",
+        "reason": ""
+      },
+      "error_codes": [
+        "404",
+        "500"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/term-deposits",
+      "description": "Constitui novo DPN",
+      "request_body": {
+        "accountId": "12345",
+        "amount": 5000,
+        "termMonths": 12,
+        "autoRenew": false
+      },
+      "response_body": {
+        "id": "td-001",
+        "accountId": "12345",
+        "amount": 5000,
+        "termMonths": 12,
+        "interestRate": 3.1,
+        "startDate": "2025-01-15",
+        "endDate": "2026-01-15",
+        "autoRenew": false,
+        "status": "active"
+      },
+      "error_codes": [
+        "400",
+        "403",
+        "500"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/term-deposits/:id/reinforce",
+      "description": "Reforça DPN existente com capital adicional",
+      "request_body": {
+        "additionalAmount": 2000
+      },
+      "response_body": {
+        "id": "td-001",
+        "newAmount": 7000,
+        "message": "Depósito reforçado com sucesso"
+      },
+      "error_codes": [
+        "400",
+        "404",
+        "500"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/term-deposits/:id/redeem",
+      "description": "Mobiliza/resgata depósito (parcial ou total), calcula penalidade se antes do prazo",
+      "request_body": {
+        "redeemAmount": 3000,
+        "redeemType": "partial"
+      },
+      "response_body": {
+        "id": "td-001",
+        "redeemedAmount": 3000,
+        "penalty": 15,
+        "netAmount": 2985,
+        "remainingAmount": 4000,
+        "status": "active"
+      },
+      "error_codes": [
+        "400",
+        "404",
+        "500"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/term-deposits/:id/renew",
+      "description": "Renova DPN (manual ou confirmação de renovação automática)",
+      "request_body": {
+        "newTermMonths": 12,
+        "autoRenew": true
+      },
+      "response_body": {
+        "id": "td-001",
+        "newStartDate": "2026-01-15",
+        "newEndDate": "2027-01-15",
+        "newInterestRate": 3.2,
+        "status": "active"
+      },
+      "error_codes": [
+        "400",
+        "404",
+        "500"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/term-deposits/history/:accountId",
+      "description": "Retorna histórico completo de operações DPN da conta",
+      "request_body": {},
+      "response_body": {
+        "accountId": "12345",
+        "history": [
+          {
+            "id": "td-001",
+            "operation": "create",
+            "amount": 5000,
+            "date": "2025-01-15",
+            "status": "active"
+          },
+          {
+            "id": "td-001",
+            "operation": "reinforce",
+            "amount": 2000,
+            "date": "2025-03-01",
+            "status": "active"
+          }
+        ]
+      },
+      "error_codes": [
+        "404",
+        "500"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/term-deposits/:accountId",
+      "description": "Lista todos os DPNs activos de uma conta",
+      "request_body": {},
+      "response_body": {
+        "accountId": "12345",
+        "deposits": [
+          {
+            "id": "td-001",
+            "amount": 7000,
+            "termMonths": 12,
+            "startDate": "2025-01-15",
+            "endDate": "2026-01-15",
+            "status": "active"
+          }
+        ]
+      },
+      "error_codes": [
+        "404",
+        "500"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "termDeposit.created",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "depositId": "td-001",
+        "accountId": "12345",
+        "amount": 5000,
+        "termMonths": 12,
+        "startDate": "2025-01-15"
+      }
+    },
+    {
+      "name": "termDeposit.reinforced",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "depositId": "td-001",
+        "additionalAmount": 2000,
+        "newTotalAmount": 7000
+      }
+    },
+    {
+      "name": "termDeposit.redeemed",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "depositId": "td-001",
+        "redeemedAmount": 3000,
+        "penalty": 15,
+        "netAmount": 2985
+      }
+    },
+    {
+      "name": "termDeposit.renewed",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "depositId": "td-001",
+        "newStartDate": "2026-01-15",
+        "newEndDate": "2027-01-15"
+      }
+    },
+    {
+      "name": "termDeposit.matured",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "depositId": "td-001",
+        "accountId": "12345",
+        "maturityDate": "2026-01-15",
+        "amount": 5000,
+        "interestEarned": 155,
+        "notificationType": "30d_warning"
+      }
+    }
+  ],
+  "shared_types": {
+    "TermDeposit": {
+      "id": "string",
+      "accountId": "string",
+      "clientId": "string",
+      "amount": "number",
+      "termMonths": "number",
+      "interestRate": "number",
+      "startDate": "string (ISO8601)",
+      "endDate": "string (ISO8601)",
+      "autoRenew": "boolean",
+      "status": "'active' | 'matured' | 'redeemed' | 'cancelled'",
+      "penaltyRate": "number"
+    },
+    "ProductInfo": {
+      "interestRates": "Array<{ termMonths: number, rate: number }>",
+      "minimumAmount": "number",
+      "penaltyRate": "number",
+      "currency": "string"
+    },
+    "SimulationResult": {
+      "amount": "number",
+      "termMonths": "number",
+      "interestRate": "number",
+      "expectedInterest": "number",
+      "maturityAmount": "number",
+      "maturityDate": "string (ISO8601)"
+    },
+    "EligibilityCheck": {
+      "eligible": "boolean",
+      "availableBalance": "number",
+      "accountId": "string",
+      "reason": "string"
+    }
+  },
+  "microservices": [
+    {
+      "name": "term-deposits-bff",
+      "system": "digitalChannels",
+      "mount_path": "/api/bff/term-deposits",
+      "port": 3005,
+      "tech_stack": [
+        "Node.js",
+        "Express",
+        "TypeScript"
+      ],
+      "dependencies": [
+        "core:term-deposits-api",
+        "core:accounts-api"
+      ],
+      "routes": [
+        {
+          "method": "GET",
+          "path": "/check-available-funds/:accountId",
+          "description": "Agrega elegibilidade + saldo disponível para UI",
+          "downstream": "http://core:8080/api/v1/term-deposits/eligibility/:accountId"
+        },
+        {
+          "method": "GET",
+          "path": "/summary/:accountId",
+          "description": "Agrega todos os DPNs + saldos + histórico recente",
+          "downstream": "http://core:8080/api/v1/term-deposits/:accountId"
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "TermDepositsPage",
+      "route": "/term-deposits",
+      "auth_required": true,
+      "components": [
+        "DepositCard",
+        "Button",
+        "Table"
+      ],
+      "api_calls": [
+        "GET /api/v1/term-deposits/:accountId"
+      ],
+      "cache_reads": [
+        "product-info"
+      ],
+      "cache_writes": []
+    },
+    {
+      "name": "CreateTermDepositPage",
+      "route": "/term-deposits/new",
+      "auth_required": true,
+      "components": [
+        "Form",
+        "Input",
+        "Select",
+        "Button",
+        "SimulatorWidget"
+      ],
+      "api_calls": [
+        "GET /api/v1/term-deposits/product-info",
+        "POST /api/v1/term-deposits/simulate",
+        "GET /api/v1/term-deposits/eligibility/:accountId",
+        "POST /api/v1/term-deposits"
+      ],
+      "cache_reads": [
+        "product-info"
+      ],
+      "cache_writes": [
+        "product-info"
+      ]
+    },
+    {
+      "name": "TermDepositDetailPage",
+      "route": "/term-deposits/:id",
+      "auth_required": true,
+      "components": [
+        "DetailCard",
+        "Button",
+        "Modal"
+      ],
+      "api_calls": [
+        "PUT /api/v1/term-deposits/:id/reinforce",
+        "DELETE /api/v1/term-deposits/:id/redeem",
+        "PUT /api/v1/term-deposits/:id/renew"
+      ],
+      "cache_reads": [],
+      "cache_writes": []
+    },
+    {
+      "name": "TermDepositHistoryPage",
+      "route": "/term-deposits/history",
+      "auth_required": true,
+      "components": [
+        "Table",
+        "Filter"
+      ],
+      "api_calls": [
+        "GET /api/v1/term-deposits/history/:accountId"
+      ],
+      "cache_reads": [],
+      "cache_writes": []
+    }
+  ],
+  "cache_strategy": {
+    "storage_type": "localStorage",
+    "server_cache": false,
+    "items": [
+      {
+        "key": "product-info",
+        "written_by": "CreateTermDepositPage",
+        "read_by": [
+          "CreateTermDepositPage",
+          "TermDepositsPage"
+        ],
+        "ttl": "86400s",
+        "cleared_on": "user logout"
+      }
+    ],
+    "notes": "Product info é estático (taxas, prazos, montante mínimo) — cachear 24h para reduzir calls desnecessárias."
+  },
+  "event_strategy": {
+    "pattern": "hybrid",
+    "events_consumed": [
+      "termDeposit.matured"
+    ],
+    "events_declared_not_consumed": [
+      "termDeposit.created",
+      "termDeposit.reinforced",
+      "termDeposit.redeemed",
+      "termDeposit.renewed"
+    ],
+    "retry_logic": "Exponential backoff (1s, 2s, 4s) para eventos matured",
+    "notes": "Operações (criar, reforçar, mobilizar, renovar) são API-first com polling. Notificações de vencimento (30d antes + no dia) são event-driven via Socket.IO."
+  },
+  "deep_dives": [
+    {
+      "system": "core",
+      "data_flow_summary": "Core gere o ciclo de vida completo dos Depósitos a Prazo: criação, reforço, mobilização, renovação, cálculo de juros e penalidades. Emite eventos para notificação de vencimento (30d + no dia). Dados persistidos em tabela term_deposits com campos: id, client_id, account_id, amount, start_date, end_date, interest_rate, term_months, auto_renew, status, penalty_rate.",
+      "architecture_notes": "API REST stateless. Scheduler job (cron) verifica diariamente depósitos próximos do vencimento e emite termDeposit.matured (30d antes + no dia). Cálculo de penalidade: (redeemed_amount * penalty_rate * days_remaining / 365). Renovação automática: job cron renova automaticamente depósitos com auto_renew=true no vencimento.",
+      "gaps": [
+        "Falta integração com sistema de contabilidade (lançamentos de juros)",
+        "Falta aprovação manual para mobilizações acima de 50.000 EUR",
+        "Falta rate-limiting por cliente (evitar spam de constituições)"
+      ],
+      "recommendations": [
+        "Adicionar tabela term_deposits_audit para log de todas as operações (compliance)",
+        "Adicionar endpoint GET /api/v1/term-deposits/pending-maturity para backoffice",
+        "Implementar validação de business hours (constituições só em dias úteis)",
+        "Adicionar campo metadata (JSON) na tabela para extensibilidade futura"
+      ],
+      "implementation_tasks": [
+        {
+          "description": "Criar tabela term_deposits com schema completo (id, client_id, account_id, amount, start_date, end_date, interest_rate, term_months, auto_renew, status, penalty_rate)",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Implementar API GET /api/v1/term-deposits/product-info",
+          "user_story_key": "BCTT-391"
+        },
+        {
+          "description": "Implementar API POST /api/v1/term-deposits/simulate",
+          "user_story_key": "BCTT-392"
+        },
+        {
+          "description": "Implementar API GET /api/v1/term-deposits/eligibility/:accountId",
+          "user_story_key": "BCTT-393"
+        },
+        {
+          "description": "Implementar API POST /api/v1/term-deposits (constituir DPN)",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Implementar API PUT /api/v1/term-deposits/:id/reinforce",
+          "user_story_key": "BCTT-395"
+        },
+        {
+          "description": "Implementar API DELETE /api/v1/term-deposits/:id/redeem com cálculo de penalidade",
+          "user_story_key": "BCTT-396"
+        },
+        {
+          "description": "Implementar API PUT /api/v1/term-deposits/:id/renew",
+          "user_story_key": "BCTT-397"
+        },
+        {
+          "description": "Implementar API GET /api/v1/term-deposits/history/:accountId",
+          "user_story_key": "BCTT-398"
+        },
+        {
+          "description": "Implementar API GET /api/v1/term-deposits/:accountId (listar DPNs activos)",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Criar scheduler job (cron) para verificar depósitos próximos do vencimento e emitir evento termDeposit.matured (30d antes + no dia)",
+          "user_story_key": "BCTT-399"
+        },
+        {
+          "description": "Criar scheduler job (cron) para renovação automática de depósitos com auto_renew=true",
+          "user_story_key": "BCTT-397"
+        },
+        {
+          "description": "Adicionar tabela term_deposits_audit para auditoria de operações",
+          "user_story_key": "BCTT-394"
+        }
+      ]
+    },
+    {
+      "system": "middleware",
+      "data_flow_summary": "Middleware actua como API Gateway: proxy de todas as rotas /api/v1/term-deposits/* para Core, com autenticação JWT e rate-limiting (100 req/min por cliente). Não adiciona lógica de negócio.",
+      "architecture_notes": "Kong ou Express Gateway. Validação de JWT em todos os endpoints (header Authorization: Bearer <token>). Rate-limit por IP + clientId. Logs de todas as requests para auditoria.",
+      "gaps": [
+        "Falta política de retry para chamadas a Core (se Core falhar temporariamente)",
+        "Falta circuit breaker para proteger Core de sobrecarga"
+      ],
+      "recommendations": [
+        "Adicionar circuit breaker (pattern) para chamadas a Core (ex: Hystrix, Resilience4j)",
+        "Adicionar cache de product-info no Middleware (Redis, TTL 1h) para reduzir load no Core",
+        "Adicionar metrics (Prometheus) para monitorizar latência e taxa de erro"
+      ],
+      "implementation_tasks": [
+        {
+          "description": "Configurar proxy routes /api/v1/term-deposits/* → Core (port 8080)",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Adicionar validação JWT em todos os endpoints de term-deposits",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Configurar rate-limiting (100 req/min por clientId)",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Adicionar logging de todas as requests para auditoria",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Implementar circuit breaker para chamadas a Core",
+          "user_story_key": "BCTT-394"
+        }
+      ]
+    },
+    {
+      "system": "digitalChannels",
+      "data_flow_summary": "Frontend SPA (React) com 4 páginas: TermDepositsPage (lista), CreateTermDepositPage (form constituição), TermDepositDetailPage (detalhe + acções), TermDepositHistoryPage (histórico). BFF term-deposits-bff agrega dados de Core (term-deposits + accounts) para optimizar UI. Socket.IO listener para evento termDeposit.matured (notificação in-app). LocalStorage cache de product-info (24h TTL).",
+      "architecture_notes": "React Router v6, componentes do Design System (DepositCard, Form, Input, Select, Button, Table, Modal). Estado global (Redux) para user session + notificações. Socket.IO client conectado a Core (namespace /notifications). Cache: product-info guardado no localStorage após primeiro GET, invalidado no logout.",
+      "gaps": [
+        "Falta componente de notificação visual in-app (toast/banner) para evento matured",
+        "Falta validação de input no form (amount >= minimumAmount, termMonths válido)",
+        "Falta loading states e error handling em todas as páginas",
+        "Falta testes E2E (Cypress) para fluxo completo de constituição"
+      ],
+      "recommendations": [
+        "Adicionar componente NotificationBanner no Design System para exibir notificações de vencimento",
+        "Adicionar biblioteca de validação (Yup ou Zod) no form de CreateTermDepositPage",
+        "Adicionar Suspense + ErrorBoundary em todas as páginas",
+        "Adicionar testes E2E (Cypress) para fluxo: consulta product-info → simula → constitui → verifica lista",
+        "Adicionar analytics tracking (Google Analytics) para medir conversão (simulação → constituição)"
+      ],
+      "implementation_tasks": [
+        {
+          "description": "Criar microserviço BFF term-deposits-bff (Node.js/Express) com rotas /check-available-funds/:accountId e /summary/:accountId",
+          "user_story_key": "BCTT-393"
+        },
+        {
+          "description": "Criar página TermDepositsPage (/term-deposits) com lista de DPNs activos e botão 'Criar Novo'",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Criar página CreateTermDepositPage (/term-deposits/new) com form (account, amount, termMonths, autoRenew) + SimulatorWidget",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Criar página TermDepositDetailPage (/term-deposits/:id) com detalhe do DPN e botões de acção (reforçar, mobilizar, renovar)",
+          "user_story_key": "BCTT-395"
+        },
+        {
+          "description": "Criar página TermDepositHistoryPage (/term-deposits/history) com tabela de histórico de operações",
+          "user_story_key": "BCTT-398"
+        },
+        {
+          "description": "Implementar Socket.IO listener para evento termDeposit.matured e exibir notificação in-app",
+          "user_story_key": "BCTT-399"
+        },
+        {
+          "description": "Implementar cache de product-info no localStorage (TTL 24h, invalidar no logout)",
+          "user_story_key": "BCTT-391"
+        },
+        {
+          "description": "Adicionar validação de form (amount >= minimumAmount, termMonths válido) usando Yup",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Adicionar componente NotificationBanner no Design System para notificações de vencimento",
+          "user_story_key": "BCTT-399"
+        },
+        {
+          "description": "Adicionar testes E2E (Cypress) para fluxo completo de constituição",
+          "user_story_key": "BCTT-394"
+        },
+        {
+          "description": "Adicionar Suspense + ErrorBoundary em todas as páginas de term-deposits",
+          "user_story_key": "BCTT-394"
+        }
+      ]
+    }
+  ]
+}

@@ -2,64 +2,58 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Stack } from '@mui/material';
 import { DatePicker } from './DatePicker';
 
-/**
- * # DatePicker - BCTT Design System
- *
- * Componente para selecção de uma data única.
- */
 const meta: Meta<typeof DatePicker> = {
   title: 'Components/DatePicker',
   component: DatePicker,
-  parameters: {
-    layout: 'centered',
-  },
+  parameters: { layout: 'centered' },
   tags: ['autodocs'],
   argTypes: {
     label: {
       control: 'text',
-      description: 'Label do campo',
+      description: 'Label do campo de data',
     },
-    value: {
-      control: 'text',
-      description: 'Valor da data (YYYY-MM-DD)',
+    error: {
+      control: 'select',
+      options: ['true', 'false'],
+      description: 'Estado de erro',
     },
     disabled: {
-      control: 'boolean',
+      control: 'select',
+      options: ['true', 'false'],
       description: 'Estado desabilitado',
     },
-    fullWidth: {
-      control: 'boolean',
-      description: 'Ocupar largura total',
+    helperText: {
+      control: 'text',
+      description: 'Texto de ajuda ou erro',
     },
-    onChange: { action: 'onChange' },
+    placeholder: {
+      control: 'text',
+      description: 'Placeholder do campo',
+    },
   },
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/**
- * DatePicker padrão.
- */
 export const DefaultVariant: Story = {
-  args: { label: 'Data' },
+  args: { variant: 'default' },
 };
 
-/**
- * DatePicker desabilitado.
- */
+export const Error: Story = {
+  args: { variant: 'error' },
+};
+
 export const Disabled: Story = {
-  args: { label: 'Data', disabled: true },
+  args: { variant: 'disabled' },
 };
 
-/**
- * Todas as variantes.
- */
 export const AllVariants: Story = {
   render: () => (
-    <Stack spacing={2}>
-      <DatePicker label="Data de início" />
-      <DatePicker label="Data desabilitada" disabled />
+    <Stack direction="row" spacing={2}>
+      <DatePicker variant="default" />
+      <DatePicker variant="error" />
+      <DatePicker variant="disabled" />
     </Stack>
   ),
 };

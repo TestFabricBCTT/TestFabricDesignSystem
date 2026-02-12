@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1016" width="1400" height="1016" font-family="Arial, Helvetica, sans-serif">
+  
+  <defs>
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/><stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/><stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/><stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9C27B0"/><stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/><stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="1016" fill="url(#bgGrad)"/>
+
+  <!-- Title -->
+  <rect x="0" y="0" width="1400" height="72" fill="#263238" opacity="0.95"/>
+  <text x="700" y="32" text-anchor="middle" fill="#FFF" font-size="20" font-weight="700">BDEV00000014 &#8212; Core Deep Dive</text>
+  <text x="700" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12">Análise detalhada &#8212; 2026-02-12</text>
+  <rect x="520" y="62" width="360" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  
+  
+  
+  <!-- Events Panel -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="200" width="640" height="180" rx="10" fill="#FFF" stroke="#CE93D8" stroke-width="1" stroke-dasharray="6 3"/>
+    <text x="60" y="224" fill="#6A1B9A" font-size="13" font-weight="700">&#9889; Socket.IO Events</text>
+    
+    <text x="80" y="260" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="280" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.reinforced — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="300" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.redeemed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="320" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.renewed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="340" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> termDeposit.matured — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="370" fill="#C62828" font-size="9" font-weight="600">Padrão: API-ONLY</text>
+  </g>
+  
+  
+  <!-- Implementation Tasks -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="420" width="1320" height="284" rx="10" fill="#FFF" stroke="#B0BEC5" stroke-width="1"/>
+    <text x="60" y="444" fill="#37474F" font-size="13" font-weight="700">&#9776; Tarefas de Implementação (13)</text>
+    <text x="80" y="470" fill="#37474F" font-size="10">&#9654; Criar tabela term_deposits com schema completo (id, client_id, account_id, amount, start_date, end_date, interest_rate, term_months, auto_renew, status, penalty_rate) <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="488" fill="#37474F" font-size="10">&#9654; Implementar API GET /api/v1/term-deposits/product-info <tspan fill="#78909C" font-size="8">(BCTT-391)</tspan></text>
+  <text x="80" y="506" fill="#37474F" font-size="10">&#9654; Implementar API POST /api/v1/term-deposits/simulate <tspan fill="#78909C" font-size="8">(BCTT-392)</tspan></text>
+  <text x="80" y="524" fill="#37474F" font-size="10">&#9654; Implementar API GET /api/v1/term-deposits/eligibility/:accountId <tspan fill="#78909C" font-size="8">(BCTT-393)</tspan></text>
+  <text x="80" y="542" fill="#37474F" font-size="10">&#9654; Implementar API POST /api/v1/term-deposits (constituir DPN) <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="560" fill="#37474F" font-size="10">&#9654; Implementar API PUT /api/v1/term-deposits/:id/reinforce <tspan fill="#78909C" font-size="8">(BCTT-395)</tspan></text>
+  <text x="80" y="578" fill="#37474F" font-size="10">&#9654; Implementar API DELETE /api/v1/term-deposits/:id/redeem com cálculo de penalidade <tspan fill="#78909C" font-size="8">(BCTT-396)</tspan></text>
+  <text x="80" y="596" fill="#37474F" font-size="10">&#9654; Implementar API PUT /api/v1/term-deposits/:id/renew <tspan fill="#78909C" font-size="8">(BCTT-397)</tspan></text>
+  <text x="80" y="614" fill="#37474F" font-size="10">&#9654; Implementar API GET /api/v1/term-deposits/history/:accountId <tspan fill="#78909C" font-size="8">(BCTT-398)</tspan></text>
+  <text x="80" y="632" fill="#37474F" font-size="10">&#9654; Implementar API GET /api/v1/term-deposits/:accountId (listar DPNs activos) <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="650" fill="#37474F" font-size="10">&#9654; Criar scheduler job (cron) para verificar depósitos próximos do vencimento e emitir evento termDeposit.matured (30d antes + no dia) <tspan fill="#78909C" font-size="8">(BCTT-399)</tspan></text>
+  <text x="80" y="668" fill="#37474F" font-size="10">&#9654; Criar scheduler job (cron) para renovação automática de depósitos com auto_renew=true <tspan fill="#78909C" font-size="8">(BCTT-397)</tspan></text>
+  <text x="80" y="686" fill="#37474F" font-size="10">&#9654; Adicionar tabela term_deposits_audit para auditoria de operações <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  </g>
+  
+  <!-- Strategy + Gaps -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="724" width="1320" height="252" rx="10" fill="#FFF" stroke="#CFD8DC" stroke-width="1"/>
+    <text x="60" y="748" fill="#37474F" font-size="13" font-weight="700">&#128260; Análise</text>
+    
+    <text x="80" y="784" fill="#37474F" font-size="10">Core gere o ciclo de vida completo dos Depósitos a Prazo: criação, reforço, mobilização, renovação, cálculo de juros e penalidades. Emite eventos para notificação de vencimento (30d + no dia). Dados persistidos em tabela term_deposits com campos: id, client_id, account_id, amount, start_date, end_date, interest_rate, term_months, auto_renew, status, penalty_rate.</text>
+    <text x="80" y="824" fill="#C62828" font-size="9">&#9888; Falta integração com sistema de contabilidade (lançamentos de juros)</text>
+  <text x="80" y="840" fill="#C62828" font-size="9">&#9888; Falta aprovação manual para mobilizações acima de 50.000 EUR</text>
+  <text x="80" y="856" fill="#C62828" font-size="9">&#9888; Falta rate-limiting por cliente (evitar spam de constituições)</text>
+    <text x="80" y="892" fill="#1565C0" font-size="9">&#128161; Adicionar tabela term_deposits_audit para log de todas as operações (compliance)</text>
+  <text x="80" y="908" fill="#1565C0" font-size="9">&#128161; Adicionar endpoint GET /api/v1/term-deposits/pending-maturity para backoffice</text>
+  <text x="80" y="924" fill="#1565C0" font-size="9">&#128161; Implementar validação de business hours (constituições só em dias úteis)</text>
+  <text x="80" y="940" fill="#1565C0" font-size="9">&#128161; Adicionar campo metadata (JSON) na tabela para extensibilidade futura</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="700" y="1006" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; TAA Deep Dive &#8212; 2026-02-12</text>
+</svg>

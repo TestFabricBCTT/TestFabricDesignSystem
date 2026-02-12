@@ -674,8 +674,12 @@ const conversationMap: Record<AgentId, Conversation[]> = {
   da: conversasDA,
   pa: [], // TODO: Add PA conversations
   dsla: conversasDSLA,
-  fda: [], // TODO: Add FDA conversations
-  bda: [], // TODO: Add BDA conversations
+  taa: [], // Phase 2: Technical Architecture Agent
+  fde: [], // Phase 2: Frontend Dev Engineer
+  bde: [], // Phase 2: Backend Dev Engineer
+  bbs: [], // Phase 2: Backend Bug Solver
+  fda: [], // Legacy: FDA conversations
+  bda: [], // Legacy: BDA conversations
   fbs: [], // TODO: Add FBS conversations
   ute: [], // TODO: Add UTE conversations
   lte: [], // TODO: Add LTE conversations

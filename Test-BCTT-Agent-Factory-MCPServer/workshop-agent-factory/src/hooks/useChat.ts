@@ -6,6 +6,7 @@ import {
   sendMessageStream,
   clearConversation,
   isApiReady,
+  approveDevPlan,
 } from '@/services/api';
 
 // Pre-seeded welcome messages for agents in live mode
@@ -24,6 +25,25 @@ export interface PipelineProgress {
   percentage: number;
 }
 
+export interface DevPlanApproval {
+  gateId: string;
+  agentId: string;
+  plan: {
+    bdev_code: string;
+    agent: string;
+    plan: {
+      summary: string;
+      files_to_create?: Array<{ project: string; path: string; purpose: string }>;
+      files_to_modify?: Array<{ project: string; path: string; changes: string }>;
+      tables_to_add?: Array<{ name: string; columns: string }>;
+      tables_to_modify?: Array<{ name: string; changes: string }>;
+      function_changes?: Array<{ file: string; function_name: string; change: string }>;
+    };
+    warnings: string[];
+    status: string;
+  } | null;
+}
+
 interface UseChatReturn {
   messages: ChatMessage[];
   isLoading: boolean;
@@ -32,6 +52,7 @@ interface UseChatReturn {
   currentAgent: Agent | null;
   conversations: Conversation[];
   pendingAutoAdvance: string | null;
+  pendingApproval: DevPlanApproval | null;
   progress: PipelineProgress | null;
   streamingText: string;
   openChat: (agent: Agent) => void;
@@ -44,6 +65,7 @@ interface UseChatReturn {
   resumeWithMessages: (agent: Agent, msgs: ChatMessage[]) => void;
   getCurrentMessages: () => ChatMessage[];
   clearAutoAdvance: () => void;
+  handleApproveDevPlan: (approved: boolean, comments?: string) => void;
 }
 
 export const useChat = (): UseChatReturn => {
@@ -54,6 +76,7 @@ export const useChat = (): UseChatReturn => {
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState<string | null>(null);
+  const [pendingApproval, setPendingApproval] = useState<DevPlanApproval | null>(null);
   const [progress, setProgress] = useState<PipelineProgress | null>(null);
   const [streamingText, setStreamingText] = useState('');
 
@@ -178,6 +201,15 @@ export const useChat = (): UseChatReturn => {
             setStreamingText(responseContent);
           } else if (event.type === 'tool') {
             console.log(`Tool used: ${event.name}`);
+          } else if (event.type === 'approval-gate') {
+            // Dev plan approval gate — show plan for user review
+            const gateEvent = event as Record<string, unknown>;
+            setPendingApproval({
+              gateId: gateEvent.gateId as string,
+              agentId: gateEvent.agentId as string,
+              plan: gateEvent.plan as DevPlanApproval['plan'],
+            });
+            setIsLoading(false);
           } else if (event.type === 'end' && (event as Record<string, unknown>).autoAdvance) {
             const advance = (event as Record<string, unknown>).autoAdvance as { nextAgent: string };
             autoAdvanceAgent = advance.nextAgent;
@@ -290,6 +322,42 @@ export const useChat = (): UseChatReturn => {
     setIsLiveMode(value);
   }, []);
 
+  const handleApproveDevPlan = useCallback(async (approved: boolean, comments?: string) => {
+    if (!pendingApproval) return;
+    const { agentId } = pendingApproval;
+    try {
+      await approveDevPlan(agentId, approved, comments);
+      setPendingApproval(null);
+
+      if (approved) {
+        // Add system message about approval
+        setMessages((prev) => [...prev, {
+          role: 'system' as ChatMessage['role'],
+          content: `✅ Plano de desenvolvimento aprovado. A iniciar implementação...`,
+        }]);
+
+        // Re-launch the agent for Phase 2 (execution)
+        // The server will detect the approval and run execution phase
+        const agent = currentAgentRef.current;
+        if (agent) {
+          // Small delay then auto-send the same BDEV message to trigger Phase 2
+          const bdevCode = pendingApproval.plan?.bdev_code || '';
+          const relaunchMsg = `Implementa o ${bdevCode}`;
+          setTimeout(() => {
+            sendMessage(relaunchMsg);
+          }, 500);
+        }
+      } else {
+        setMessages((prev) => [...prev, {
+          role: 'system' as ChatMessage['role'],
+          content: `❌ Plano rejeitado.${comments ? ` Motivo: ${comments}` : ''}`,
+        }]);
+      }
+    } catch (error) {
+      console.error('Error approving dev plan:', error);
+    }
+  }, [pendingApproval, sendMessage]);
+
   const clearAutoAdvance = useCallback(() => {
     setPendingAutoAdvance(null);
   }, []);
@@ -315,6 +383,7 @@ export const useChat = (): UseChatReturn => {
     currentAgent,
     conversations,
     pendingAutoAdvance,
+    pendingApproval,
     progress,
     streamingText,
     openChat,
@@ -327,6 +396,7 @@ export const useChat = (): UseChatReturn => {
     resumeWithMessages,
     getCurrentMessages,
     clearAutoAdvance,
+    handleApproveDevPlan,
   };
 };
 

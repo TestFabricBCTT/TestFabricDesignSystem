@@ -35,10 +35,19 @@ const conversations = new Map<string, AgentConversation>();
 // ============================================
 
 const AGENT_UPSTREAM: Record<string, string[]> = {
+  // Phase 1
   fa: ["ba"],
   da: ["fa"],
   pa: ["da"],
   dsla: ["da", "pa"],
+  // Phase 2
+  fde: ["taa"],
+  fde_planning: ["taa"],
+  bde: ["taa"],
+  bde_planning: ["taa"],
+  ute: ["fde", "bde"],
+  fbs: ["ute"],
+  bbs: ["ute"],
 };
 
 const HANDOFF_FALLBACK_CHARS = 4000;
@@ -371,7 +380,7 @@ export function clearConversation(sessionId: string, agentId: string): void {
  * Used when starting a new project from the dashboard.
  */
 export function resetSession(sessionId: string): void {
-  for (const aid of ['ba', 'fa', 'da', 'dsla', 'pa']) {
+  for (const aid of ['ba', 'fa', 'da', 'dsla', 'pa', 'taa', 'fde', 'bde', 'ute', 'fbs', 'bbs']) {
     conversations.delete(`${sessionId}:${aid}`);
   }
   console.log(`[session] Full reset for ${sessionId}`);
@@ -408,19 +417,68 @@ function formatConversationPrompt(
 // SPAWN CLAUDE CODE CLI (robust for long text)
 // ============================================
 
+// Model per agent — Opus for critical, Sonnet for structured, Haiku for mechanical
+const MODEL_PER_AGENT: Record<string, string> = {
+  ba: "claude-opus-4-6",
+  fa: "claude-sonnet-4-5-20250929",
+  da: "claude-sonnet-4-5-20250929",
+  dsla: "claude-opus-4-6",
+  pa: "claude-sonnet-4-5-20250929",
+  taa: "claude-opus-4-6",
+  fde: "claude-opus-4-6",
+  bde: "claude-opus-4-6",
+  ute: "claude-haiku-4-5-20251001",
+  fbs: "claude-sonnet-4-5-20250929",
+  bbs: "claude-sonnet-4-5-20250929",
+};
 const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "sonnet";
 const CLAUDE_TIMEOUT_MS = parseInt(process.env.CLAUDE_TIMEOUT_MS || "600000"); // 10 min default (configurable)
+
+/** Get the model for a specific agent (falls back to CLAUDE_MODEL env var) */
+export function getModelForAgent(agentId: string): string {
+  return MODEL_PER_AGENT[agentId] || process.env.CLAUDE_MODEL || CLAUDE_MODEL;
+}
 
 /**
  * Spawn Claude Code CLI and pipe prompt via stdin.
  * This avoids Windows command-line length limits with long prompts/system prompts.
  * The system prompt is written to a temp file to avoid arg length issues.
  */
-export function spawnClaudeCode(
+export async function spawnClaudeCode(
   prompt: string,
   systemPrompt: string,
   mcpConfigPath: string,
-  maxTurns?: number
+  maxTurns?: number,
+  agentId?: string
+): Promise<{ stdout: string; stderr: string }> {
+  const MAX_RETRIES = 1; // 1 retry for transient failures
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await spawnClaudeCodeOnce(prompt, systemPrompt, mcpConfigPath, maxTurns, agentId);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const msg = lastError.message;
+      // Only retry on exit code 1 with empty/short stderr (transient failure)
+      const isTransient = msg.includes('exited with code 1') && (msg.includes('stderr: .') || msg.includes('stderr: \n') || /stderr:\s*$/.test(msg) || /stderr:\s+stdout:/.test(msg));
+      if (isTransient && attempt < MAX_RETRIES) {
+        console.log(`[claude-code] Transient failure (attempt ${attempt + 1}), retrying in 2s...`);
+        await new Promise(r => setTimeout(r, 2000));
+        continue;
+      }
+      throw lastError;
+    }
+  }
+  throw lastError!;
+}
+
+function spawnClaudeCodeOnce(
+  prompt: string,
+  systemPrompt: string,
+  mcpConfigPath: string,
+  maxTurns?: number,
+  agentId?: string
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const cliPath = getClaudeCLIPath();
@@ -432,10 +490,12 @@ export function spawnClaudeCode(
 
     const effectiveMaxTurns = maxTurns || 10;
 
+    const effectiveModel = agentId ? getModelForAgent(agentId) : CLAUDE_MODEL;
+
     const args: string[] = [
       "-p", // print mode (non-interactive), prompt comes from stdin when no positional arg
       "--output-format", "json",
-      "--model", CLAUDE_MODEL,
+      "--model", effectiveModel,
       "--max-turns", String(effectiveMaxTurns),
       "--system-prompt-file", systemPromptFile, // read from temp file to avoid Windows arg escaping issues
       "--mcp-config", mcpConfigPath,
@@ -445,11 +505,17 @@ export function spawnClaudeCode(
       "--disallowed-tools", "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,NotebookEdit,Task,TodoWrite",
     ];
 
+    const cwd = process.cwd();
     console.log(`[claude-code] Spawning CLI: ${cliPath}`);
-    console.log(`[claude-code] Args count: ${args.length}, prompt length: ${prompt.length}, system prompt length: ${systemPrompt.length}`);
+    console.log(`[claude-code] CWD: ${cwd}`);
+    console.log(`[claude-code] Model: ${effectiveModel}, maxTurns: ${effectiveMaxTurns}, agent: ${agentId || 'none'}`);
+    console.log(`[claude-code] System prompt file: ${systemPromptFile}`);
+    console.log(`[claude-code] MCP config: ${mcpConfigPath}`);
+    console.log(`[claude-code] Args: ${args.join(' ')}`);
+    console.log(`[claude-code] Prompt length: ${prompt.length}, system prompt length: ${systemPrompt.length}`);
 
     const child = spawn(cliPath, args, {
-      cwd: process.cwd(),
+      cwd,
       stdio: ["pipe", "pipe", "pipe"],
       env: {
         ...process.env,
@@ -486,12 +552,16 @@ export function spawnClaudeCode(
       // Cleanup temp file
       try { fs.unlinkSync(systemPromptFile); } catch {}
 
+      console.log(`[claude-code] Process exited with code ${code}`);
+      if (stdout) console.log(`[claude-code] stdout (first 500): ${stdout.substring(0, 500)}`);
+      if (stderr) console.log(`[claude-code] stderr (first 500): ${stderr.substring(0, 500)}`);
+
       if (code === 0) {
         resolve({ stdout, stderr });
       } else {
         reject(
           new Error(
-            `Claude Code exited with code ${code}. stderr: ${stderr.substring(0, 500)}`
+            `Claude Code exited with code ${code}. stderr: ${stderr.substring(0, 500)}. stdout: ${stdout.substring(0, 500)}`
           )
         );
       }
@@ -549,15 +619,18 @@ export async function sendMessageToClaude(
   const allMessagesExceptLast = conversation.messages.slice(0, -1);
   const prompt = formatConversationPrompt(allMessagesExceptLast, enrichedMessage);
 
+  const agentModel = getModelForAgent(agentId);
   console.log(`[${agentId}] Sending message via Claude Code CLI...`);
-  console.log(`[${agentId}] Model: ${CLAUDE_MODEL}`);
+  console.log(`[${agentId}] Model: ${agentModel}`);
   console.log(`[${agentId}] Conversation messages: ${conversation.messages.length}`);
 
   try {
     const { stdout, stderr } = await spawnClaudeCode(
       prompt,
       conversation.systemPrompt,
-      configPath
+      configPath,
+      undefined,
+      agentId
     );
 
     if (stderr) {

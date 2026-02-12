@@ -9,6 +9,9 @@ import {
   CreateBDEVInput,
   CreateFeatureInput,
   CreateUserStoryInput,
+  CreateBugInput,
+  CreateTaskInput,
+  CreateSubtaskInput,
   FAStructure,
   CreateBDEVResult,
   CreateFeatureResult,
@@ -228,6 +231,63 @@ export class JiraClient {
 
   async linkIssues(payload: LinkIssuesPayload): Promise<void> {
     await this.post<void>('/issueLink', payload);
+  }
+
+  /**
+   * Transition an issue to a new status.
+   * Jira requires transition ID (not status name), so we first list available
+   * transitions, find the one matching the target status, then execute it.
+   */
+  async transitionIssue(issueKey: string, targetStatus: string): Promise<{ transitioned: boolean; from: string; to: string }> {
+    // Get available transitions for this issue
+    const transitionsData = await this.get<{ transitions: Array<{ id: string; name: string; to: { name: string } }> }>(
+      `/issue/${issueKey}/transitions`
+    );
+
+    // English → Portuguese status name mapping (Jira API returns PT names even when JQL uses EN)
+    // Uses Unicode NFC normalization to handle accented characters (ã, ó, ú) consistently
+    const norm = (s: string) => s.toLowerCase().normalize('NFC');
+
+    const STATUS_ALIASES: Record<string, string[]> = {
+      'to do': ['a fazer', 'não iniciado', 'por fazer'],
+      'in progress': ['em progresso', 'in development', 'in progress', 'em desenvolvimento'],
+      'in development': ['em desenvolvimento', 'in progress', 'em progresso'],
+      'ready for development': ['pronto para desenvolvimento'],
+      'ready for testing': ['pronto para teste', 'pronto para testes'],
+      'in testing': ['em teste', 'em testes'],
+      'in production': ['em produção', 'em producao'],
+      'development completed': ['desenvolvimento concluído', 'desenvolvimento concluido'],
+      'done': ['concluído', 'concluido', 'feito'],
+    };
+
+    // Find transition matching target status (case-insensitive, Unicode-normalized, with alias support)
+    const target = norm(targetStatus);
+    const aliases = STATUS_ALIASES[target] || [];
+    const allTargets = [target, ...aliases.map(norm)];
+
+    const transition = transitionsData.transitions.find(
+      t => {
+        const tName = norm(t.name);
+        const toName = norm(t.to.name);
+        return allTargets.some(a => tName === a || toName === a || tName.includes(a) || toName.includes(a));
+      }
+    );
+
+    if (!transition) {
+      const available = transitionsData.transitions.map(t => `"${t.name}" → "${t.to.name}"`).join(', ');
+      throw new Error(`No transition to "${targetStatus}" available for ${issueKey}. Available: ${available}`);
+    }
+
+    // Get current status before transition
+    const issue = await this.getIssue(issueKey);
+    const fromStatus = issue.fields?.status?.name || 'Unknown';
+
+    // Execute the transition
+    await this.post<void>(`/issue/${issueKey}/transitions`, {
+      transition: { id: transition.id },
+    });
+
+    return { transitioned: true, from: fromStatus, to: transition.to.name };
   }
 
   // ============================================
@@ -525,7 +585,7 @@ export class JiraClient {
         issuetype: {
           name: 'Story',
         },
-        labels: ['user-story', 'fa-generated'],
+        labels: ['user-story', 'fa-generated', ...(input.mvpLabel ? [input.mvpLabel] : [])],
         parent: {
           key: input.parentKey,
         },
@@ -617,6 +677,174 @@ export class JiraClient {
       version: 1,
       content: contentArray,
     };
+  }
+
+  // ============================================
+  // CREATE BUG (Phase 2)
+  // ============================================
+
+  async createBug(input: CreateBugInput): Promise<JiraIssue> {
+    const assignee = await this.findUserByDisplayName('Rodrigo Horta');
+
+    // Build description in ADF
+    const contentArray: ADFContent[] = [
+      {
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: 'Descrição' }],
+      } as ADFHeading,
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: input.description }],
+      } as ADFParagraph,
+    ];
+
+    if (input.stepsToReproduce && input.stepsToReproduce.length > 0) {
+      contentArray.push(
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: 'Passos para Reproduzir' }],
+        } as ADFHeading,
+        {
+          type: 'bulletList',
+          content: input.stepsToReproduce.map(step => ({
+            type: 'listItem',
+            content: [{
+              type: 'paragraph',
+              content: [{ type: 'text', text: step }],
+            } as ADFParagraph],
+          } as ADFListItem)),
+        } as ADFBulletList
+      );
+    }
+
+    if (input.expectedBehavior) {
+      contentArray.push(
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: 'Comportamento Esperado' }],
+        } as ADFHeading,
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: input.expectedBehavior }],
+        } as ADFParagraph
+      );
+    }
+
+    if (input.actualBehavior) {
+      contentArray.push(
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: 'Comportamento Actual' }],
+        } as ADFHeading,
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: input.actualBehavior }],
+        } as ADFParagraph
+      );
+    }
+
+    const severityLabel = `severity-${input.severity}`;
+    const componentLabel = `${input.component}-bug`;
+    const labels = ['bug', severityLabel, componentLabel, ...(input.labels || [])];
+
+    const payload: CreateIssuePayload = {
+      fields: {
+        project: { key: this.config.projectKey },
+        summary: input.summary,
+        description: {
+          type: 'doc',
+          version: 1,
+          content: contentArray,
+        },
+        issuetype: { name: 'Bug' },
+        labels,
+        ...(input.epicKey && { parent: { key: input.epicKey } }),
+        ...(assignee && { assignee: { accountId: assignee.accountId } }),
+      },
+    };
+
+    return this.createIssue(payload);
+  }
+
+  // ============================================
+  // CREATE TASK (Phase 2)
+  // ============================================
+
+  async createTask(input: CreateTaskInput): Promise<JiraIssue> {
+    const assignee = await this.findUserByDisplayName('Rodrigo Horta');
+
+    const payload: CreateIssuePayload = {
+      fields: {
+        project: { key: this.config.projectKey },
+        summary: input.summary,
+        description: input.description ? {
+          type: 'doc',
+          version: 1,
+          content: [{
+            type: 'paragraph',
+            content: [{ type: 'text', text: input.description }],
+          }],
+        } : undefined,
+        issuetype: { name: 'Task' },
+        labels: input.labels || [],
+        ...(input.epicKey && { parent: { key: input.epicKey } }),
+        ...(assignee && { assignee: { accountId: assignee.accountId } }),
+      },
+    };
+
+    return this.createIssue(payload);
+  }
+
+  // ============================================
+  // CREATE SUBTASK (Phase 2 — TAA)
+  // ============================================
+
+  async createSubtask(input: CreateSubtaskInput): Promise<JiraIssue> {
+    const assignee = await this.findUserByDisplayName('Rodrigo Horta');
+
+    const payload: CreateIssuePayload = {
+      fields: {
+        project: { key: this.config.projectKey },
+        summary: input.summary,
+        description: input.description ? {
+          type: 'doc',
+          version: 1,
+          content: [{
+            type: 'paragraph',
+            content: [{ type: 'text', text: input.description }],
+          }],
+        } : undefined,
+        issuetype: { name: 'Subtask' },
+        labels: input.labels || [],
+        parent: { key: input.parentKey },
+        ...(assignee && { assignee: { accountId: assignee.accountId } }),
+      },
+    };
+
+    return this.createIssue(payload);
+  }
+
+  // ============================================
+  // ADD COMMENT (Phase 2)
+  // ============================================
+
+  async addComment(issueKey: string, commentText: string): Promise<{ id: string }> {
+    const body = {
+      body: {
+        type: 'doc',
+        version: 1,
+        content: [{
+          type: 'paragraph',
+          content: [{ type: 'text', text: commentText }],
+        }],
+      },
+    };
+
+    return this.post<{ id: string }>(`/issue/${issueKey}/comment`, body);
   }
 
   // ============================================
@@ -763,6 +991,12 @@ export class JiraClient {
       const usResults = await this.processInBatches(
         usToCreate,
         async (item) => {
+          // Map priority → MVP label: Must Have→MVP1, Should Have→MVP2, Could Have→MVP3
+          const mvpMap: Record<string, 'MVP1' | 'MVP2' | 'MVP3'> = {
+            'Must Have': 'MVP1', 'Should Have': 'MVP2', 'Could Have': 'MVP3',
+          };
+          const mvpLabel = item.faUS.priority ? mvpMap[item.faUS.priority] : undefined;
+
           const usInput: CreateUserStoryInput = {
             parentKey: item.parentKey,
             storyId: item.faUS.id,
@@ -770,6 +1004,7 @@ export class JiraClient {
             screen: item.faUS.screen,
             acceptanceCriteria: item.faUS.acceptanceCriteria,
             businessRules: item.faUS.businessRules,
+            mvpLabel,
           };
 
           const userStory = await this.createUserStory(usInput);

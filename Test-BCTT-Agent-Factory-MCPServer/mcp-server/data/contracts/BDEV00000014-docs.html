@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interface Contract — BDEV00000014</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f5f6fa; color: #2c3e50; line-height: 1.65; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+    .header { background: linear-gradient(135deg, #1a237e 0%, #0d47a1 60%, #1565c0 100%); color: #fff; padding: 48px 0 40px; }
+    .header h1 { font-size: 2.2rem; font-weight: 700; }
+    .header .sub { font-size: 1.1rem; opacity: 0.85; margin-top: 8px; }
+    section { margin: 32px 0; }
+    section h2 { font-size: 1.45rem; font-weight: 700; color: #1a237e; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid #1565c0; }
+    .footer { background: #263238; color: #b0bec5; text-align: center; padding: 24px; margin-top: 48px; }
+    @media print { body { background: #fff; } .header { background: #1a237e !important; -webkit-print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <h1>Interface Contract — BDEV00000014</h1>
+    <p class="sub">Documentação técnica gerada automaticamente pelo TAA</p>
+    <div style="margin-top:16px;display:flex;gap:12px;">
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.2);font-size:0.8rem;font-weight:600;">v2.1</span>
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.12);font-size:0.82rem;">2026-02-12</span>
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.12);font-size:0.82rem;">9 APIs | 5 Events | 4 Types</span>
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.12);font-size:0.82rem;">3 Deep Dives</span>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="margin-top:32px;">
+
+  <section>
+    <h2>APIs REST (9 endpoints)</h2>
+    
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/product-info</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Retorna informação do produto DPN (taxas, prazos disponíveis, montante mínimo)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestRates</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "termMonths": 3,
+    "rate": 2.5
+  },
+  {
+    "termMonths": 6,
+    "rate": 2.8
+  },
+  {
+    "termMonths": 12,
+    "rate": 3.1
+  }
+]</pre></td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">minimumAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">1000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">penaltyRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">0.5</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">currency</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">EUR</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/simulate</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Simula cenário de depósito (retorna juros esperados)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">5000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">5000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">3.1</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">expectedInterest</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">155</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">maturityAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">5155</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">maturityDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2026-01-15</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/eligibility/:accountId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Verifica se a conta é elegível e retorna saldo disponível</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">eligible</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">true</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">availableBalance</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12345</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">reason</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"></td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Constitui novo DPN</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12345</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">5000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">autoRenew</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">false</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">id</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12345</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">5000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">3.1</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">startDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2025-01-15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">endDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2026-01-15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">autoRenew</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">false</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">active</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#FF9800;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">PUT</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/:id/reinforce</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Reforça DPN existente com capital adicional</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">additionalAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2000</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">id</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">7000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">message</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">Depósito reforçado com sucesso</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#f44336;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">DELETE</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/:id/redeem</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Mobiliza/resgata depósito (parcial ou total), calcula penalidade se antes do prazo</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">redeemAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">3000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">redeemType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">partial</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">id</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">redeemedAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">3000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">penalty</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">netAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2985</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">remainingAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">4000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">active</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#FF9800;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">PUT</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/:id/renew</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Renova DPN (manual ou confirmação de renovação automática)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newTermMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">autoRenew</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">true</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">id</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newStartDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2026-01-15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newEndDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2027-01-15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newInterestRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">3.2</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">active</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/history/:accountId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Retorna histórico completo de operações DPN da conta</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12345</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">history</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "id": "td-001",
+    "operation": "create",
+    "amount": 5000,
+    "date": "2025-01-15",
+    "status": "active"
+  },
+  {
+    "id": "td-001",
+    "operation": "reinforce",
+    "amount": 2000,
+    "date": "2025-03-01",
+    "status": "active"
+  }
+]</pre></td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/term-deposits/:accountId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Lista todos os DPNs activos de uma conta</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12345</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">deposits</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "id": "td-001",
+    "amount": 7000,
+    "termMonths": 12,
+    "startDate": "2025-01-15",
+    "endDate": "2026-01-15",
+    "status": "active"
+  }
+]</pre></td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">500</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Eventos Socket.IO (5)</h2>
+    
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">termDeposit.created</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">depositId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12345</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">5000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">startDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2025-01-15</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">termDeposit.reinforced</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">depositId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">additionalAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newTotalAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">7000</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">termDeposit.redeemed</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">depositId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">redeemedAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">3000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">penalty</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">netAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2985</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">termDeposit.renewed</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">depositId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newStartDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2026-01-15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newEndDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2027-01-15</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">termDeposit.matured</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">depositId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">td-001</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">12345</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">maturityDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">2026-01-15</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">5000</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestEarned</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">155</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">notificationType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">30d_warning</td></tr></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tipos Partilhados (4)</h2>
+    
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>TermDeposit</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">id</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">clientId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">startDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (ISO8601)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">endDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (ISO8601)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">autoRenew</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">boolean</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">'active' | 'matured' | 'redeemed' | 'cancelled'</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">penaltyRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>ProductInfo</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestRates</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">Array<{ termMonths: number, rate: number }></td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">minimumAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">penaltyRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">currency</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>SimulationResult</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">expectedInterest</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">maturityAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">maturityDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (ISO8601)</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>EligibilityCheck</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">eligible</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">boolean</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">availableBalance</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">accountId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">reason</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+  </section>
+
+  
+    <section style="margin-bottom:36px;">
+      <h2 style="font-size:1.45rem;font-weight:700;color:#1a237e;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #1565c0;">Deep Dive — Core</h2>
+      <p style="color:#37474f;margin-bottom:12px;">Core gere o ciclo de vida completo dos Depósitos a Prazo: criação, reforço, mobilização, renovação, cálculo de juros e penalidades. Emite eventos para notificação de vencimento (30d + no dia). Dados persistidos em tabela term_deposits com campos: id, client_id, account_id, amount, start_date, end_date, interest_rate, term_months, auto_renew, status, penalty_rate.</p>
+      <p style="color:#546e7a;margin-bottom:12px;font-style:italic;">API REST stateless. Scheduler job (cron) verifica diariamente depósitos próximos do vencimento e emite termDeposit.matured (30d antes + no dia). Cálculo de penalidade: (redeemed_amount * penalty_rate * days_remaining / 365). Renovação automática: job cron renova automaticamente depósitos com auto_renew=true no vencimento.</p>
+      
+      <h4 style="color:#c62828;margin-bottom:6px;">Lacunas Identificadas</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#c62828;">Falta integração com sistema de contabilidade (lançamentos de juros)</li><li style="color:#c62828;">Falta aprovação manual para mobilizações acima de 50.000 EUR</li><li style="color:#c62828;">Falta rate-limiting por cliente (evitar spam de constituições)</li></ul>
+      
+      <h4 style="color:#1565c0;margin-bottom:6px;">Recomendações</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#1565c0;">Adicionar tabela term_deposits_audit para log de todas as operações (compliance)</li><li style="color:#1565c0;">Adicionar endpoint GET /api/v1/term-deposits/pending-maturity para backoffice</li><li style="color:#1565c0;">Implementar validação de business hours (constituições só em dias úteis)</li><li style="color:#1565c0;">Adicionar campo metadata (JSON) na tabela para extensibilidade futura</li></ul>
+      
+      <h4 style="color:#37474f;margin-bottom:6px;">Tarefas de Implementação (13)</h4>
+      <ul><li>Criar tabela term_deposits com schema completo (id, client_id, account_id, amount, start_date, end_date, interest_rate, term_months, auto_renew, status, penalty_rate) <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Implementar API GET /api/v1/term-deposits/product-info <span style="color:#78909c;font-size:0.85em;">(BCTT-391)</span></li><li>Implementar API POST /api/v1/term-deposits/simulate <span style="color:#78909c;font-size:0.85em;">(BCTT-392)</span></li><li>Implementar API GET /api/v1/term-deposits/eligibility/:accountId <span style="color:#78909c;font-size:0.85em;">(BCTT-393)</span></li><li>Implementar API POST /api/v1/term-deposits (constituir DPN) <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Implementar API PUT /api/v1/term-deposits/:id/reinforce <span style="color:#78909c;font-size:0.85em;">(BCTT-395)</span></li><li>Implementar API DELETE /api/v1/term-deposits/:id/redeem com cálculo de penalidade <span style="color:#78909c;font-size:0.85em;">(BCTT-396)</span></li><li>Implementar API PUT /api/v1/term-deposits/:id/renew <span style="color:#78909c;font-size:0.85em;">(BCTT-397)</span></li><li>Implementar API GET /api/v1/term-deposits/history/:accountId <span style="color:#78909c;font-size:0.85em;">(BCTT-398)</span></li><li>Implementar API GET /api/v1/term-deposits/:accountId (listar DPNs activos) <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Criar scheduler job (cron) para verificar depósitos próximos do vencimento e emitir evento termDeposit.matured (30d antes + no dia) <span style="color:#78909c;font-size:0.85em;">(BCTT-399)</span></li><li>Criar scheduler job (cron) para renovação automática de depósitos com auto_renew=true <span style="color:#78909c;font-size:0.85em;">(BCTT-397)</span></li><li>Adicionar tabela term_deposits_audit para auditoria de operações <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li></ul>
+    </section>
+    <section style="margin-bottom:36px;">
+      <h2 style="font-size:1.45rem;font-weight:700;color:#1a237e;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #1565c0;">Deep Dive — Middleware</h2>
+      <p style="color:#37474f;margin-bottom:12px;">Middleware actua como API Gateway: proxy de todas as rotas /api/v1/term-deposits/* para Core, com autenticação JWT e rate-limiting (100 req/min por cliente). Não adiciona lógica de negócio.</p>
+      <p style="color:#546e7a;margin-bottom:12px;font-style:italic;">Kong ou Express Gateway. Validação de JWT em todos os endpoints (header Authorization: Bearer &lt;token&gt;). Rate-limit por IP + clientId. Logs de todas as requests para auditoria.</p>
+      
+      <h4 style="color:#c62828;margin-bottom:6px;">Lacunas Identificadas</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#c62828;">Falta política de retry para chamadas a Core (se Core falhar temporariamente)</li><li style="color:#c62828;">Falta circuit breaker para proteger Core de sobrecarga</li></ul>
+      
+      <h4 style="color:#1565c0;margin-bottom:6px;">Recomendações</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#1565c0;">Adicionar circuit breaker (pattern) para chamadas a Core (ex: Hystrix, Resilience4j)</li><li style="color:#1565c0;">Adicionar cache de product-info no Middleware (Redis, TTL 1h) para reduzir load no Core</li><li style="color:#1565c0;">Adicionar metrics (Prometheus) para monitorizar latência e taxa de erro</li></ul>
+      
+      <h4 style="color:#37474f;margin-bottom:6px;">Tarefas de Implementação (5)</h4>
+      <ul><li>Configurar proxy routes /api/v1/term-deposits/* → Core (port 8080) <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Adicionar validação JWT em todos os endpoints de term-deposits <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Configurar rate-limiting (100 req/min por clientId) <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Adicionar logging de todas as requests para auditoria <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Implementar circuit breaker para chamadas a Core <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li></ul>
+    </section>
+    <section style="margin-bottom:36px;">
+      <h2 style="font-size:1.45rem;font-weight:700;color:#1a237e;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #1565c0;">Deep Dive — Digital Channels</h2>
+      <p style="color:#37474f;margin-bottom:12px;">Frontend SPA (React) com 4 páginas: TermDepositsPage (lista), CreateTermDepositPage (form constituição), TermDepositDetailPage (detalhe + acções), TermDepositHistoryPage (histórico). BFF term-deposits-bff agrega dados de Core (term-deposits + accounts) para optimizar UI. Socket.IO listener para evento termDeposit.matured (notificação in-app). LocalStorage cache de product-info (24h TTL).</p>
+      <p style="color:#546e7a;margin-bottom:12px;font-style:italic;">React Router v6, componentes do Design System (DepositCard, Form, Input, Select, Button, Table, Modal). Estado global (Redux) para user session + notificações. Socket.IO client conectado a Core (namespace /notifications). Cache: product-info guardado no localStorage após primeiro GET, invalidado no logout.</p>
+      
+      <h4 style="color:#c62828;margin-bottom:6px;">Lacunas Identificadas</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#c62828;">Falta componente de notificação visual in-app (toast/banner) para evento matured</li><li style="color:#c62828;">Falta validação de input no form (amount &gt;= minimumAmount, termMonths válido)</li><li style="color:#c62828;">Falta loading states e error handling em todas as páginas</li><li style="color:#c62828;">Falta testes E2E (Cypress) para fluxo completo de constituição</li></ul>
+      
+      <h4 style="color:#1565c0;margin-bottom:6px;">Recomendações</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#1565c0;">Adicionar componente NotificationBanner no Design System para exibir notificações de vencimento</li><li style="color:#1565c0;">Adicionar biblioteca de validação (Yup ou Zod) no form de CreateTermDepositPage</li><li style="color:#1565c0;">Adicionar Suspense + ErrorBoundary em todas as páginas</li><li style="color:#1565c0;">Adicionar testes E2E (Cypress) para fluxo: consulta product-info → simula → constitui → verifica lista</li><li style="color:#1565c0;">Adicionar analytics tracking (Google Analytics) para medir conversão (simulação → constituição)</li></ul>
+      
+      <h4 style="color:#37474f;margin-bottom:6px;">Tarefas de Implementação (11)</h4>
+      <ul><li>Criar microserviço BFF term-deposits-bff (Node.js/Express) com rotas /check-available-funds/:accountId e /summary/:accountId <span style="color:#78909c;font-size:0.85em;">(BCTT-393)</span></li><li>Criar página TermDepositsPage (/term-deposits) com lista de DPNs activos e botão 'Criar Novo' <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Criar página CreateTermDepositPage (/term-deposits/new) com form (account, amount, termMonths, autoRenew) + SimulatorWidget <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Criar página TermDepositDetailPage (/term-deposits/:id) com detalhe do DPN e botões de acção (reforçar, mobilizar, renovar) <span style="color:#78909c;font-size:0.85em;">(BCTT-395)</span></li><li>Criar página TermDepositHistoryPage (/term-deposits/history) com tabela de histórico de operações <span style="color:#78909c;font-size:0.85em;">(BCTT-398)</span></li><li>Implementar Socket.IO listener para evento termDeposit.matured e exibir notificação in-app <span style="color:#78909c;font-size:0.85em;">(BCTT-399)</span></li><li>Implementar cache de product-info no localStorage (TTL 24h, invalidar no logout) <span style="color:#78909c;font-size:0.85em;">(BCTT-391)</span></li><li>Adicionar validação de form (amount &gt;= minimumAmount, termMonths válido) usando Yup <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Adicionar componente NotificationBanner no Design System para notificações de vencimento <span style="color:#78909c;font-size:0.85em;">(BCTT-399)</span></li><li>Adicionar testes E2E (Cypress) para fluxo completo de constituição <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li><li>Adicionar Suspense + ErrorBoundary em todas as páginas de term-deposits <span style="color:#78909c;font-size:0.85em;">(BCTT-394)</span></li></ul>
+    </section>
+
+</div>
+
+<footer class="footer">
+  <p><strong>Gerado automaticamente pelo TAA (Technical Architecture Agent)</strong></p>
+  <p style="margin-top:6px;">2026-02-12 — <code style="background:rgba(255,255,255,0.15);color:#fff;padding:2px 8px;border-radius:4px;">BDEV00000014.json</code> v2.1</p>
+</footer>
+</body>
+</html>

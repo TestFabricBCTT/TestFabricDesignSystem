@@ -1,0 +1,64 @@
+{
+  "bdev_code": "BDEV00000014",
+  "agent": "fde",
+  "plan": {
+    "summary": "Implementação da funcionalidade de Depósitos a Prazo (DPN) no frontend, incluindo: (1) Página de listagem de DPNs activos; (2) Fluxo completo de criação de DPN com wizard multi-step (informação produto → simulação → elegibilidade → confirmação); (3) Página de detalhe de DPN individual; (4) Integração com 3 endpoints da API v1 de term-deposits; (5) Validações de formulário e gestão de estados de erro.",
+    "files_to_create": [
+      {
+        "project": "frontend",
+        "path": "frontend/src/pages/TermDepositsPage.tsx",
+        "purpose": "Página principal de listagem de todos os depósitos a prazo do cliente. Mostra tabela com DPNs activos (ID, montante, prazo, taxa, datas abertura/vencimento, juros acumulados). Botão 'Criar Novo DPN' que navega para o wizard."
+      },
+      {
+        "project": "frontend",
+        "path": "frontend/src/pages/TermDepositDetailPage.tsx",
+        "purpose": "Página de detalhe de um DPN específico (acedida por /term-deposits/:id). Mostra informação completa do DPN, botão de resgate antecipado (se ainda não vencido), histórico de operações e projecção de juros."
+      },
+      {
+        "project": "frontend",
+        "path": "frontend/src/pages/CreateTermDepositPage.tsx",
+        "purpose": "Wizard multi-step para criação de DPN. Usa Stepper do DS. Steps: 1-Informação do Produto, 2-Simulação (montante+prazo), 3-Verificar Elegibilidade, 4-Confirmação. Integra com os 3 endpoints (product-info, simulate, eligibility)."
+      },
+      {
+        "project": "frontend",
+        "path": "frontend/src/services/termDepositsService.ts",
+        "purpose": "Serviço dedicado para chamadas à API de term-deposits. Métodos: getProductInfo(), simulate(amount, termMonths), checkEligibility(accountId), createTermDeposit(payload), getTermDeposits(), getTermDepositById(id), earlyWithdrawal(id)."
+      },
+      {
+        "project": "frontend",
+        "path": "frontend/src/types/termDeposit.ts",
+        "purpose": "Interfaces TypeScript para os tipos de dados: TermDeposit, ProductInfo, SimulationResult, EligibilityCheck, CreateTermDepositRequest, EarlyWithdrawalRequest."
+      },
+      {
+        "project": "frontend",
+        "path": "frontend/src/components/TermDepositCard.tsx",
+        "purpose": "Componente de Card reutilizável para exibir resumo de um DPN (para usar na listagem). Usa Card variant='product' do DS. Mostra ícone, montante, prazo, taxa e estado."
+      }
+    ],
+    "files_to_modify": [
+      {
+        "project": "frontend",
+        "path": "frontend/src/App.tsx",
+        "changes": "Adicionar 3 novas rotas protegidas: '/term-deposits' (lista), '/term-deposits/new' (wizard criação), '/term-deposits/:id' (detalhe). Todas dentro de ProtectedRoute."
+      },
+      {
+        "project": "frontend",
+        "path": "frontend/src/pages/LandingPage.tsx",
+        "changes": "Adicionar novo Card 'Depósitos a Prazo' na dashboard (ao lado de Contas e Movimentos). Mostra total investido em DPNs e botão 'Ver Depósitos' que navega para /term-deposits. IMPORTANTE: Corrigir imports MUI existentes (@mui/material) para usar @bctt/design-system."
+      },
+      {
+        "project": "frontend",
+        "path": "frontend/src/services/api.ts",
+        "changes": "Não modifica este ficheiro (termDepositsService será criado separadamente). Apenas para referência da função helper request<T>()."
+      }
+    ],
+    "function_changes": [],
+    "tables_to_add": [],
+    "tables_to_modify": []
+  },
+  "warnings": [],
+  "submitted_at": "2026-02-12T13:07:44.540Z",
+  "status": "approved",
+  "approval_comments": "",
+  "approved_at": "2026-02-12T13:09:53.581Z"
+}

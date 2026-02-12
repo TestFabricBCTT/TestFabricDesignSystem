@@ -1,0 +1,81 @@
+{
+  "bdev_code": "BDEV00000014",
+  "agent": "bde",
+  "plan": {
+    "summary": "Implementação de Depósitos a Prazo (DPN) com 3 endpoints REST (info produto, simulação, elegibilidade), nova tabela term_deposits e term_deposit_rates no Core, rotas de negócio no Core, proxy automático no Middleware, e eventos WebSocket para notificações em tempo real.",
+    "tables_to_add": [
+      {
+        "name": "term_deposit_rates",
+        "columns": "id TEXT PRIMARY KEY, term_months INTEGER UNIQUE NOT NULL, rate REAL NOT NULL, active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "term_deposits",
+        "columns": "id TEXT PRIMARY KEY, account_id TEXT REFERENCES accounts(id), amount REAL NOT NULL, term_months INTEGER NOT NULL, interest_rate REAL NOT NULL, expected_interest REAL NOT NULL, maturity_amount REAL NOT NULL, start_date TEXT NOT NULL, maturity_date TEXT NOT NULL, status TEXT CHECK(status IN ('active', 'cancelled', 'matured')) DEFAULT 'active', cancelled_at DATETIME, maturity_processed INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "tables_to_modify": [],
+    "files_to_create": [
+      {
+        "project": "core",
+        "path": "src/routes/termDeposits.ts",
+        "purpose": "Rotas REST para gestão de depósitos a prazo: GET /product-info (taxas e config), POST /simulate (cálculo de juros), GET /eligibility/:accountId (validação), POST / (criação), GET / (listagem), POST /:id/cancel (cancelamento antecipado)"
+      }
+    ],
+    "files_to_modify": [
+      {
+        "project": "core",
+        "path": "src/db/schema.ts",
+        "changes": "Adicionar CREATE TABLE term_deposit_rates e term_deposits no bloco SQL de initDatabase(). Ambas as tabelas seguem padrão existente (TEXT PRIMARY KEY, DATETIME, CHECK constraints)."
+      },
+      {
+        "project": "core",
+        "path": "src/db/seed.ts",
+        "changes": "Adicionar INSERT de taxas padrão na term_deposit_rates (3 meses: 2.5%, 6 meses: 2.8%, 12 meses: 3.1%). Adicionar 1-2 depósitos de exemplo na term_deposits para testes."
+      },
+      {
+        "project": "core",
+        "path": "src/server.ts",
+        "changes": "Importar termDepositRoutes e registar app.use('/api/term-deposits', termDepositRoutes()) após as rotas existentes."
+      },
+      {
+        "project": "middleware",
+        "path": "src/routes/proxy.ts",
+        "changes": "Adicionar proxy router.use('/term-deposits', createProxyMiddleware({target: CORE_URL, changeOrigin: true, pathRewrite: {'^/api/v1/term-deposits': '/api/term-deposits'}})) para encaminhar pedidos do Middleware (porta 4010, /api/v1/term-deposits/*) para Core (porta 4001, /api/term-deposits/*)."
+      }
+    ],
+    "function_changes": [
+      {
+        "file": "core/src/routes/termDeposits.ts",
+        "function_name": "GET /product-info",
+        "change": "Criar função que usa queryAll('SELECT term_months, rate FROM term_deposit_rates WHERE active = 1 ORDER BY term_months') e retorna JSON {interestRates: [...], minimumAmount: 1000, penaltyRate: 0.5, currency: 'EUR'}"
+      },
+      {
+        "file": "core/src/routes/termDeposits.ts",
+        "function_name": "POST /simulate",
+        "change": "Validar body (amount >= 1000, termMonths válido). Buscar taxa com queryOne('SELECT rate FROM term_deposit_rates WHERE term_months = ? AND active = 1'). Calcular juros: expectedInterest = amount * rate / 100, maturityAmount = amount + expectedInterest, maturityDate = startDate + termMonths. Retornar simulação JSON."
+      },
+      {
+        "file": "core/src/routes/termDeposits.ts",
+        "function_name": "GET /eligibility/:accountId",
+        "change": "Buscar conta com queryOne('SELECT balance, status FROM accounts WHERE id = ?'). Validar eligible = (status === 'fullaccess' && balance >= 1000). Retornar {eligible, availableBalance: balance, accountId, reason: (se !eligible)}."
+      },
+      {
+        "file": "core/src/routes/termDeposits.ts",
+        "function_name": "POST /",
+        "change": "Validar body, verificar elegibilidade interna, buscar taxa, calcular juros/maturidade. Usar run() com INSERT INTO term_deposits (id, account_id, amount, ...) VALUES (?, ?, ?, ...). Deduzir saldo da conta: run('UPDATE accounts SET balance = balance - ? WHERE id = ?'). Emitir evento emitEvent('term_deposit.created', {depositId, accountId, amount}). Retornar depósito criado."
+      },
+      {
+        "file": "core/src/routes/termDeposits.ts",
+        "function_name": "POST /:id/cancel",
+        "change": "Buscar depósito com queryOne('SELECT * FROM term_deposits WHERE id = ?'). Validar status === 'active'. Calcular penalização (0.5% do amount). Usar run('UPDATE term_deposits SET status = ?, cancelled_at = ? WHERE id = ?'). Devolver fundos à conta: run('UPDATE accounts SET balance = balance + ? WHERE id = ?', [amount - penalização]). Emitir evento 'term_deposit.cancelled'. Retornar resultado."
+      }
+    ]
+  },
+  "warnings": [
+    "⚠️ ALTERA 5 função(ões) existente(s)"
+  ],
+  "submitted_at": "2026-02-12T13:07:41.030Z",
+  "status": "approved",
+  "approval_comments": "",
+  "approved_at": "2026-02-12T13:09:46.933Z"
+}

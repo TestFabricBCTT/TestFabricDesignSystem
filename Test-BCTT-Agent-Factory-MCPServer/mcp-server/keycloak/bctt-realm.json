@@ -1,0 +1,205 @@
+{
+  "id": "bctt",
+  "realm": "bctt",
+  "displayName": "BCTT - Banco Comercial de Testes e Tecnologia",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 2592000,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanUserAction": 300,
+  "passwordPolicy": "length(8)",
+  "defaultRoles": ["consultation"],
+  "roles": {
+    "realm": [
+      {
+        "name": "consultation",
+        "description": "Acesso de consulta — visualizar saldos, movimentos, extractos"
+      },
+      {
+        "name": "operations",
+        "description": "Acesso operacional — transferências, pagamentos, gestão de cartões"
+      },
+      {
+        "name": "administration",
+        "description": "Acesso administrativo — gestão de perfil, limites, beneficiários"
+      },
+      {
+        "name": "backoffice-admin",
+        "description": "Administrador do backoffice Core — gestão de clientes, contas, movimentos"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "digital-channels",
+      "name": "Digital Channels (Web App)",
+      "description": "Frontend app para clientes bancários",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "dc-secret-2026-agent-factory",
+      "redirectUris": [
+        "http://www.DCsCreatedbyAI.pt/*",
+        "http://localhost:5173/*",
+        "http://fix.DCsCreatedbyAI.pt/*",
+        "http://localhost:5174/*"
+      ],
+      "webOrigins": [
+        "http://www.DCsCreatedbyAI.pt",
+        "http://localhost:5173",
+        "http://fix.DCsCreatedbyAI.pt",
+        "http://localhost:5174"
+      ],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "backoffice",
+      "name": "Core Backoffice",
+      "description": "Admin dashboard para gestão bancária",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "bo-secret-2026-agent-factory",
+      "redirectUris": [
+        "http://backoffice.DCsCreatedbyAI.pt/*",
+        "http://localhost:4002/*"
+      ],
+      "webOrigins": [
+        "http://backoffice.DCsCreatedbyAI.pt",
+        "http://localhost:4002"
+      ],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "middleware-api",
+      "name": "Middleware API Gateway",
+      "description": "Service account para validação JWT no middleware",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "mw-secret-2026-agent-factory",
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "joao@exemplo.pt",
+      "email": "joao@exemplo.pt",
+      "firstName": "João",
+      "lastName": "Silva",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["operations"],
+      "attributes": {
+        "clientId": "CLI001",
+        "nif": "123456789",
+        "accessLevel": "operations"
+      }
+    },
+    {
+      "username": "maria@exemplo.pt",
+      "email": "maria@exemplo.pt",
+      "firstName": "Maria",
+      "lastName": "Santos",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["operations"],
+      "attributes": {
+        "clientId": "CLI002",
+        "nif": "987654321",
+        "accessLevel": "operations"
+      }
+    },
+    {
+      "username": "pedro@exemplo.pt",
+      "email": "pedro@exemplo.pt",
+      "firstName": "Pedro",
+      "lastName": "Costa",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["consultation"],
+      "attributes": {
+        "clientId": "CLI003",
+        "nif": "456789123",
+        "accessLevel": "consultation"
+      }
+    },
+    {
+      "username": "admin@bctt.pt",
+      "email": "admin@bctt.pt",
+      "firstName": "Administrador",
+      "lastName": "BCTT",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["backoffice-admin", "administration"],
+      "attributes": {
+        "department": "IT",
+        "accessLevel": "administration"
+      }
+    }
+  ],
+  "scopeMappings": [
+    {
+      "client": "digital-channels",
+      "roles": ["consultation", "operations", "administration"]
+    },
+    {
+      "client": "backoffice",
+      "roles": ["backoffice-admin", "administration"]
+    }
+  ],
+  "clientScopeMappings": {},
+  "internationalizationEnabled": true,
+  "supportedLocales": ["pt", "en"],
+  "defaultLocale": "pt",
+  "smtpServer": {},
+  "eventsEnabled": false,
+  "adminEventsEnabled": false
+}

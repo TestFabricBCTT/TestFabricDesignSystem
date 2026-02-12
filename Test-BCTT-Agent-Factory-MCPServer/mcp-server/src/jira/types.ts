@@ -89,6 +89,7 @@ export interface CreateUserStoryInput {
   screen?: string;
   acceptanceCriteria: AcceptanceCriterion[];
   businessRules?: string[];
+  mvpLabel?: 'MVP1' | 'MVP2' | 'MVP3'; // MVP classification for Phase 2
 }
 
 export interface AcceptanceCriterion {
@@ -96,6 +97,36 @@ export interface AcceptanceCriterion {
   given: string;
   when: string;
   then: string;
+}
+
+// ============================================
+// BUG & TASK TYPES (Phase 2)
+// ============================================
+
+export interface CreateBugInput {
+  epicKey?: string;       // Parent Epic (optional)
+  summary: string;
+  description: string;
+  severity: 'critical' | 'major' | 'minor';
+  component: 'frontend' | 'backend' | 'bff' | 'middleware' | 'core';
+  stepsToReproduce?: string[];
+  expectedBehavior?: string;
+  actualBehavior?: string;
+  labels?: string[];
+}
+
+export interface CreateTaskInput {
+  epicKey?: string;       // Parent Epic (optional)
+  summary: string;
+  description?: string;
+  labels?: string[];
+}
+
+export interface CreateSubtaskInput {
+  parentKey: string;      // Parent issue key (e.g., User Story) — subtask will be child
+  summary: string;
+  description?: string;
+  labels?: string[];
 }
 
 // ============================================

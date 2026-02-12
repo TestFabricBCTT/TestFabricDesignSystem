@@ -30,12 +30,12 @@ import {
   Download as DownloadIcon,
   OpenInNew as OpenInNewIcon,
   Edit as EditIcon,
+  Terminal as TerminalIcon,
 } from '@mui/icons-material';
 import { Project, AgentIterationStatus } from '@/types';
 import { getAgentById } from '@/data/agents';
 import { getAgentColor } from '@/theme/theme';
-
-const PIPELINE_AGENTS = ['ba', 'fa', 'da', 'pa', 'dsla'] as const;
+import { getPipelineAgents } from '@/hooks/useProjectHistory';
 
 export type ProjectAgentAction =
   | { type: 'view'; projectId: string; agentId: string }
@@ -47,8 +47,10 @@ export type ProjectAgentAction =
 interface ProjectHistoryPanelProps {
   projects: Project[];
   activeProject: Project | null;
+  activePhaseId?: string;
   onSelectProject: (projectId: string) => void;
   onNewProject: () => void;
+  onNewPhase2Project?: () => void;
   onDeleteProject: (id: string) => void;
   onRenameProject: (id: string, newTitle: string) => void;
   onAgentAction: (action: ProjectAgentAction) => void;
@@ -90,16 +92,28 @@ function getStatusLabel(status: AgentIterationStatus, msgCount: number): string 
 }
 
 function getCompletedCount(project: Project): number {
-  return PIPELINE_AGENTS.filter(
+  const pipeline = getPipelineAgents(project.phaseId);
+  return pipeline.filter(
     (id) => project.agents[id]?.status === 'completed',
   ).length;
 }
 
+const PHASE_CHIP_CONFIG: Record<string, { label: string; color: string }> = {
+  concepcao: { label: 'Conceção', color: '#3B82F6' },
+  desenvolvimento: { label: 'Dev', color: '#7C3AED' },
+  producao: { label: 'Prod', color: '#10B981' },
+};
+
+// Phase 2 agents run via CLI, not via webapp chat
+const PHASE2_AGENT_IDS = new Set(['taa', 'fde', 'bde', 'ute', 'fbs', 'bbs']);
+
 export const ProjectHistoryPanel = ({
   projects,
   activeProject,
+  activePhaseId,
   onSelectProject,
   onNewProject,
+  onNewPhase2Project,
   onDeleteProject,
   onRenameProject,
   onAgentAction,
@@ -171,10 +185,15 @@ export const ProjectHistoryPanel = ({
               setSelectedProjectId(id);
               onSelectProject(id);
             }}
+            activePhaseId={activePhaseId}
             onNewProject={() => {
               handleClose();
               onNewProject();
             }}
+            onNewPhase2Project={onNewPhase2Project ? () => {
+              handleClose();
+              onNewPhase2Project();
+            } : undefined}
             onDeleteProject={onDeleteProject}
             onRenameProject={onRenameProject}
           />
@@ -191,8 +210,10 @@ export const ProjectHistoryPanel = ({
 interface ProjectListViewProps {
   projects: Project[];
   activeProject: Project | null;
+  activePhaseId?: string;
   onSelectProject: (id: string) => void;
   onNewProject: () => void;
+  onNewPhase2Project?: () => void;
   onDeleteProject: (id: string) => void;
   onRenameProject: (id: string, newTitle: string) => void;
 }
@@ -200,8 +221,10 @@ interface ProjectListViewProps {
 const ProjectListView = ({
   projects,
   activeProject,
+  activePhaseId,
   onSelectProject,
   onNewProject,
+  onNewPhase2Project,
   onDeleteProject,
   onRenameProject,
 }: ProjectListViewProps) => {
@@ -252,8 +275,8 @@ const ProjectListView = ({
       </Box>
     </Box>
 
-    {/* New Project button */}
-    <Box sx={{ p: 2 }}>
+    {/* New Project button — phase-aware */}
+    <Box sx={{ p: 2, display: 'flex', gap: 1 }}>
       <Button
         variant="contained"
         fullWidth
@@ -268,6 +291,22 @@ const ProjectListView = ({
       >
         Novo Pedido
       </Button>
+      {onNewPhase2Project && activePhaseId === 'desenvolvimento' && (
+        <Button
+          variant="contained"
+          fullWidth
+          startIcon={<TerminalIcon />}
+          onClick={onNewPhase2Project}
+          sx={{
+            bgcolor: alpha('#7C3AED', 0.15),
+            color: '#7C3AED',
+            fontWeight: 600,
+            '&:hover': { bgcolor: alpha('#7C3AED', 0.25) },
+          }}
+        >
+          Novo Dev
+        </Button>
+      )}
     </Box>
 
     <Divider sx={{ borderColor: alpha('#FFFFFF', 0.06) }} />
@@ -287,8 +326,10 @@ const ProjectListView = ({
       ) : (
         <List sx={{ py: 0 }}>
           {projects.map((project) => {
+            const pipeline = getPipelineAgents(project.phaseId);
             const completed = getCompletedCount(project);
             const isActive = activeProject?.id === project.id;
+            const phaseConfig = PHASE_CHIP_CONFIG[project.phaseId || 'concepcao'];
 
             return (
               <ListItem
@@ -391,7 +432,19 @@ const ProjectListView = ({
                       </Box>
                     }
                     secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {/* Phase chip */}
+                        <Chip
+                          label={phaseConfig.label}
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: '0.55rem',
+                            fontWeight: 700,
+                            bgcolor: alpha(phaseConfig.color, 0.12),
+                            color: phaseConfig.color,
+                          }}
+                        />
                         {project.bdevCode && (
                           <Chip
                             label={project.bdevCode}
@@ -412,7 +465,7 @@ const ProjectListView = ({
                         </Typography>
                         {/* Progress dots */}
                         <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
-                          {PIPELINE_AGENTS.map((agentId) => {
+                          {pipeline.map((agentId) => {
                             const status =
                               project.agents[agentId]?.status || 'not_started';
                             return (
@@ -440,7 +493,7 @@ const ProjectListView = ({
                               ml: 0.5,
                             }}
                           >
-                            {completed}/{PIPELINE_AGENTS.length}
+                            {completed}/{pipeline.length}
                           </Typography>
                         </Box>
                       </Box>
@@ -480,6 +533,10 @@ const PipelineView = ({
   const [editValue, setEditValue] = useState(project.title);
   const editRef = useRef<HTMLInputElement>(null);
 
+  const pipelineAgents = getPipelineAgents(project.phaseId);
+  const isPhase2 = project.phaseId === 'desenvolvimento';
+  const phaseConfig = PHASE_CHIP_CONFIG[project.phaseId || 'concepcao'];
+
   useEffect(() => {
     if (isEditing && editRef.current) {
       editRef.current.focus();
@@ -515,58 +572,72 @@ const PipelineView = ({
           <ArrowBackIcon fontSize="small" />
         </IconButton>
         <Box sx={{ flex: 1 }}>
-          {isEditing ? (
-            <TextField
-              inputRef={editRef}
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveEdit();
-                if (e.key === 'Escape') setIsEditing(false);
-              }}
-              onBlur={saveEdit}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {isEditing ? (
+              <TextField
+                inputRef={editRef}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveEdit();
+                  if (e.key === 'Escape') setIsEditing(false);
+                }}
+                onBlur={saveEdit}
+                size="small"
+                variant="standard"
+                sx={{
+                  maxWidth: 200,
+                  '& .MuiInput-input': {
+                    color: '#FFFFFF',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    py: 0,
+                  },
+                  '& .MuiInput-underline:before': {
+                    borderBottomColor: alpha('#FFFFFF', 0.3),
+                  },
+                  '& .MuiInput-underline:after': {
+                    borderBottomColor: '#C8102E',
+                  },
+                }}
+              />
+            ) : (
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer' }}
+                onClick={() => { setEditValue(project.title); setIsEditing(true); }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#FFFFFF',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 180,
+                  }}
+                >
+                  {project.title}
+                </Typography>
+                <EditIcon sx={{ fontSize: 14, color: alpha('#FFFFFF', 0.3) }} />
+              </Box>
+            )}
+            <Chip
+              label={phaseConfig.label}
               size="small"
-              variant="standard"
               sx={{
-                maxWidth: 250,
-                '& .MuiInput-input': {
-                  color: '#FFFFFF',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  py: 0,
-                },
-                '& .MuiInput-underline:before': {
-                  borderBottomColor: alpha('#FFFFFF', 0.3),
-                },
-                '& .MuiInput-underline:after': {
-                  borderBottomColor: '#C8102E',
-                },
+                height: 18,
+                fontSize: '0.55rem',
+                fontWeight: 700,
+                bgcolor: alpha(phaseConfig.color, 0.12),
+                color: phaseConfig.color,
               }}
             />
-          ) : (
-            <Box
-              sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer' }}
-              onClick={() => { setEditValue(project.title); setIsEditing(true); }}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  color: '#FFFFFF',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: 220,
-                }}
-              >
-                {project.title}
-              </Typography>
-              <EditIcon sx={{ fontSize: 14, color: alpha('#FFFFFF', 0.3) }} />
-            </Box>
-          )}
+          </Box>
           {project.bdevCode && (
             <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.4) }}>
               {project.bdevCode}
+              {project.mvp && ` · ${project.mvp}`}
             </Typography>
           )}
         </Box>
@@ -580,9 +651,31 @@ const PipelineView = ({
       </IconButton>
     </Box>
 
+    {/* Phase 2 CLI notice */}
+    {isPhase2 && (
+      <Box
+        sx={{
+          mx: 2,
+          mt: 1.5,
+          p: 1.5,
+          borderRadius: 1.5,
+          bgcolor: alpha('#7C3AED', 0.08),
+          border: `1px solid ${alpha('#7C3AED', 0.2)}`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <TerminalIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
+        <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.6) }}>
+          Agentes Fase 2 correm via Claude Code CLI
+        </Typography>
+      </Box>
+    )}
+
     {/* Agent pipeline */}
     <Box sx={{ flex: 1, overflow: 'auto', py: 1 }}>
-      {PIPELINE_AGENTS.map((agentId, index) => {
+      {pipelineAgents.map((agentId, index) => {
         const iteration = project.agents[agentId] || {
           agentId,
           status: 'not_started' as const,
@@ -593,121 +686,200 @@ const PipelineView = ({
         const msgCount = iteration.messages.filter(
           (m) => m.role === 'user' || m.role === 'assistant',
         ).length;
-        const isLast = index === PIPELINE_AGENTS.length - 1;
+        const isLast = index === pipelineAgents.length - 1;
+        const isCLIAgent = PHASE2_AGENT_IDS.has(agentId);
+
+        // Show FDE+BDE side by side if both present consecutively
+        const nextAgentId = index < pipelineAgents.length - 1 ? pipelineAgents[index + 1] : null;
+        const isParallelStart = agentId === 'fde' && nextAgentId === 'bde';
+        const isParallelEnd = agentId === 'bde' && index > 0 && pipelineAgents[index - 1] === 'fde';
+
+        // Skip BDE in main loop — it's rendered inside FDE's parallel block
+        if (isParallelEnd) return null;
 
         return (
           <Box key={agentId}>
-            <Box sx={{ px: 2.5, py: 2 }}>
-              {/* Agent header */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                {getStatusIcon(iteration.status)}
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 1,
-                    bgcolor: alpha(agentColor, 0.15),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    color: agentColor,
-                    flexShrink: 0,
-                  }}
+            {isParallelStart ? (
+              /* Parallel FDE + BDE block */
+              <Box sx={{ px: 2.5, py: 1 }}>
+                <Typography
+                  variant="overline"
+                  sx={{ color: alpha('#FFFFFF', 0.3), fontSize: '0.6rem', mb: 0.5, display: 'block' }}
                 >
-                  {agent?.sigla || agentId.toUpperCase()}
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 600, color: '#FFFFFF', fontSize: '0.85rem' }}
-                  >
-                    {agent?.nome || agentId}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.4) }}>
-                    {getStatusLabel(iteration.status, msgCount)}
-                  </Typography>
+                  Paralelo
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1.5 }}>
+                  {/* FDE */}
+                  <ParallelAgentCard
+                    agentId={agentId}
+                    project={project}
+                    onAgentAction={onAgentAction}
+                    isCLIAgent={isCLIAgent}
+                  />
+                  {/* BDE */}
+                  <ParallelAgentCard
+                    agentId="bde"
+                    project={project}
+                    onAgentAction={onAgentAction}
+                    isCLIAgent={true}
+                  />
                 </Box>
               </Box>
+            ) : (
+              /* Normal agent row */
+              <Box sx={{ px: 2.5, py: 2 }}>
+                {/* Agent header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                  {getStatusIcon(iteration.status)}
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1,
+                      bgcolor: alpha(agentColor, 0.15),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      color: agentColor,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {agent?.sigla || agentId.toUpperCase()}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600, color: '#FFFFFF', fontSize: '0.85rem' }}
+                    >
+                      {agent?.nome || agentId}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.4) }}>
+                      {getStatusLabel(iteration.status, msgCount)}
+                    </Typography>
+                  </Box>
+                  {/* Model badge */}
+                  {agent?.aiRecomendado?.cor && (
+                    <ModelBadge color={agent.aiRecomendado.cor} modelo={agent.aiRecomendado.modelo} />
+                  )}
+                </Box>
 
-              {/* Action buttons */}
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', ml: 6.5 }}>
-                {iteration.status === 'completed' && (
-                  <>
+                {/* Action buttons */}
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', ml: 6.5 }}>
+                  {iteration.status === 'completed' && (
+                    <>
+                      {!isCLIAgent && (
+                        <ActionButton
+                          label="Ver conversa"
+                          icon={<ChatIcon sx={{ fontSize: 14 }} />}
+                          onClick={() =>
+                            onAgentAction({
+                              type: 'view',
+                              projectId: project.id,
+                              agentId,
+                            })
+                          }
+                        />
+                      )}
+                      {isCLIAgent && (
+                        <ActionButton
+                          label="Via CLI"
+                          icon={<TerminalIcon sx={{ fontSize: 14 }} />}
+                          color="#7C3AED"
+                          onClick={() => {}}
+                        />
+                      )}
+                      {/* PA-specific actions */}
+                      {agentId === 'pa' && project.bdevCode && (
+                        <>
+                          <ActionButton
+                            label="Lançar"
+                            icon={<RocketIcon sx={{ fontSize: 14 }} />}
+                            color="#4CAF50"
+                            onClick={() =>
+                              onAgentAction({
+                                type: 'launch-prototype',
+                                projectId: project.id,
+                                bdevCode: project.bdevCode!,
+                              })
+                            }
+                          />
+                          <ActionButton
+                            label="Exportar"
+                            icon={<DownloadIcon sx={{ fontSize: 14 }} />}
+                            onClick={() =>
+                              onAgentAction({
+                                type: 'export-prototype',
+                                projectId: project.id,
+                                bdevCode: project.bdevCode!,
+                              })
+                            }
+                          />
+                        </>
+                      )}
+                    </>
+                  )}
+                  {iteration.status === 'in_progress' && !isCLIAgent && (
                     <ActionButton
-                      label="Ver conversa"
+                      label="Continuar"
                       icon={<ChatIcon sx={{ fontSize: 14 }} />}
+                      color="#FF9800"
                       onClick={() =>
                         onAgentAction({
-                          type: 'view',
+                          type: 'continue',
                           projectId: project.id,
                           agentId,
                         })
                       }
                     />
-                    {/* PA-specific actions */}
-                    {agentId === 'pa' && project.bdevCode && (
-                      <>
-                        <ActionButton
-                          label="Lançar"
-                          icon={<RocketIcon sx={{ fontSize: 14 }} />}
-                          color="#4CAF50"
-                          onClick={() =>
-                            onAgentAction({
-                              type: 'launch-prototype',
-                              projectId: project.id,
-                              bdevCode: project.bdevCode!,
-                            })
-                          }
-                        />
-                        <ActionButton
-                          label="Exportar"
-                          icon={<DownloadIcon sx={{ fontSize: 14 }} />}
-                          onClick={() =>
-                            onAgentAction({
-                              type: 'export-prototype',
-                              projectId: project.id,
-                              bdevCode: project.bdevCode!,
-                            })
-                          }
-                        />
-                      </>
-                    )}
-                  </>
-                )}
-                {iteration.status === 'in_progress' && (
-                  <ActionButton
-                    label="Continuar"
-                    icon={<ChatIcon sx={{ fontSize: 14 }} />}
-                    color="#FF9800"
-                    onClick={() =>
-                      onAgentAction({
-                        type: 'continue',
-                        projectId: project.id,
-                        agentId,
-                      })
-                    }
-                  />
-                )}
-                {iteration.status === 'not_started' && (
-                  <ActionButton
-                    label="Iniciar"
-                    icon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
-                    onClick={() =>
-                      onAgentAction({
-                        type: 'start',
-                        projectId: project.id,
-                        agentId,
-                      })
-                    }
-                  />
-                )}
+                  )}
+                  {iteration.status === 'in_progress' && isCLIAgent && (
+                    <ActionButton
+                      label="Em execução (CLI)"
+                      icon={<TerminalIcon sx={{ fontSize: 14 }} />}
+                      color="#FF9800"
+                      onClick={() => {}}
+                    />
+                  )}
+                  {iteration.status === 'not_started' && !isCLIAgent && (
+                    <ActionButton
+                      label="Iniciar"
+                      icon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                      onClick={() =>
+                        onAgentAction({
+                          type: 'start',
+                          projectId: project.id,
+                          agentId,
+                        })
+                      }
+                    />
+                  )}
+                  {iteration.status === 'not_started' && isCLIAgent && (
+                    <ActionButton
+                      label="Iniciar via CLI"
+                      icon={<TerminalIcon sx={{ fontSize: 14 }} />}
+                      color={alpha('#FFFFFF', 0.5)}
+                      onClick={() => {}}
+                    />
+                  )}
+                </Box>
               </Box>
-            </Box>
+            )}
 
             {/* Connector line between agents */}
-            {!isLast && (
+            {!isLast && !isParallelStart && (
+              <Box
+                sx={{
+                  ml: 3.6,
+                  height: 16,
+                  width: 2,
+                  bgcolor: alpha('#FFFFFF', 0.08),
+                  borderRadius: 1,
+                }}
+              />
+            )}
+            {isParallelStart && !isLast && (
               <Box
                 sx={{
                   ml: 3.6,
@@ -723,6 +895,113 @@ const PipelineView = ({
       })}
     </Box>
   </>
+  );
+};
+
+/* ========================================
+   Parallel Agent Card (FDE/BDE side-by-side)
+   ======================================== */
+
+interface ParallelAgentCardProps {
+  agentId: string;
+  project: Project;
+  onAgentAction: (action: ProjectAgentAction) => void;
+  isCLIAgent: boolean;
+}
+
+const ParallelAgentCard = ({
+  agentId,
+  project,
+  isCLIAgent,
+}: ParallelAgentCardProps) => {
+  const iteration = project.agents[agentId] || {
+    agentId,
+    status: 'not_started' as const,
+    messages: [],
+  };
+  const agent = getAgentById(agentId);
+  const agentColor = getAgentColor(agentId);
+
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        p: 1.5,
+        borderRadius: 1.5,
+        border: `1px solid ${alpha(agentColor, 0.2)}`,
+        bgcolor: alpha(agentColor, 0.04),
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+        {getStatusIcon(iteration.status)}
+        <Box
+          sx={{
+            width: 24,
+            height: 24,
+            borderRadius: 0.75,
+            bgcolor: alpha(agentColor, 0.15),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.6rem',
+            fontWeight: 700,
+            color: agentColor,
+          }}
+        >
+          {agent?.sigla || agentId.toUpperCase()}
+        </Box>
+        <Typography variant="caption" sx={{ color: '#FFFFFF', fontWeight: 600, fontSize: '0.7rem' }}>
+          {agent?.nome || agentId}
+        </Typography>
+      </Box>
+      {isCLIAgent && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 4.5 }}>
+          <TerminalIcon sx={{ fontSize: 10, color: alpha('#FFFFFF', 0.3) }} />
+          <Typography variant="caption" sx={{ color: alpha('#FFFFFF', 0.3), fontSize: '0.6rem' }}>
+            Via CLI
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+/* ========================================
+   Model Badge (Opus/Sonnet/Haiku indicator)
+   ======================================== */
+
+interface ModelBadgeProps {
+  color: string;
+  modelo: string;
+}
+
+const ModelBadge = ({ color, modelo }: ModelBadgeProps) => {
+  // Extract first letter of model tier (O/S/H)
+  let letter = '?';
+  if (modelo.includes('Opus')) letter = 'O';
+  else if (modelo.includes('Sonnet')) letter = 'S';
+  else if (modelo.includes('Haiku')) letter = 'H';
+
+  return (
+    <Tooltip title={modelo} placement="left">
+      <Box
+        sx={{
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          bgcolor: alpha(color, 0.15),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '0.6rem',
+          fontWeight: 700,
+          color,
+          flexShrink: 0,
+        }}
+      >
+        {letter}
+      </Box>
+    </Tooltip>
   );
 };
 

@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 876" width="1280" height="876" font-family="Arial, Helvetica, sans-serif">
+  
+  <defs>
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/><stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/><stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/><stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9C27B0"/><stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/><stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="876" fill="url(#bgGrad)"/>
+
+  <!-- Title -->
+  <rect x="0" y="0" width="1280" height="72" fill="#263238" opacity="0.95"/>
+  <text x="640" y="32" text-anchor="middle" fill="#FFF" font-size="20" font-weight="700">BDEV00000014 &#8212; Alterações de Arquitectura</text>
+  <text x="640" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12">O que este BDEV introduz &#8212; Interface Contract v2.1 &#8212; 2026-02-12</text>
+  <rect x="460" y="62" width="360" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  
+  <!-- Core -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="100" width="380" height="336" rx="10" fill="#FFF" stroke="#A5D6A7" stroke-width="1"/>
+    <rect x="40" y="100" width="380" height="42" rx="10" fill="url(#gradGreen)"/>
+    <rect x="40" y="130" width="380" height="12" fill="url(#gradGreen)"/>
+    <text x="60" y="128" fill="#FFF" font-size="16">&#9881;</text>
+    <text x="82" y="127" fill="#FFF" font-size="14" font-weight="700">Core</text>
+    <rect x="330" y="110" width="78" height="18" rx="9" fill="#FFF" opacity="0.25"/>
+    <text x="369" y="123" text-anchor="middle" fill="#FFF" font-size="9" font-weight="600">:4001</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="52" y="155" width="356" height="55" rx="6" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.6"/>
+    <text x="64" y="172" fill="#2E7D32" font-size="10" font-weight="700">Impacto deste BDEV</text>
+    <text x="64" y="188" fill="#37474F" font-size="9">0 APIs | 0 microserviços | 0 páginas | 5 eventos</text>
+    <text x="64" y="202" fill="#546E7A" font-size="8" font-style="italic">13 tarefas de implementação</text>
+  </g>
+  
+  <text x="54" y="236" fill="#455A64" font-size="9" font-weight="600">Tarefas:</text>
+  <text x="60" y="250" fill="#546E7A" font-size="8">&#9654; Criar tabela term_deposits com schema completo (id</text>
+    <text x="60" y="266" fill="#546E7A" font-size="8">&#9654; Implementar API GET /api/v1/term-deposits/product-</text>
+    <text x="60" y="282" fill="#546E7A" font-size="8">&#9654; Implementar API POST /api/v1/term-deposits/simulat</text>
+    <text x="60" y="298" fill="#546E7A" font-size="8">&#9654; Implementar API GET /api/v1/term-deposits/eligibil</text>
+  <rect x="330" y="308" width="78" height="18" rx="9" fill="#FFEBEE" stroke="#EF9A9A" stroke-width="0.6"/>
+         <text x="369" y="320" text-anchor="middle" fill="#C62828" font-size="8" font-weight="600">3 lacunas</text>
+
+  <!-- Middleware -->
+  <g filter="url(#shadow)">
+    <rect x="440" y="100" width="380" height="336" rx="10" fill="#FFF" stroke="#FFCC80" stroke-width="1"/>
+    <rect x="440" y="100" width="380" height="42" rx="10" fill="url(#gradOrange)"/>
+    <rect x="440" y="130" width="380" height="12" fill="url(#gradOrange)"/>
+    <text x="460" y="128" fill="#FFF" font-size="16">&#128274;</text>
+    <text x="482" y="127" fill="#FFF" font-size="14" font-weight="700">Middleware</text>
+    <rect x="730" y="110" width="78" height="18" rx="9" fill="#FFF" opacity="0.25"/>
+    <text x="769" y="123" text-anchor="middle" fill="#FFF" font-size="9" font-weight="600">:4010</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="452" y="155" width="356" height="55" rx="6" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.6"/>
+    <text x="464" y="172" fill="#E65100" font-size="10" font-weight="700">Impacto deste BDEV</text>
+    <text x="464" y="188" fill="#37474F" font-size="9">0 APIs | 0 microserviços | 0 páginas | 0 eventos</text>
+    <text x="464" y="202" fill="#546E7A" font-size="8" font-style="italic">5 tarefas de implementação</text>
+  </g>
+  
+  <text x="454" y="236" fill="#455A64" font-size="9" font-weight="600">Tarefas:</text>
+  <text x="460" y="250" fill="#546E7A" font-size="8">&#9654; Configurar proxy routes /api/v1/term-deposits/* → </text>
+    <text x="460" y="266" fill="#546E7A" font-size="8">&#9654; Adicionar validação JWT em todos os endpoints de t</text>
+    <text x="460" y="282" fill="#546E7A" font-size="8">&#9654; Configurar rate-limiting (100 req/min por clientId</text>
+    <text x="460" y="298" fill="#546E7A" font-size="8">&#9654; Adicionar logging de todas as requests para audito</text>
+  <rect x="730" y="308" width="78" height="18" rx="9" fill="#FFEBEE" stroke="#EF9A9A" stroke-width="0.6"/>
+         <text x="769" y="320" text-anchor="middle" fill="#C62828" font-size="8" font-weight="600">2 lacunas</text>
+
+  <!-- Digital Channels -->
+  <g filter="url(#shadow)">
+    <rect x="840" y="100" width="380" height="336" rx="10" fill="#FFF" stroke="#90CAF9" stroke-width="1"/>
+    <rect x="840" y="100" width="380" height="42" rx="10" fill="url(#gradBlue)"/>
+    <rect x="840" y="130" width="380" height="12" fill="url(#gradBlue)"/>
+    <text x="860" y="128" fill="#FFF" font-size="16">&#128187;</text>
+    <text x="882" y="127" fill="#FFF" font-size="14" font-weight="700">Digital Channels</text>
+    <rect x="1130" y="110" width="78" height="18" rx="9" fill="#FFF" opacity="0.25"/>
+    <text x="1169" y="123" text-anchor="middle" fill="#FFF" font-size="9" font-weight="600">:5173 / :4020</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="852" y="155" width="356" height="55" rx="6" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.6"/>
+    <text x="864" y="172" fill="#1565C0" font-size="10" font-weight="700">Impacto deste BDEV</text>
+    <text x="864" y="188" fill="#37474F" font-size="9">0 APIs | 1 microserviços | 4 páginas | 0 eventos</text>
+    <text x="864" y="202" fill="#546E7A" font-size="8" font-style="italic">11 tarefas de implementação</text>
+  </g>
+  
+  <text x="854" y="236" fill="#455A64" font-size="9" font-weight="600">Tarefas:</text>
+  <text x="860" y="250" fill="#546E7A" font-size="8">&#9654; Criar microserviço BFF term-deposits-bff (Node.js/</text>
+    <text x="860" y="266" fill="#546E7A" font-size="8">&#9654; Criar página TermDepositsPage (/term-deposits) com</text>
+    <text x="860" y="282" fill="#546E7A" font-size="8">&#9654; Criar página CreateTermDepositPage (/term-deposits</text>
+    <text x="860" y="298" fill="#546E7A" font-size="8">&#9654; Criar página TermDepositDetailPage (/term-deposits</text>
+  <rect x="1130" y="308" width="78" height="18" rx="9" fill="#FFEBEE" stroke="#EF9A9A" stroke-width="0.6"/>
+         <text x="1169" y="320" text-anchor="middle" fill="#C62828" font-size="8" font-weight="600">4 lacunas</text>
+  <line x1="420" y1="268" x2="440" y2="268" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+  <line x1="820" y1="268" x2="840" y2="268" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+  
+  <g filter="url(#shadow)">
+    <rect x="40" y="476" width="1200" height="140" rx="10" fill="#FFF" stroke="#CE93D8" stroke-width="1" stroke-dasharray="6 3"/>
+    <text x="60" y="500" fill="#6A1B9A" font-size="12" font-weight="700">&#9889; Novos Eventos Socket.IO</text>
+    
+    <rect x="60" y="514" width="1160" height="15" rx="3" fill="#F3E5F5"/>
+    <text x="70" y="526" fill="#37474F" font-size="9"><tspan fill="#6A1B9A" font-weight="700">termDeposit.created</tspan>  core &#8594; digitalChannels</text>
+    <rect x="1130" y="515" width="42" height="13" rx="6" fill="#E8F5E9" stroke="#66BB6A" stroke-width="0.5"/>
+    <text x="1151" y="525" text-anchor="middle" fill="#2E7D32" font-size="7" font-weight="700">NOVO</text>
+    <rect x="60" y="532" width="1160" height="15" rx="3" fill="#F3E5F5"/>
+    <text x="70" y="544" fill="#37474F" font-size="9"><tspan fill="#6A1B9A" font-weight="700">termDeposit.reinforced</tspan>  core &#8594; digitalChannels</text>
+    <rect x="1130" y="533" width="42" height="13" rx="6" fill="#E8F5E9" stroke="#66BB6A" stroke-width="0.5"/>
+    <text x="1151" y="543" text-anchor="middle" fill="#2E7D32" font-size="7" font-weight="700">NOVO</text>
+    <rect x="60" y="550" width="1160" height="15" rx="3" fill="#F3E5F5"/>
+    <text x="70" y="562" fill="#37474F" font-size="9"><tspan fill="#6A1B9A" font-weight="700">termDeposit.redeemed</tspan>  core &#8594; digitalChannels</text>
+    <rect x="1130" y="551" width="42" height="13" rx="6" fill="#E8F5E9" stroke="#66BB6A" stroke-width="0.5"/>
+    <text x="1151" y="561" text-anchor="middle" fill="#2E7D32" font-size="7" font-weight="700">NOVO</text>
+    <rect x="60" y="568" width="1160" height="15" rx="3" fill="#F3E5F5"/>
+    <text x="70" y="580" fill="#37474F" font-size="9"><tspan fill="#6A1B9A" font-weight="700">termDeposit.renewed</tspan>  core &#8594; digitalChannels</text>
+    <rect x="1130" y="569" width="42" height="13" rx="6" fill="#E8F5E9" stroke="#66BB6A" stroke-width="0.5"/>
+    <text x="1151" y="579" text-anchor="middle" fill="#2E7D32" font-size="7" font-weight="700">NOVO</text>
+    <rect x="60" y="586" width="1160" height="15" rx="3" fill="#F3E5F5"/>
+    <text x="70" y="598" fill="#37474F" font-size="9"><tspan fill="#6A1B9A" font-weight="700">termDeposit.matured</tspan>  core &#8594; digitalChannels</text>
+    <rect x="1130" y="587" width="42" height="13" rx="6" fill="#E8F5E9" stroke="#66BB6A" stroke-width="0.5"/>
+    <text x="1151" y="597" text-anchor="middle" fill="#2E7D32" font-size="7" font-weight="700">NOVO</text>
+  </g>
+  
+  <g filter="url(#shadowLight)">
+    <rect x="40" y="646" width="1200" height="80" rx="10" fill="#FFF" stroke="#CFD8DC" stroke-width="1"/>
+    <text x="60" y="674" fill="#37474F" font-size="12" font-weight="700">Resumo do BDEV</text>
+    <text x="60" y="696" fill="#37474F" font-size="10">3 sistemas impactados &#8226; 9 APIs novas &#8226; 5 eventos novos &#8226; 29 tarefas de implementação &#8226; 9 lacunas identificadas</text>
+    <text x="60" y="714" fill="#78909C" font-size="9" font-style="italic">Estratégia: HYBRID | 4 páginas | 1 microserviços</text>
+  </g>
+  
+  <g filter="url(#shadowLight)">
+    <rect x="40" y="756" width="1200" height="100" rx="10" fill="#FFF" stroke="#CFD8DC" stroke-width="1"/>
+    <text x="640" y="776" text-anchor="middle" fill="#37474F" font-size="10" font-weight="700">LEGENDA</text>
+    <rect x="70" y="788" width="14" height="14" rx="3" fill="url(#gradBlue)"/>
+    <text x="92" y="799" fill="#37474F" font-size="9">Digital Channels</text>
+    <rect x="240" y="788" width="14" height="14" rx="3" fill="url(#gradOrange)"/>
+    <text x="262" y="799" fill="#37474F" font-size="9">Middleware</text>
+    <rect x="380" y="788" width="14" height="14" rx="3" fill="url(#gradGreen)"/>
+    <text x="402" y="799" fill="#37474F" font-size="9">Core</text>
+    <rect x="500" y="788" width="42" height="14" rx="7" fill="#E8F5E9" stroke="#66BB6A" stroke-width="0.6"/>
+    <text x="521" y="799" text-anchor="middle" fill="#2E7D32" font-size="7" font-weight="700">NOVO</text>
+    <text x="550" y="799" fill="#37474F" font-size="9">API / Evento novo</text>
+    <line x1="70" y1="818" x2="120" y2="818" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+    <text x="130" y="822" fill="#37474F" font-size="9">Fluxo REST</text>
+    <line x1="240" y1="818" x2="290" y2="818" stroke="#7B1FA2" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowSocket)"/>
+    <text x="300" y="822" fill="#37474F" font-size="9">Socket.IO</text>
+    <text x="640" y="844" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; TAA &#8212; 2026-02-12</text>
+  </g>
+</svg>

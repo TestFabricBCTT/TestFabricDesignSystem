@@ -62,6 +62,16 @@ export {
 // MUI styled/alpha utilities
 export { alpha, styled } from '@mui/material/styles';
 
+// MUI Data Display (Tables)
+export {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+} from '@mui/material';
+
 // MUI UI Components (re-exported until DSLA creates proper BCTT wrappers)
 export {
   AppBar,

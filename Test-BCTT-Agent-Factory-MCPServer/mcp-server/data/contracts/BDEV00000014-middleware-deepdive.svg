@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 620" width="1400" height="620" font-family="Arial, Helvetica, sans-serif">
+  
+  <defs>
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/><stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/><stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/><stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9C27B0"/><stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/><stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="620" fill="url(#bgGrad)"/>
+
+  <!-- Title -->
+  <rect x="0" y="0" width="1400" height="72" fill="#263238" opacity="0.95"/>
+  <text x="700" y="32" text-anchor="middle" fill="#FFF" font-size="20" font-weight="700">BDEV00000014 &#8212; Middleware Deep Dive</text>
+  <text x="700" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12">Análise detalhada &#8212; 2026-02-12</text>
+  <rect x="520" y="62" width="360" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  
+  
+  
+  
+  
+  <!-- Implementation Tasks -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="200" width="1320" height="140" rx="10" fill="#FFF" stroke="#B0BEC5" stroke-width="1"/>
+    <text x="60" y="224" fill="#37474F" font-size="13" font-weight="700">&#9776; Tarefas de Implementação (5)</text>
+    <text x="80" y="250" fill="#37474F" font-size="10">&#9654; Configurar proxy routes /api/v1/term-deposits/* → Core (port 8080) <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="268" fill="#37474F" font-size="10">&#9654; Adicionar validação JWT em todos os endpoints de term-deposits <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="286" fill="#37474F" font-size="10">&#9654; Configurar rate-limiting (100 req/min por clientId) <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="304" fill="#37474F" font-size="10">&#9654; Adicionar logging de todas as requests para auditoria <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  <text x="80" y="322" fill="#37474F" font-size="10">&#9654; Implementar circuit breaker para chamadas a Core <tspan fill="#78909C" font-size="8">(BCTT-394)</tspan></text>
+  </g>
+  
+  <!-- Strategy + Gaps -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="360" width="1320" height="220" rx="10" fill="#FFF" stroke="#CFD8DC" stroke-width="1"/>
+    <text x="60" y="384" fill="#37474F" font-size="13" font-weight="700">&#128260; Análise</text>
+    
+    <text x="80" y="420" fill="#37474F" font-size="10">Middleware actua como API Gateway: proxy de todas as rotas /api/v1/term-deposits/* para Core, com autenticação JWT e rate-limiting (100 req/min por cliente). Não adiciona lógica de negócio.</text>
+    <text x="80" y="460" fill="#C62828" font-size="9">&#9888; Falta política de retry para chamadas a Core (se Core falhar temporariamente)</text>
+  <text x="80" y="476" fill="#C62828" font-size="9">&#9888; Falta circuit breaker para proteger Core de sobrecarga</text>
+    <text x="80" y="512" fill="#1565C0" font-size="9">&#128161; Adicionar circuit breaker (pattern) para chamadas a Core (ex: Hystrix, Resilience4j)</text>
+  <text x="80" y="528" fill="#1565C0" font-size="9">&#128161; Adicionar cache de product-info no Middleware (Redis, TTL 1h) para reduzir load no Core</text>
+  <text x="80" y="544" fill="#1565C0" font-size="9">&#128161; Adicionar metrics (Prometheus) para monitorizar latência e taxa de erro</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="700" y="610" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; TAA Deep Dive &#8212; 2026-02-12</text>
+</svg>

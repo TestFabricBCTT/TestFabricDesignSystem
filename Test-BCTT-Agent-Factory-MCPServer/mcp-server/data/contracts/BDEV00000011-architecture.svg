@@ -1,0 +1,464 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" width="1200" height="880" font-family="Arial, Helvetica, sans-serif">
+
+  <!-- ========== DEFINITIONS ========== -->
+  <defs>
+    <!-- Gradients for system boxes -->
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/>
+      <stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/>
+      <stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/>
+      <stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/>
+      <stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/>
+      <stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+
+    <!-- Drop shadow filter -->
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+
+    <!-- Arrowhead markers -->
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+    <marker id="arrowGrey" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#90A4AE"/>
+    </marker>
+  </defs>
+
+  <!-- ========== BACKGROUND ========== -->
+  <rect width="1200" height="880" rx="0" fill="url(#bgGrad)"/>
+  <!-- Subtle grid pattern -->
+  <g opacity="0.03">
+    <line x1="0" y1="0" x2="0" y2="880" stroke="#000" stroke-width="1" id="vl"/>
+    <line x1="50" y1="0" x2="50" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="100" y1="0" x2="100" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="150" y1="0" x2="150" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="200" y1="0" x2="200" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="250" y1="0" x2="250" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="300" y1="0" x2="300" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="350" y1="0" x2="350" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="400" y1="0" x2="400" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="450" y1="0" x2="450" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="500" y1="0" x2="500" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="550" y1="0" x2="550" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="600" y1="0" x2="600" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="650" y1="0" x2="650" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="700" y1="0" x2="700" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="750" y1="0" x2="750" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="800" y1="0" x2="800" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="850" y1="0" x2="850" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="900" y1="0" x2="900" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="950" y1="0" x2="950" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="1000" y1="0" x2="1000" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="1050" y1="0" x2="1050" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="1100" y1="0" x2="1100" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="1150" y1="0" x2="1150" y2="880" stroke="#000" stroke-width="0.5"/>
+    <line x1="1200" y1="0" x2="1200" y2="880" stroke="#000" stroke-width="0.5"/>
+  </g>
+
+  <!-- ========== TITLE AREA ========== -->
+  <rect x="0" y="0" width="1200" height="72" fill="#263238" opacity="0.95"/>
+  <text x="600" y="32" text-anchor="middle" fill="#FFFFFF" font-size="20" font-weight="700" letter-spacing="0.5">BDEV00000011 &#8212; Arquitectura do Ecossistema</text>
+  <text x="600" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12" font-weight="400" letter-spacing="0.3">Interface Contract &#8212; Gerado em 2026-02-11</text>
+  <!-- Decorative accent line -->
+  <rect x="420" y="62" width="360" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  <!-- ====================================================================== -->
+  <!-- DIGITAL CHANNELS (Blue) — Left Column                                  -->
+  <!-- ====================================================================== -->
+  <g filter="url(#shadow)">
+    <!-- Box outline -->
+    <rect x="40" y="100" width="310" height="530" rx="10" fill="#FFFFFF" stroke="#BBDEFB" stroke-width="1"/>
+    <!-- Header bar -->
+    <rect x="40" y="100" width="310" height="42" rx="10" fill="url(#gradBlue)"/>
+    <rect x="40" y="130" width="310" height="12" fill="url(#gradBlue)"/>
+    <!-- Icon -->
+    <text x="60" y="128" fill="#FFFFFF" font-size="16">&#128187;</text>
+    <text x="82" y="127" fill="#FFFFFF" font-size="14" font-weight="700">Digital Channels</text>
+    <!-- System tag -->
+    <rect x="270" y="110" width="68" height="20" rx="4" fill="#FFFFFF" opacity="0.25"/>
+    <text x="304" y="124" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="600">FRONTEND</text>
+  </g>
+
+  <!-- Frontend sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="58" y="155" width="274" height="130" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="58" y="155" width="274" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="58" y="175" width="274" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="72" y="174" fill="#1565C0" font-size="11" font-weight="700">Frontend &#8212; React + Vite</text>
+    <!-- Port badge -->
+    <rect x="268" y="159" width="52" height="18" rx="9" fill="#1976D2"/>
+    <text x="294" y="172" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">:5173</text>
+    <!-- Content -->
+    <text x="72" y="200" fill="#37474F" font-size="10">&#9654; @bctt/design-system</text>
+    <text x="72" y="216" fill="#37474F" font-size="10">&#9654; LoginPage (autenticacao)</text>
+    <text x="72" y="232" fill="#37474F" font-size="10">&#9654; LandingPage (dashboard)</text>
+    <text x="72" y="248" fill="#546E7A" font-size="9" font-style="italic">React Router + Axios + Socket.IO Client</text>
+    <!-- Tech pills -->
+    <rect x="72" y="258" width="42" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="93" y="270" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">React</text>
+    <rect x="120" y="258" width="32" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="136" y="270" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Vite</text>
+    <rect x="158" y="258" width="60" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="188" y="270" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Socket.IO</text>
+  </g>
+
+  <!-- BFF sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="58" y="300" width="274" height="130" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="58" y="300" width="274" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="58" y="320" width="274" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="72" y="319" fill="#1565C0" font-size="11" font-weight="700">BFF &#8212; Backend for Frontend</text>
+    <!-- Port badge -->
+    <rect x="268" y="304" width="52" height="18" rx="9" fill="#1976D2"/>
+    <text x="294" y="317" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">:4020</text>
+    <!-- Content -->
+    <text x="72" y="345" fill="#37474F" font-size="10">&#9654; Express.js microservice</text>
+    <text x="72" y="361" fill="#37474F" font-size="10">&#9654; Auth proxy (login/logout)</text>
+    <text x="72" y="377" fill="#37474F" font-size="10">&#9654; Accounts + Movements proxy</text>
+    <text x="72" y="393" fill="#37474F" font-size="10">&#9654; Transfers orchestration</text>
+    <text x="72" y="409" fill="#546E7A" font-size="9" font-style="italic">Axios + express-http-proxy</text>
+    <!-- Tech pills -->
+    <rect x="72" y="418" width="50" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="97" y="430" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Express</text>
+    <rect x="128" y="418" width="40" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="148" y="430" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">Axios</text>
+  </g>
+
+  <!-- Internal arrow Frontend → BFF -->
+  <line x1="195" y1="285" x2="195" y2="300" stroke="#1565C0" stroke-width="1.5" marker-end="url(#arrowRest)" opacity="0.5"/>
+  <rect x="136" y="285" width="72" height="14" rx="3" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.5"/>
+  <text x="172" y="295" text-anchor="middle" fill="#1565C0" font-size="8" font-weight="600">/api/* proxy</text>
+
+  <!-- Socket.IO label area in Digital Channels -->
+  <g>
+    <rect x="58" y="450" width="274" height="48" rx="8" fill="#F3E5F5" stroke="#CE93D8" stroke-width="0.8" stroke-dasharray="4 2"/>
+    <text x="72" y="470" fill="#6A1B9A" font-size="10" font-weight="600">&#9889; Socket.IO Client (real-time)</text>
+    <text x="72" y="486" fill="#7B1FA2" font-size="9">Listens: movement.created, balance.updated</text>
+  </g>
+
+  <!-- ====================================================================== -->
+  <!-- MIDDLEWARE (Orange) — Center Column                                     -->
+  <!-- ====================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="445" y="100" width="310" height="340" rx="10" fill="#FFFFFF" stroke="#FFE0B2" stroke-width="1"/>
+    <rect x="445" y="100" width="310" height="42" rx="10" fill="url(#gradOrange)"/>
+    <rect x="445" y="130" width="310" height="12" fill="url(#gradOrange)"/>
+    <text x="465" y="128" fill="#FFFFFF" font-size="16">&#128274;</text>
+    <text x="487" y="127" fill="#FFFFFF" font-size="14" font-weight="700">Middleware</text>
+    <rect x="668" y="110" width="75" height="20" rx="4" fill="#FFFFFF" opacity="0.25"/>
+    <text x="706" y="124" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="600">GATEWAY</text>
+  </g>
+
+  <!-- API Gateway sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="463" y="155" width="274" height="115" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.8"/>
+    <rect x="463" y="155" width="274" height="28" rx="8" fill="#FF9800" opacity="0.12"/>
+    <rect x="463" y="175" width="274" height="8" fill="#FF9800" opacity="0.12"/>
+    <text x="477" y="174" fill="#E65100" font-size="11" font-weight="700">API Gateway &#8212; Express</text>
+    <rect x="673" y="159" width="52" height="18" rx="9" fill="#F57C00"/>
+    <text x="699" y="172" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">:4010</text>
+    <text x="477" y="200" fill="#37474F" font-size="10">&#9654; JWT Authentication (verify)</text>
+    <text x="477" y="216" fill="#37474F" font-size="10">&#9654; Rate Limiting (express-rate-limit)</text>
+    <text x="477" y="232" fill="#37474F" font-size="10">&#9654; http-proxy-middleware &#8594; Core</text>
+    <text x="477" y="248" fill="#546E7A" font-size="9" font-style="italic">Path rewrite: /api/v1/* &#8594; /api/*</text>
+    <!-- Tech pills -->
+    <rect x="477" y="255" width="50" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="502" y="267" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">Express</text>
+    <rect x="533" y="255" width="32" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="549" y="267" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">JWT</text>
+    <rect x="571" y="255" width="42" height="16" rx="8" fill="#FFE0B2"/>
+    <text x="592" y="267" text-anchor="middle" fill="#E65100" font-size="8" font-weight="600">Proxy</text>
+  </g>
+
+  <!-- Middleware Routes sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="463" y="285" width="274" height="140" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.8"/>
+    <rect x="463" y="285" width="274" height="24" rx="8" fill="#FF9800" opacity="0.08"/>
+    <rect x="463" y="301" width="274" height="8" fill="#FF9800" opacity="0.08"/>
+    <text x="477" y="302" fill="#E65100" font-size="10" font-weight="700">Exposed Routes (validated)</text>
+    <!-- Route items -->
+    <rect x="477" y="314" width="246" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="485" y="327" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="517" y="327" fill="#37474F" font-size="9">/api/v1/auth/login</text>
+
+    <rect x="477" y="336" width="246" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="485" y="349" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="510" y="349" fill="#37474F" font-size="9">/api/v1/accounts</text>
+
+    <rect x="477" y="358" width="246" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="485" y="371" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="510" y="371" fill="#37474F" font-size="9">/api/v1/movements</text>
+
+    <rect x="477" y="380" width="246" height="18" rx="4" fill="#FFF8E1"/>
+    <text x="485" y="393" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="517" y="393" fill="#37474F" font-size="9">/api/v1/transfers</text>
+
+    <text x="477" y="414" fill="#78909C" font-size="8" font-style="italic">Todas as rotas requerem Bearer token (exceto login)</text>
+  </g>
+
+  <!-- ====================================================================== -->
+  <!-- CORE (Green) — Right Column                                             -->
+  <!-- ====================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="850" y="100" width="310" height="530" rx="10" fill="#FFFFFF" stroke="#C8E6C9" stroke-width="1"/>
+    <rect x="850" y="100" width="310" height="42" rx="10" fill="url(#gradGreen)"/>
+    <rect x="850" y="130" width="310" height="12" fill="url(#gradGreen)"/>
+    <text x="870" y="128" fill="#FFFFFF" font-size="16">&#9881;</text>
+    <text x="892" y="127" fill="#FFFFFF" font-size="14" font-weight="700">Core</text>
+    <rect x="1078" y="110" width="68" height="20" rx="4" fill="#FFFFFF" opacity="0.25"/>
+    <text x="1112" y="124" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="600">BACKEND</text>
+  </g>
+
+  <!-- REST API sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="868" y="155" width="274" height="138" rx="8" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.8"/>
+    <rect x="868" y="155" width="274" height="28" rx="8" fill="#4CAF50" opacity="0.12"/>
+    <rect x="868" y="175" width="274" height="8" fill="#4CAF50" opacity="0.12"/>
+    <text x="882" y="174" fill="#2E7D32" font-size="11" font-weight="700">REST API &#8212; Express</text>
+    <rect x="1078" y="159" width="52" height="18" rx="9" fill="#388E3C"/>
+    <text x="1104" y="172" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">:4001</text>
+    <text x="882" y="200" fill="#37474F" font-size="10">&#9654; /api/clients (CRUD)</text>
+    <text x="882" y="216" fill="#37474F" font-size="10">&#9654; /api/accounts (query + create)</text>
+    <text x="882" y="232" fill="#37474F" font-size="10">&#9654; /api/movements (list + transfer)</text>
+    <text x="882" y="248" fill="#37474F" font-size="10">&#9654; /api/auth (JWT issuance)</text>
+    <text x="882" y="264" fill="#546E7A" font-size="9" font-style="italic">CORS enabled, JSON body parser</text>
+    <!-- Tech pills -->
+    <rect x="882" y="272" width="50" height="16" rx="8" fill="#C8E6C9"/>
+    <text x="907" y="284" text-anchor="middle" fill="#2E7D32" font-size="8" font-weight="600">Express</text>
+    <rect x="938" y="272" width="40" height="16" rx="8" fill="#C8E6C9"/>
+    <text x="958" y="284" text-anchor="middle" fill="#2E7D32" font-size="8" font-weight="600">CORS</text>
+    <rect x="984" y="272" width="32" height="16" rx="8" fill="#C8E6C9"/>
+    <text x="1000" y="284" text-anchor="middle" fill="#2E7D32" font-size="8" font-weight="600">JWT</text>
+  </g>
+
+  <!-- Backoffice sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="868" y="305" width="274" height="98" rx="8" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.8"/>
+    <rect x="868" y="305" width="274" height="28" rx="8" fill="#4CAF50" opacity="0.12"/>
+    <rect x="868" y="325" width="274" height="8" fill="#4CAF50" opacity="0.12"/>
+    <text x="882" y="324" fill="#2E7D32" font-size="11" font-weight="700">Backoffice &#8212; React + Vite</text>
+    <rect x="1078" y="309" width="52" height="18" rx="9" fill="#388E3C"/>
+    <text x="1104" y="322" text-anchor="middle" fill="#FFF" font-size="9" font-weight="700">:4002</text>
+    <text x="882" y="350" fill="#37474F" font-size="10">&#9654; Client management UI</text>
+    <text x="882" y="366" fill="#37474F" font-size="10">&#9654; Account + movement views</text>
+    <text x="882" y="382" fill="#37474F" font-size="10">&#9654; Direct API calls to :4001</text>
+    <text x="882" y="395" fill="#546E7A" font-size="9" font-style="italic">Internal admin access only</text>
+  </g>
+
+  <!-- Database sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="868" y="418" width="274" height="98" rx="8" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.8"/>
+    <rect x="868" y="418" width="274" height="28" rx="8" fill="#4CAF50" opacity="0.12"/>
+    <rect x="868" y="438" width="274" height="8" fill="#4CAF50" opacity="0.12"/>
+    <text x="882" y="437" fill="#2E7D32" font-size="11" font-weight="700">Database &#8212; SQLite (sql.js)</text>
+    <rect x="1078" y="422" width="62" height="18" rx="9" fill="#388E3C"/>
+    <text x="1109" y="435" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">in-memory</text>
+    <text x="882" y="462" fill="#37474F" font-size="10">&#9654; clients, accounts, movements</text>
+    <text x="882" y="478" fill="#37474F" font-size="10">&#9654; balances, digital_access</text>
+    <text x="882" y="494" fill="#37474F" font-size="10">&#9654; Seed data on startup</text>
+    <text x="882" y="508" fill="#546E7A" font-size="9" font-style="italic">WASM-based, no native deps</text>
+  </g>
+
+  <!-- Socket.IO Hub sub-box -->
+  <g filter="url(#shadowLight)">
+    <rect x="868" y="530" width="274" height="84" rx="8" fill="#F3E5F5" stroke="#CE93D8" stroke-width="0.8"/>
+    <rect x="868" y="530" width="274" height="28" rx="8" fill="#9C27B0" opacity="0.08"/>
+    <rect x="868" y="550" width="274" height="8" fill="#9C27B0" opacity="0.08"/>
+    <text x="882" y="549" fill="#6A1B9A" font-size="11" font-weight="700">&#9889; Socket.IO Hub (real-time)</text>
+    <text x="882" y="572" fill="#37474F" font-size="10">&#9654; movement.created</text>
+    <text x="882" y="588" fill="#37474F" font-size="10">&#9654; balance.updated, account.status.changed</text>
+    <text x="882" y="604" fill="#37474F" font-size="10">&#9654; digital_access.created</text>
+  </g>
+
+  <!-- ====================================================================== -->
+  <!-- EXTERNAL SERVICES (Grey) — Bottom Center                                -->
+  <!-- ====================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="445" y="470" width="310" height="160" rx="10" fill="#FFFFFF" stroke="#CFD8DC" stroke-width="1"/>
+    <rect x="445" y="470" width="310" height="38" rx="10" fill="url(#gradGrey)"/>
+    <rect x="445" y="498" width="310" height="10" fill="url(#gradGrey)"/>
+    <text x="465" y="496" fill="#FFFFFF" font-size="14">&#128033;</text>
+    <text x="487" y="495" fill="#FFFFFF" font-size="13" font-weight="700">Docker Services</text>
+    <rect x="656" y="478" width="86" height="20" rx="4" fill="#FFFFFF" opacity="0.25"/>
+    <text x="699" y="492" text-anchor="middle" fill="#FFFFFF" font-size="9" font-weight="600">INFRA</text>
+  </g>
+
+  <!-- Nginx -->
+  <g filter="url(#shadowLight)">
+    <rect x="463" y="518" width="80" height="48" rx="6" fill="#ECEFF1" stroke="#B0BEC5" stroke-width="0.8"/>
+    <text x="503" y="539" text-anchor="middle" fill="#37474F" font-size="10" font-weight="700">Nginx</text>
+    <rect x="475" y="548" width="56" height="14" rx="7" fill="#607D8B"/>
+    <text x="503" y="559" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:80</text>
+  </g>
+
+  <!-- SonarQube -->
+  <g filter="url(#shadowLight)">
+    <rect x="560" y="518" width="80" height="48" rx="6" fill="#ECEFF1" stroke="#B0BEC5" stroke-width="0.8"/>
+    <text x="600" y="539" text-anchor="middle" fill="#37474F" font-size="10" font-weight="700">SonarQube</text>
+    <rect x="572" y="548" width="56" height="14" rx="7" fill="#607D8B"/>
+    <text x="600" y="559" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:9000</text>
+  </g>
+
+  <!-- Keycloak -->
+  <g filter="url(#shadowLight)">
+    <rect x="657" y="518" width="80" height="48" rx="6" fill="#ECEFF1" stroke="#B0BEC5" stroke-width="0.8"/>
+    <text x="697" y="539" text-anchor="middle" fill="#37474F" font-size="10" font-weight="700">Keycloak</text>
+    <rect x="669" y="548" width="56" height="14" rx="7" fill="#607D8B"/>
+    <text x="697" y="559" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:8080</text>
+  </g>
+
+  <!-- Docker description -->
+  <text x="463" y="585" fill="#78909C" font-size="8" font-style="italic">Reverse proxy, code quality, identity provider (OIDC/OAuth2)</text>
+  <text x="463" y="597" fill="#78909C" font-size="8" font-style="italic">Realm: bctt | docker-compose.yml</text>
+
+  <!-- ====================================================================== -->
+  <!-- REST API CONNECTIONS (Solid Arrows)                                     -->
+  <!-- ====================================================================== -->
+
+  <!-- BFF → Middleware: main REST connection -->
+  <line x1="332" y1="365" x2="445" y2="230" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+  <!-- Label background -->
+  <rect x="346" y="274" width="92" height="36" rx="4" fill="#FFFFFF" stroke="#B0BEC5" stroke-width="0.8"/>
+  <text x="350" y="288" fill="#E65100" font-size="8" font-weight="700">POST</text>
+  <text x="380" y="288" fill="#37474F" font-size="8">/auth/login</text>
+  <text x="350" y="300" fill="#1565C0" font-size="8" font-weight="700">GET</text>
+  <text x="375" y="300" fill="#37474F" font-size="8">/accounts</text>
+
+  <!-- Middleware → Core: proxy connection -->
+  <line x1="755" y1="230" x2="850" y2="230" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+  <rect x="770" y="213" width="65" height="16" rx="4" fill="#FFFFFF" stroke="#B0BEC5" stroke-width="0.8"/>
+  <text x="774" y="225" fill="#37474F" font-size="8" font-weight="600">proxy /api/*</text>
+
+  <!-- Backoffice → Core API (internal) -->
+  <path d="M 1005 305 L 1005 293" stroke="#2E7D32" stroke-width="1.5" marker-end="url(#arrowRest)" stroke-dasharray="none" opacity="0.6"/>
+  <rect x="1010" y="290" width="100" height="14" rx="3" fill="#E8F5E9" stroke="#A5D6A7" stroke-width="0.5"/>
+  <text x="1014" y="300" fill="#2E7D32" font-size="7" font-weight="600">GET/POST /api/clients</text>
+
+  <!-- ====================================================================== -->
+  <!-- SOCKET.IO CONNECTIONS (Dashed Arrows)                                   -->
+  <!-- ====================================================================== -->
+
+  <!-- Core Socket.IO → Frontend (long dashed line going above) -->
+  <path d="M 868 570 C 650 570, 400 560, 195 498" stroke="#7B1FA2" stroke-width="1.8" fill="none" stroke-dasharray="6 3" marker-end="url(#arrowSocket)"/>
+  <!-- Label -->
+  <rect x="495" y="555" width="160" height="28" rx="4" fill="#F3E5F5" stroke="#CE93D8" stroke-width="0.8"/>
+  <text x="504" y="568" fill="#6A1B9A" font-size="8" font-weight="700">&#9889; Socket.IO</text>
+  <text x="504" y="579" fill="#7B1FA2" font-size="7">movement.created, balance.updated</text>
+
+  <!-- Core Socket.IO → Middleware (short dashed) -->
+  <path d="M 868 565 C 800 565, 780 460, 755 445" stroke="#7B1FA2" stroke-width="1.5" fill="none" stroke-dasharray="5 3" marker-end="url(#arrowSocket)" opacity="0.7"/>
+  <rect x="782" y="496" width="74" height="14" rx="3" fill="#F3E5F5" stroke="#CE93D8" stroke-width="0.5"/>
+  <text x="786" y="506" fill="#6A1B9A" font-size="7">digital_access.*</text>
+
+  <!-- ====================================================================== -->
+  <!-- LEGEND                                                                  -->
+  <!-- ====================================================================== -->
+  <g>
+    <rect x="40" y="660" width="1120" height="200" rx="10" fill="#FFFFFF" stroke="#CFD8DC" stroke-width="1" filter="url(#shadow)"/>
+    <rect x="40" y="660" width="1120" height="32" rx="10" fill="#263238" opacity="0.06"/>
+    <rect x="40" y="684" width="1120" height="8" fill="#263238" opacity="0.06"/>
+    <text x="600" y="682" text-anchor="middle" fill="#37474F" font-size="12" font-weight="700">LEGENDA</text>
+
+    <!-- Column 1: System Colors -->
+    <text x="70" y="712" fill="#37474F" font-size="10" font-weight="700">Sistemas</text>
+
+    <rect x="70" y="722" width="14" height="14" rx="3" fill="url(#gradBlue)"/>
+    <text x="92" y="733" fill="#37474F" font-size="9">Digital Channels (frontend + BFF)</text>
+
+    <rect x="70" y="742" width="14" height="14" rx="3" fill="url(#gradOrange)"/>
+    <text x="92" y="753" fill="#37474F" font-size="9">Middleware (API gateway + seguranca)</text>
+
+    <rect x="70" y="762" width="14" height="14" rx="3" fill="url(#gradGreen)"/>
+    <text x="92" y="773" fill="#37474F" font-size="9">Core (backend + backoffice + database)</text>
+
+    <rect x="70" y="782" width="14" height="14" rx="3" fill="url(#gradGrey)"/>
+    <text x="92" y="793" fill="#37474F" font-size="9">Docker Services (infraestrutura)</text>
+
+    <!-- Separator -->
+    <line x1="320" y1="700" x2="320" y2="840" stroke="#ECEFF1" stroke-width="1"/>
+
+    <!-- Column 2: Connection Types -->
+    <text x="350" y="712" fill="#37474F" font-size="10" font-weight="700">Conexoes</text>
+
+    <line x1="350" y1="728" x2="400" y2="728" stroke="#37474F" stroke-width="2" marker-end="url(#arrowRest)"/>
+    <text x="415" y="732" fill="#37474F" font-size="9">REST API (HTTP request/response)</text>
+
+    <line x1="350" y1="750" x2="400" y2="750" stroke="#7B1FA2" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowSocket)"/>
+    <text x="415" y="754" fill="#37474F" font-size="9">Socket.IO (real-time events, bidireccional)</text>
+
+    <line x1="350" y1="772" x2="400" y2="772" stroke="#90A4AE" stroke-width="1.5" stroke-dasharray="3 2" marker-end="url(#arrowGrey)"/>
+    <text x="415" y="776" fill="#37474F" font-size="9">Internal / infraestrutura</text>
+
+    <!-- Separator -->
+    <line x1="680" y1="700" x2="680" y2="840" stroke="#ECEFF1" stroke-width="1"/>
+
+    <!-- Column 3: Ports -->
+    <text x="710" y="712" fill="#37474F" font-size="10" font-weight="700">Portas</text>
+
+    <rect x="710" y="720" width="40" height="16" rx="8" fill="#1976D2"/>
+    <text x="730" y="732" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:5173</text>
+    <text x="758" y="732" fill="#37474F" font-size="9">Frontend (Vite dev server)</text>
+
+    <rect x="710" y="742" width="40" height="16" rx="8" fill="#1976D2"/>
+    <text x="730" y="754" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:4020</text>
+    <text x="758" y="754" fill="#37474F" font-size="9">BFF (Express)</text>
+
+    <rect x="710" y="764" width="40" height="16" rx="8" fill="#F57C00"/>
+    <text x="730" y="776" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:4010</text>
+    <text x="758" y="776" fill="#37474F" font-size="9">Middleware (Gateway)</text>
+
+    <rect x="710" y="786" width="40" height="16" rx="8" fill="#388E3C"/>
+    <text x="730" y="798" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:4001</text>
+    <text x="758" y="798" fill="#37474F" font-size="9">Core API (Express)</text>
+
+    <rect x="710" y="808" width="40" height="16" rx="8" fill="#388E3C"/>
+    <text x="730" y="820" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">:4002</text>
+    <text x="758" y="820" fill="#37474F" font-size="9">Backoffice (Vite)</text>
+
+    <!-- Separator -->
+    <line x1="940" y1="700" x2="940" y2="840" stroke="#ECEFF1" stroke-width="1"/>
+
+    <!-- Column 4: Data Flow -->
+    <text x="970" y="712" fill="#37474F" font-size="10" font-weight="700">Fluxo de Dados</text>
+
+    <text x="970" y="732" fill="#37474F" font-size="9" font-weight="600">1.</text>
+    <text x="985" y="732" fill="#37474F" font-size="9">Login &#8594; BFF &#8594; MW &#8594; Core</text>
+
+    <text x="970" y="752" fill="#37474F" font-size="9" font-weight="600">2.</text>
+    <text x="985" y="752" fill="#37474F" font-size="9">JWT emitido pelo Core</text>
+
+    <text x="970" y="772" fill="#37474F" font-size="9" font-weight="600">3.</text>
+    <text x="985" y="772" fill="#37474F" font-size="9">Requests autenticados via MW</text>
+
+    <text x="970" y="792" fill="#37474F" font-size="9" font-weight="600">4.</text>
+    <text x="985" y="792" fill="#37474F" font-size="9">Eventos real-time via Socket.IO</text>
+
+    <text x="970" y="812" fill="#37474F" font-size="9" font-weight="600">5.</text>
+    <text x="985" y="812" fill="#37474F" font-size="9">Backoffice acede Core directo</text>
+
+    <!-- Bottom bar -->
+    <rect x="40" y="844" width="1120" height="16" rx="0" fill="#263238" opacity="0.04"/>
+    <text x="600" y="854" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; Gerado automaticamente pelo agente PA (Pipeline Architect) &#8212; 2026-02-11</text>
+  </g>
+
+</svg>

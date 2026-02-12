@@ -15,6 +15,8 @@ import {
   StepLabel,
   Tooltip,
   CircularProgress,
+  Button,
+  TextField,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -25,6 +27,7 @@ import {
   Bolt as LiveIcon,
 } from '@mui/icons-material';
 import { Agent, ChatMessage as ChatMessageType } from '@/types';
+import { DevPlanApproval } from '@/hooks/useChat';
 import { getAgentColor } from '@/theme/theme';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -45,6 +48,8 @@ interface ChatModalProps {
     steps: string[];
     percentage: number;
   };
+  pendingApproval?: DevPlanApproval | null;
+  onApproveDevPlan?: (approved: boolean, comments?: string) => void;
 }
 
 export const ChatModal = ({
@@ -59,10 +64,13 @@ export const ChatModal = ({
   onDownload,
   streamingText,
   progress,
+  pendingApproval,
+  onApproveDevPlan,
 }: ChatModalProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [messageIndex, setMessageIndex] = useState(0);
+  const [rejectComments, setRejectComments] = useState('');
   const [visibleMessages, setVisibleMessages] = useState<ChatMessageType[]>([]);
   const [isTyping, setIsTyping] = useState(false);
 
@@ -405,6 +413,131 @@ export const ChatModal = ({
                       }}
                     />
                   </Typography>
+                </Box>
+              )}
+
+              {/* Dev plan approval gate */}
+              {pendingApproval?.plan && (
+                <Box
+                  sx={{
+                    p: 2.5,
+                    bgcolor: alpha('#F59E0B', 0.08),
+                    borderRadius: 2,
+                    border: `1px solid ${alpha('#F59E0B', 0.25)}`,
+                    mb: 2,
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 600, color: '#F59E0B', mb: 1.5, fontSize: '0.95rem' }}>
+                    Plano de Desenvolvimento — {pendingApproval.plan.bdev_code} ({pendingApproval.agentId.toUpperCase()})
+                  </Typography>
+
+                  <Typography sx={{ color: alpha('#FFFFFF', 0.85), mb: 2, fontSize: '0.85rem' }}>
+                    {pendingApproval.plan.plan.summary}
+                  </Typography>
+
+                  {/* Warnings */}
+                  {pendingApproval.plan.warnings.length > 0 && (
+                    <Box sx={{ mb: 2, p: 1.5, bgcolor: alpha('#EF4444', 0.1), borderRadius: 1, border: `1px solid ${alpha('#EF4444', 0.3)}` }}>
+                      {pendingApproval.plan.warnings.map((w, i) => (
+                        <Typography key={i} sx={{ color: '#EF4444', fontSize: '0.8rem', fontWeight: 500 }}>
+                          {w}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* Files to create */}
+                  {pendingApproval.plan.plan.files_to_create && pendingApproval.plan.plan.files_to_create.length > 0 && (
+                    <Box sx={{ mb: 1.5 }}>
+                      <Typography sx={{ color: '#10B981', fontSize: '0.8rem', fontWeight: 600, mb: 0.5 }}>
+                        Ficheiros a criar ({pendingApproval.plan.plan.files_to_create.length}):
+                      </Typography>
+                      {pendingApproval.plan.plan.files_to_create.map((f, i) => (
+                        <Typography key={i} sx={{ color: alpha('#FFFFFF', 0.7), fontSize: '0.75rem', pl: 1 }}>
+                          + {f.project}/{f.path} — {f.purpose}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* Files to modify */}
+                  {pendingApproval.plan.plan.files_to_modify && pendingApproval.plan.plan.files_to_modify.length > 0 && (
+                    <Box sx={{ mb: 1.5 }}>
+                      <Typography sx={{ color: '#F59E0B', fontSize: '0.8rem', fontWeight: 600, mb: 0.5 }}>
+                        Ficheiros a modificar ({pendingApproval.plan.plan.files_to_modify.length}):
+                      </Typography>
+                      {pendingApproval.plan.plan.files_to_modify.map((f, i) => (
+                        <Typography key={i} sx={{ color: alpha('#FFFFFF', 0.7), fontSize: '0.75rem', pl: 1 }}>
+                          ~ {f.project}/{f.path} — {f.changes}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* Tables */}
+                  {pendingApproval.plan.plan.tables_to_add && pendingApproval.plan.plan.tables_to_add.length > 0 && (
+                    <Box sx={{ mb: 1.5 }}>
+                      <Typography sx={{ color: '#10B981', fontSize: '0.8rem', fontWeight: 600, mb: 0.5 }}>
+                        Tabelas a criar ({pendingApproval.plan.plan.tables_to_add.length}):
+                      </Typography>
+                      {pendingApproval.plan.plan.tables_to_add.map((t, i) => (
+                        <Typography key={i} sx={{ color: alpha('#FFFFFF', 0.7), fontSize: '0.75rem', pl: 1 }}>
+                          + {t.name}: {t.columns}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+
+                  {pendingApproval.plan.plan.tables_to_modify && pendingApproval.plan.plan.tables_to_modify.length > 0 && (
+                    <Box sx={{ mb: 1.5 }}>
+                      <Typography sx={{ color: '#EF4444', fontSize: '0.8rem', fontWeight: 600, mb: 0.5 }}>
+                        Tabelas a modificar ({pendingApproval.plan.plan.tables_to_modify.length}):
+                      </Typography>
+                      {pendingApproval.plan.plan.tables_to_modify.map((t, i) => (
+                        <Typography key={i} sx={{ color: alpha('#FFFFFF', 0.7), fontSize: '0.75rem', pl: 1 }}>
+                          ~ {t.name}: {t.changes}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* Reject comments */}
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Comentários (opcional)..."
+                    value={rejectComments}
+                    onChange={(e) => setRejectComments(e.target.value)}
+                    sx={{
+                      mb: 2,
+                      '& .MuiInputBase-root': { bgcolor: alpha('#FFFFFF', 0.05), color: 'white', fontSize: '0.8rem' },
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha('#FFFFFF', 0.15) },
+                    }}
+                  />
+
+                  {/* Actions */}
+                  <Box sx={{ display: 'flex', gap: 1.5 }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        onApproveDevPlan?.(true, rejectComments || undefined);
+                        setRejectComments('');
+                      }}
+                      sx={{ bgcolor: '#10B981', '&:hover': { bgcolor: '#059669' }, fontWeight: 600, textTransform: 'none' }}
+                    >
+                      Aprovar
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        onApproveDevPlan?.(false, rejectComments || undefined);
+                        setRejectComments('');
+                      }}
+                      sx={{ borderColor: '#EF4444', color: '#EF4444', '&:hover': { borderColor: '#DC2626', bgcolor: alpha('#EF4444', 0.1) }, fontWeight: 600, textTransform: 'none' }}
+                    >
+                      Rejeitar
+                    </Button>
+                  </Box>
                 </Box>
               )}
 

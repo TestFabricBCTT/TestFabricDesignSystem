@@ -1,33 +1,39 @@
 import React from 'react';
-import { TextField as MuiTextField } from '@mui/material';
+import { TextField as MuiTextField, type TextFieldProps as MuiTextFieldProps } from '@mui/material';
 
-export interface DatePickerProps {
-  /** Label */
+export interface DatePickerProps extends Omit<MuiTextFieldProps, 'variant' | 'onChange'> {
+  /** Label do campo de data */
   label?: string;
-  /** Valor */
+  /** Valor da data (formato YYYY-MM-DD) */
   value?: string;
-  /** Change handler */
+  /** Callback quando a data muda */
   onChange?: (value: string) => void;
-  /** Desativado */
+  /** Estado de erro */
+  error?: boolean;
+  /** Texto de ajuda ou erro */
+  helperText?: string;
+  /** Estado desabilitado */
   disabled?: boolean;
+  /** Placeholder do campo */
+  placeholder?: string;
+  /** Data mínima permitida (YYYY-MM-DD) */
+  minDate?: string;
+  /** Data máxima permitida (YYYY-MM-DD) */
+  maxDate?: string;
   /** Largura total */
   fullWidth?: boolean;
 }
 
 export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
-  ({ label, value, onChange, disabled, fullWidth, ...props }, ref) => {
+  ({ children, onChange, ...props }, ref) => {
     return (
       <MuiTextField
         ref={ref}
-        type="date"
-        label={label || 'Data'}
-        value={value || ''}
-        onChange={(e) => onChange?.(e.target.value)}
-        disabled={disabled}
-        fullWidth={fullWidth}
-        slotProps={{ inputLabel: { shrink: true } }}
         {...props}
-      />
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+      >
+        {children}
+      </MuiTextField>
     );
   }
 );

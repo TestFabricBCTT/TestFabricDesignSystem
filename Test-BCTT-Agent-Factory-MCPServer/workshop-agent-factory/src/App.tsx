@@ -7,8 +7,10 @@ import { ChatModal } from '@/components/chat';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { GovernanceDiagram } from '@/components/governance';
 import { ProjectHistoryPanel, PrototypesPanel } from '@/components/interactions';
+import { BdevSelectorDialog } from '@/components/interactions/BdevSelectorDialog';
 import type { ProjectAgentAction } from '@/components/interactions';
 import { Agent, PhaseId } from '@/types';
+import type { BdevAvailable } from '@/services/api';
 import { phases, getPhaseById, getAgentsByPhase, getAgentById } from '@/data/agents';
 import { useChat } from '@/hooks/useChat';
 import { useProjectHistory } from '@/hooks/useProjectHistory';
@@ -33,6 +35,9 @@ function App() {
   // Governance diagram state
   const [governanceOpen, setGovernanceOpen] = useState(false);
 
+  // BDEV selector dialog (Phase 2)
+  const [bdevDialogOpen, setBdevDialogOpen] = useState(false);
+
   // Chat state - using the real useChat hook that calls the API
   const [chatOpen, setChatOpen] = useState(false);
   const {
@@ -41,6 +46,7 @@ function App() {
     isLiveMode,
     currentAgent: chatAgent,
     pendingAutoAdvance,
+    pendingApproval,
     progress,
     streamingText,
     openChat,
@@ -51,6 +57,7 @@ function App() {
     resumeWithMessages,
     getCurrentMessages,
     clearAutoAdvance,
+    handleApproveDevPlan,
   } = useChat();
 
   // Project history
@@ -300,6 +307,20 @@ function App() {
     }
   }, [createProject, updateAgentIteration, openChat, setLiveMode]);
 
+  // Phase 2: open BDEV selector dialog
+  const handleNewPhase2Project = useCallback(() => {
+    setBdevDialogOpen(true);
+  }, []);
+
+  // Phase 2: BDEV selected — create project with BDEV code
+  const handleBdevSelect = useCallback((bdev: BdevAvailable) => {
+    setBdevDialogOpen(false);
+    const project = createProject(`${bdev.key} — ${bdev.summary}`, 'desenvolvimento');
+    setSessionId(project.id);
+    activeProjectRef.current = project.id;
+    updateProject(project.id, { bdevCode: bdev.key });
+  }, [createProject, updateProject]);
+
   const handleRenameProject = useCallback((id: string, newTitle: string) => {
     updateProject(id, { title: newTitle });
   }, [updateProject]);
@@ -419,6 +440,8 @@ function App() {
             onDownload={handleDownload}
             progress={progress ?? undefined}
             streamingText={streamingText || undefined}
+            pendingApproval={pendingApproval}
+            onApproveDevPlan={handleApproveDevPlan}
           />
         </ErrorBoundary>
 
@@ -426,11 +449,20 @@ function App() {
         <ProjectHistoryPanel
           projects={projects}
           activeProject={activeProject}
+          activePhaseId={activePhaseId}
           onSelectProject={handleSelectProject}
           onNewProject={handleNewProject}
+          onNewPhase2Project={handleNewPhase2Project}
           onDeleteProject={deleteProject}
           onRenameProject={handleRenameProject}
           onAgentAction={handleAgentAction}
+        />
+
+        {/* BDEV Selector Dialog (Phase 2) */}
+        <BdevSelectorDialog
+          open={bdevDialogOpen}
+          onClose={() => setBdevDialogOpen(false)}
+          onSelect={handleBdevSelect}
         />
 
         {/* Prototypes Panel - visible when PA agent is active */}

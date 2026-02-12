@@ -15,6 +15,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as crypto from 'crypto';
+import { execSync, spawn } from 'child_process';
+import {
+  createBranch,
+  checkoutBranch,
+  stageAndCommit,
+  getProjectPath,
+  getAvailableProjects,
+  resetToTag,
+} from '../git/index.js';
+import { getJiraClient } from '../jira/client.js';
+import { stopBugWatcher, resetBugWatcher } from '../jira/bug-watcher.js';
+import { runCQE } from '../quality/cqe.js';
+import { triggerCICDPipeline, getCICDStatus, rerunFailedSteps, getCICDReport } from '../cicd/pipeline.js';
+import { startDeploy, getDeployStatus, healthCheck, stopService, startService, rollback } from '../deploy/manager.js';
+import { generateArchitectureSvg, generateDeepDiveSvg, generateDocHtml, generateJiraComment, resolveDeepDives, normalizeImplTasks, type ContractData, type DeepDiveEntry, type ImplementationTask } from './generators.js';
 
 // ============================================
 // BCTT DESIGN SYSTEM PATH HELPER
@@ -29,6 +44,42 @@ function getBcttDesignSystemPath(): string {
     throw new Error(`bctt-design-system not found at ${dsPath}`);
   }
   return dsPath;
+}
+
+// ============================================
+// WORKSPACE & PROJECT PATHS (Phase 2)
+// ============================================
+
+const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || 'c:\\Rodrigo\\TestFabricDesignSystem';
+const MCP_SERVER_ROOT = path.resolve(process.cwd());
+
+/**
+ * Resolves the data directory for contracts, registry, etc.
+ */
+function getDataDir(...subPaths: string[]): string {
+  const dataDir = path.join(MCP_SERVER_ROOT, 'data', ...subPaths);
+  fs.mkdirSync(dataDir, { recursive: true });
+  return dataDir;
+}
+
+/**
+ * Resolves project path from project name.
+ * Maps short names to full directory names under WORKSPACE_ROOT.
+ */
+const PROJECT_PATHS: Record<string, string> = {
+  core: path.join(WORKSPACE_ROOT, 'TestAgentFactoryCore'),
+  middleware: path.join(WORKSPACE_ROOT, 'TestAgentFactoryMiddleware'),
+  digitalChannels: path.join(WORKSPACE_ROOT, 'TestAgentFactoryDigitalChannels'),
+  digitalChannelsWithErrors: path.join(WORKSPACE_ROOT, 'TestAgentFactoryDigitalChannelsWithErrors'),
+  unitTest: path.join(WORKSPACE_ROOT, 'TestAgentFactoryUnitTest'),
+};
+
+function resolveProjectPath(project: string): string {
+  const p = PROJECT_PATHS[project];
+  if (!p) {
+    throw new Error(`Unknown project: '${project}'. Valid projects: ${Object.keys(PROJECT_PATHS).join(', ')}`);
+  }
+  return p;
 }
 
 // ============================================
@@ -1175,6 +1226,1047 @@ export const tools: Tool[] = [
       type: "object",
       properties: {},
       required: []
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — TAA (Technical Architecture Agent) TOOLS
+  // ============================================
+  {
+    name: "taa_read_bdev",
+    description: "TAA Agent: Lê Epic + Features + User Stories do Jira para um dado epic_key. Retorna estrutura hierárquica agrupada por MVP label.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        epic_key: {
+          type: "string",
+          description: "Jira Epic key (ex: BCTT-123)"
+        }
+      },
+      required: ["epic_key"]
+    }
+  },
+  {
+    name: "taa_generate_contract",
+    description: "TAA Agent: Gera Interface Contract JSON que define APIs, eventos e tipos partilhados entre frontend e backend.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV (ex: BDEV00000001)"
+        },
+        apis: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              method: { type: "string", enum: ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+              path: { type: "string" },
+              description: { type: "string" },
+              request_body: { type: "object" },
+              response_body: { type: "object" },
+              error_codes: { type: "array", items: { type: "string" } }
+            },
+            required: ["method", "path", "description"]
+          },
+          description: "Lista de endpoints da API"
+        },
+        events: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              payload: { type: "object" },
+              source: { type: "string" },
+              target: { type: "string" }
+            },
+            required: ["name"]
+          },
+          description: "Lista de eventos entre componentes"
+        },
+        shared_types: {
+          type: "object",
+          description: "Tipos TypeScript partilhados entre frontend e backend"
+        },
+        microservices: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Nome do microserviço (ex: 'auth-service')" },
+              system: { type: "string", description: "Sistema pai (ex: 'digitalChannels', 'core')" },
+              mount_path: { type: "string", description: "Path de montagem (ex: '/api/auth')" },
+              port: { type: "number", description: "Porto do serviço" },
+              routes: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    method: { type: "string" },
+                    path: { type: "string" },
+                    description: { type: "string" },
+                    downstream: { type: "string", description: "URL downstream que este route chama" }
+                  }
+                }
+              },
+              dependencies: { type: "array", items: { type: "string" }, description: "Serviços de que depende" },
+              tech_stack: { type: "array", items: { type: "string" }, description: "Stack tecnológica" }
+            }
+          },
+          description: "Lista de microserviços internos por sistema"
+        },
+        pages: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Nome do componente (ex: 'LoginPage')" },
+              route: { type: "string", description: "Rota React Router (ex: '/login')" },
+              auth_required: { type: "boolean", description: "Se requer autenticação" },
+              components: { type: "array", items: { type: "string" }, description: "Componentes DS usados" },
+              api_calls: { type: "array", items: { type: "string" }, description: "Chamadas API" },
+              cache_reads: { type: "array", items: { type: "string" }, description: "Itens de cache lidos" },
+              cache_writes: { type: "array", items: { type: "string" }, description: "Itens de cache escritos" }
+            }
+          },
+          description: "Páginas frontend com rotas, componentes e dependências"
+        },
+        cache_strategy: {
+          type: "object",
+          properties: {
+            storage_type: { type: "string", enum: ["localStorage", "sessionStorage", "memory", "mixed"], description: "Tipo de armazenamento" },
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  key: { type: "string" },
+                  written_by: { type: "string" },
+                  read_by: { type: "array", items: { type: "string" } },
+                  cleared_on: { type: "string" },
+                  ttl: { type: "string", description: "Time-to-live (ex: '3600s', 'none')" }
+                }
+              }
+            },
+            server_cache: { type: "boolean", description: "Se existe cache server-side" },
+            notes: { type: "string" }
+          },
+          description: "Estratégia de caching da aplicação"
+        },
+        event_strategy: {
+          type: "object",
+          properties: {
+            pattern: { type: "string", enum: ["api-only", "event-driven", "hybrid"], description: "Padrão de comunicação" },
+            events_consumed: { type: "array", items: { type: "string" }, description: "Eventos consumidos pelo frontend" },
+            events_declared_not_consumed: { type: "array", items: { type: "string" }, description: "Eventos declarados mas não consumidos" },
+            retry_logic: { type: "string", description: "Lógica de retry" },
+            notes: { type: "string" }
+          },
+          description: "Estratégia de eventos (API-only vs event-driven vs hybrid)"
+        },
+        deep_dives: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              system: { type: "string", description: "Sistema alvo (ex: 'core', 'middleware', 'digitalChannels')" },
+              data_flow_summary: { type: "string", description: "Resumo do fluxo de dados" },
+              architecture_notes: { type: "string", description: "Notas de arquitectura" },
+              gaps: { type: "array", items: { type: "string" }, description: "Lacunas identificadas" },
+              recommendations: { type: "array", items: { type: "string" }, description: "Recomendações de melhoria" },
+              implementation_tasks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    description: { type: "string", description: "Descrição da tarefa (ex: 'Criar API POST /api/v1/deposits')" },
+                    user_story_key: { type: "string", description: "Jira key da User Story associada (ex: 'BCTT-391'). Obtida via taa_read_bdev." }
+                  },
+                  required: ["description", "user_story_key"]
+                },
+                description: "Tarefas de implementação associadas a User Stories específicas"
+              }
+            }
+          },
+          description: "Deep dives por sistema impactado — cada sistema tem análise, lacunas, recomendações e tarefas"
+        }
+      },
+      required: ["bdev_code", "apis"]
+    }
+  },
+  {
+    name: "taa_update_jira_status",
+    description: "TAA Agent: Atualiza o status de um issue no Jira (transição de workflow).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Jira issue key (ex: BCTT-456)"
+        },
+        status: {
+          type: "string",
+          description: "Novo status (ex: 'In Progress', 'Done', 'In Review')"
+        }
+      },
+      required: ["issue_key", "status"]
+    }
+  },
+  {
+    name: "taa_transition_mvp_issues",
+    description: "TAA Agent: Transiciona todas as User Stories de um MVP para 'In Progress'.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        epic_key: {
+          type: "string",
+          description: "Jira Epic key"
+        },
+        mvp_label: {
+          type: "string",
+          description: "MVP label a filtrar (ex: 'MVP1', 'MVP2')"
+        }
+      },
+      required: ["epic_key", "mvp_label"]
+    }
+  },
+  {
+    name: "taa_read_code",
+    description: "TAA Agent: Lê um ficheiro de qualquer projeto (core, middleware, digitalChannels).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Nome do projeto"
+        },
+        file_path: {
+          type: "string",
+          description: "Caminho relativo do ficheiro dentro do projeto"
+        }
+      },
+      required: ["project", "file_path"]
+    }
+  },
+  {
+    name: "taa_publish_to_jira",
+    description: "TAA Agent: Publica entregáveis no Epic do BDEV no Jira — gera automaticamente diagrama de arquitectura (SVG), deep dive (SVG), documentação API (HTML), e publica tudo como attachments + comment formatado no Epic.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        epic_key: {
+          type: "string",
+          description: "Jira Epic key (ex: BCTT-374)"
+        },
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV (ex: BDEV00000011)"
+        }
+      },
+      required: ["epic_key", "bdev_code"]
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — FDE (Frontend Developer Engineer) TOOLS
+  // ============================================
+  {
+    name: "fde_read_contract",
+    description: "FDE Agent: Lê o Interface Contract JSON gerado pelo TAA.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV (ex: BDEV00000001)"
+        }
+      },
+      required: ["bdev_code"]
+    }
+  },
+  {
+    name: "fde_submit_dev_plan",
+    description: "FDE Agent: Submete plano de desenvolvimento para aprovação antes de escrever código.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: { type: "string", description: "Código BDEV" },
+        plan: {
+          type: "object",
+          properties: {
+            summary: { type: "string", description: "Resumo do que vai ser implementado" },
+            files_to_create: { type: "array", items: { type: "object", properties: { project: { type: "string" }, path: { type: "string" }, purpose: { type: "string" } } } },
+            files_to_modify: { type: "array", items: { type: "object", properties: { project: { type: "string" }, path: { type: "string" }, changes: { type: "string" } } } },
+            tables_to_add: { type: "array", items: { type: "object", properties: { name: { type: "string" }, columns: { type: "string" } } } },
+            tables_to_modify: { type: "array", items: { type: "object", properties: { name: { type: "string" }, changes: { type: "string" } } } },
+            function_changes: { type: "array", items: { type: "object", properties: { file: { type: "string" }, function_name: { type: "string" }, change: { type: "string" } } } }
+          },
+          required: ["summary", "files_to_create"]
+        }
+      },
+      required: ["bdev_code", "plan"]
+    }
+  },
+  {
+    name: "fde_read_file",
+    description: "FDE Agent: Lê um ficheiro de código existente no projecto DigitalChannels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file_path: { type: "string", description: "Caminho relativo (ex: frontend/src/App.tsx)" }
+      },
+      required: ["file_path"]
+    }
+  },
+  {
+    name: "fde_check_ds_catalog",
+    description: "FDE Agent: Verifica se um componente existe no Design System (bctt-design-system). Retorna exists + alternativas.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        component_name: {
+          type: "string",
+          description: "Nome do componente a verificar"
+        }
+      },
+      required: ["component_name"]
+    }
+  },
+  {
+    name: "fde_create_branch",
+    description: "FDE Agent: Cria feature branch no projeto digitalChannels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        branch_name: {
+          type: "string",
+          description: "Nome da branch (ex: feature/BDEV00000001-login)"
+        }
+      },
+      required: ["branch_name"]
+    }
+  },
+  {
+    name: "fde_write_code",
+    description: "FDE Agent: Escreve ficheiro no projeto DigitalChannels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file_path: {
+          type: "string",
+          description: "Caminho relativo dentro do projeto digitalChannels"
+        },
+        content: {
+          type: "string",
+          description: "Conteúdo do ficheiro"
+        }
+      },
+      required: ["file_path", "content"]
+    }
+  },
+  {
+    name: "fde_commit_push",
+    description: "FDE Agent: Faz stage e commit de ficheiros no projeto digitalChannels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        message: {
+          type: "string",
+          description: "Mensagem de commit"
+        },
+        files: {
+          type: "array",
+          items: { type: "string" },
+          description: "Lista de ficheiros a fazer stage (ou ['.'] para todos)"
+        }
+      },
+      required: ["message", "files"]
+    }
+  },
+  {
+    name: "fde_update_jira_status",
+    description: "FDE Agent: Atualiza o status de uma User Story no Jira (ex: 'In Progress', 'Done').",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Jira issue key (ex: BCTT-391)"
+        },
+        status: {
+          type: "string",
+          description: "Novo status (ex: 'In Progress', 'Done')"
+        }
+      },
+      required: ["issue_key", "status"]
+    }
+  },
+
+  {
+    name: "fde_build_project",
+    description: "FDE Agent: Compila o projecto frontend (tsc) para validar que não há erros TypeScript.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["digitalChannels-frontend", "digitalChannels-bff"],
+          description: "Qual projecto compilar"
+        }
+      },
+      required: ["project"]
+    }
+  },
+  {
+    name: "fde_smoke_test",
+    description: "FDE Agent: Inicia brevemente o frontend (vite) ou BFF para validar que arranca sem erros.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["digitalChannels-frontend", "digitalChannels-bff"],
+          description: "Qual projecto testar"
+        }
+      },
+      required: ["project"]
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — BDE (Backend Developer Engineer) TOOLS
+  // ============================================
+  {
+    name: "bde_read_contract",
+    description: "BDE Agent: Lê o Interface Contract JSON gerado pelo TAA.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: {
+          type: "string",
+          description: "Código BDEV (ex: BDEV00000001)"
+        }
+      },
+      required: ["bdev_code"]
+    }
+  },
+  {
+    name: "bde_submit_dev_plan",
+    description: "BDE Agent: Submete plano de desenvolvimento para aprovação antes de escrever código.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev_code: { type: "string", description: "Código BDEV" },
+        plan: {
+          type: "object",
+          properties: {
+            summary: { type: "string", description: "Resumo do que vai ser implementado" },
+            files_to_create: { type: "array", items: { type: "object", properties: { project: { type: "string" }, path: { type: "string" }, purpose: { type: "string" } } } },
+            files_to_modify: { type: "array", items: { type: "object", properties: { project: { type: "string" }, path: { type: "string" }, changes: { type: "string" } } } },
+            tables_to_add: { type: "array", items: { type: "object", properties: { name: { type: "string" }, columns: { type: "string" } } } },
+            tables_to_modify: { type: "array", items: { type: "object", properties: { name: { type: "string" }, changes: { type: "string" } } } },
+            function_changes: { type: "array", items: { type: "object", properties: { file: { type: "string" }, function_name: { type: "string" }, change: { type: "string" } } } }
+          },
+          required: ["summary", "files_to_create"]
+        }
+      },
+      required: ["bdev_code", "plan"]
+    }
+  },
+  {
+    name: "bde_read_file",
+    description: "BDE Agent: Lê um ficheiro de código existente num projecto backend.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", enum: ["core", "middleware", "digitalChannels"], description: "Qual projecto" },
+        file_path: { type: "string", description: "Caminho relativo (ex: src/db/schema.ts)" }
+      },
+      required: ["project", "file_path"]
+    }
+  },
+  {
+    name: "bde_create_branch",
+    description: "BDE Agent: Cria feature branch num projeto backend (core, middleware ou digitalChannels).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto onde criar a branch"
+        },
+        branch_name: {
+          type: "string",
+          description: "Nome da branch"
+        }
+      },
+      required: ["project", "branch_name"]
+    }
+  },
+  {
+    name: "bde_write_code",
+    description: "BDE Agent: Escreve ficheiro em qualquer projeto backend.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto destino"
+        },
+        file_path: {
+          type: "string",
+          description: "Caminho relativo dentro do projeto"
+        },
+        content: {
+          type: "string",
+          description: "Conteúdo do ficheiro"
+        }
+      },
+      required: ["project", "file_path", "content"]
+    }
+  },
+  {
+    name: "bde_commit_push",
+    description: "BDE Agent: Faz stage e commit de ficheiros em qualquer projeto backend.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto"
+        },
+        message: {
+          type: "string",
+          description: "Mensagem de commit"
+        },
+        files: {
+          type: "array",
+          items: { type: "string" },
+          description: "Lista de ficheiros a fazer stage"
+        }
+      },
+      required: ["project", "message", "files"]
+    }
+  },
+  {
+    name: "bde_update_jira_status",
+    description: "BDE Agent: Atualiza o status de uma User Story no Jira (ex: 'In Progress', 'Done').",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Jira issue key (ex: BCTT-391)"
+        },
+        status: {
+          type: "string",
+          description: "Novo status (ex: 'In Progress', 'Done')"
+        }
+      },
+      required: ["issue_key", "status"]
+    }
+  },
+
+  {
+    name: "bde_build_project",
+    description: "BDE Agent: Compila um projecto backend (tsc) para validar que não há erros TypeScript.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels-bff"],
+          description: "Qual projecto compilar"
+        }
+      },
+      required: ["project"]
+    }
+  },
+  {
+    name: "bde_smoke_test",
+    description: "BDE Agent: Inicia brevemente cada servidor backend para validar que arranca sem erros (DB init, seed, health check). Executar APÓS bde_build_project.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels-bff"],
+          description: "Qual projecto testar"
+        }
+      },
+      required: ["project"]
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — UTE (Unit Test Engineer) TOOLS
+  // ============================================
+  {
+    name: "ute_run_tests",
+    description: "UTE Agent: Executa vitest num projeto. Retorna resultado JSON dos testes.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto onde correr testes"
+        },
+        branch: {
+          type: "string",
+          description: "Branch a testar (opcional, usa branch atual)"
+        },
+        scope: {
+          type: "string",
+          description: "Scope dos testes — path ou pattern (ex: 'src/services/', '*.test.ts')"
+        }
+      },
+      required: ["project"]
+    }
+  },
+  {
+    name: "ute_generate_report",
+    description: "UTE Agent: Gera relatório estruturado a partir do output JSON do vitest.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          description: "Nome do projeto"
+        },
+        test_output: {
+          type: "string",
+          description: "Output JSON do vitest run"
+        }
+      },
+      required: ["project", "test_output"]
+    }
+  },
+  {
+    name: "ute_dispatch_to_fbs",
+    description: "UTE Agent: Despacha falhas frontend para o agente FBS (Frontend Bug Solver).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        failures: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              test_name: { type: "string" },
+              file: { type: "string" },
+              error_message: { type: "string" },
+              stack_trace: { type: "string" }
+            },
+            required: ["test_name", "file", "error_message"]
+          },
+          description: "Lista de falhas frontend"
+        }
+      },
+      required: ["failures"]
+    }
+  },
+  {
+    name: "ute_dispatch_to_bbs",
+    description: "UTE Agent: Despacha falhas backend para o agente BBS (Backend Bug Solver).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        failures: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              test_name: { type: "string" },
+              file: { type: "string" },
+              error_message: { type: "string" },
+              stack_trace: { type: "string" }
+            },
+            required: ["test_name", "file", "error_message"]
+          },
+          description: "Lista de falhas backend"
+        }
+      },
+      required: ["failures"]
+    }
+  },
+  {
+    name: "ute_retest_branch",
+    description: "UTE Agent: Re-executa testes numa branch após fix aplicado.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto"
+        },
+        branch: {
+          type: "string",
+          description: "Branch a testar"
+        }
+      },
+      required: ["project", "branch"]
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — FBS (Frontend Bug Solver) TOOLS
+  // ============================================
+  {
+    name: "fbs_read_jira_bug",
+    description: "FBS Agent: Lê detalhes de um bug no Jira.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Jira issue key (ex: BCTT-789)"
+        }
+      },
+      required: ["issue_key"]
+    }
+  },
+  {
+    name: "fbs_analyze_code",
+    description: "FBS Agent: Lê ficheiro de código frontend para análise.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["digitalChannels", "digitalChannelsWithErrors"],
+          description: "Projeto frontend"
+        },
+        file_path: {
+          type: "string",
+          description: "Caminho relativo do ficheiro"
+        }
+      },
+      required: ["project", "file_path"]
+    }
+  },
+  {
+    name: "fbs_create_branch",
+    description: "FBS Agent: Cria branch de fix no projeto digitalChannels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        branch_name: {
+          type: "string",
+          description: "Nome da branch (ex: fix/BCTT-789-login-validation)"
+        }
+      },
+      required: ["branch_name"]
+    }
+  },
+  {
+    name: "fbs_apply_fix",
+    description: "FBS Agent: Escreve fix num ficheiro do projeto digitalChannels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file_path: {
+          type: "string",
+          description: "Caminho relativo do ficheiro"
+        },
+        content: {
+          type: "string",
+          description: "Conteúdo completo do ficheiro corrigido"
+        }
+      },
+      required: ["file_path", "content"]
+    }
+  },
+  {
+    name: "fbs_update_jira_status",
+    description: "FBS Agent: Atualiza status de um bug no Jira após fix.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Jira issue key"
+        },
+        status: {
+          type: "string",
+          description: "Novo status (ex: 'In Review', 'Done')"
+        }
+      },
+      required: ["issue_key", "status"]
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — BBS (Backend Bug Solver) TOOLS
+  // ============================================
+  {
+    name: "bbs_read_jira_bug",
+    description: "BBS Agent: Lê detalhes de um bug backend no Jira.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Jira issue key"
+        }
+      },
+      required: ["issue_key"]
+    }
+  },
+  {
+    name: "bbs_analyze_code",
+    description: "BBS Agent: Lê ficheiro de código backend para análise.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto backend"
+        },
+        file_path: {
+          type: "string",
+          description: "Caminho relativo do ficheiro"
+        }
+      },
+      required: ["project", "file_path"]
+    }
+  },
+  {
+    name: "bbs_create_branch",
+    description: "BBS Agent: Cria branch de fix num projeto backend.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto"
+        },
+        branch_name: {
+          type: "string",
+          description: "Nome da branch de fix"
+        }
+      },
+      required: ["project", "branch_name"]
+    }
+  },
+  {
+    name: "bbs_apply_fix",
+    description: "BBS Agent: Escreve fix num ficheiro de qualquer projeto backend.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          type: "string",
+          enum: ["core", "middleware", "digitalChannels", "digitalChannelsWithErrors", "unitTest"],
+          description: "Projeto"
+        },
+        file_path: {
+          type: "string",
+          description: "Caminho relativo do ficheiro"
+        },
+        content: {
+          type: "string",
+          description: "Conteúdo completo do ficheiro corrigido"
+        }
+      },
+      required: ["project", "file_path", "content"]
+    }
+  },
+  {
+    name: "bbs_notify_fbs",
+    description: "BBS Agent: Notifica o FBS de impacto backend que pode afetar o frontend.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bug_key: {
+          type: "string",
+          description: "Jira bug key"
+        },
+        impact_description: {
+          type: "string",
+          description: "Descrição do impacto no frontend"
+        }
+      },
+      required: ["bug_key", "impact_description"]
+    }
+  },
+  {
+    name: "bbs_update_jira_status",
+    description: "BBS Agent: Atualiza status de um bug backend no Jira.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        issue_key: {
+          type: "string",
+          description: "Jira issue key"
+        },
+        status: {
+          type: "string",
+          description: "Novo status"
+        }
+      },
+      required: ["issue_key", "status"]
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — SHARED / REGISTRY TOOLS
+  // ============================================
+  {
+    name: "read_implementation_registry",
+    description: "Shared: Lê o registo de implementação (quais componentes/módulos estão implementados, por quem, em que branch).",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  },
+  {
+    name: "update_implementation_registry",
+    description: "Shared: Atualiza o registo de implementação após merge ou progresso significativo.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        updates: {
+          type: "object",
+          description: "Objecto com updates a fazer merge no registo (ex: { 'login-page': { status: 'merged', branch: 'feature/login' } })"
+        }
+      },
+      required: ["updates"]
+    }
+  },
+
+  // ============================================
+  // RESET / ENVIRONMENT TOOLS
+  // ============================================
+  {
+    name: "reset_bug_environment",
+    description: "Reset do ambiente de bugs: restaura o projecto WithErrors ao estado inicial (git tag 'initial-bugs') e repõe os bugs no Jira a 'To Do'. Útil para re-demonstrações.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        confirm: {
+          type: "boolean",
+          description: "Confirmação de reset (true para executar)"
+        }
+      },
+      required: ["confirm"]
+    }
+  },
+
+  // ============================================
+  // CQE — CODE QUALITY ENGINE TOOLS
+  // ============================================
+  {
+    name: "cqe_validate_code",
+    description: "Executa quality gates (lint, typecheck, DS imports, security) num projecto. Retorna report com status de cada gate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Nome do projecto (core, middleware, digitalChannels)" },
+      },
+      required: ["project"]
+    }
+  },
+  {
+    name: "cqe_sonarqube_scan",
+    description: "Executa SonarQube scanner num projecto. Requer SONAR_TOKEN configurado.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Nome do projecto" },
+      },
+      required: ["project"]
+    }
+  },
+  {
+    name: "cqe_sonarqube_status",
+    description: "Lê o quality gate status do SonarQube para um projecto.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        projectKey: { type: "string", description: "SonarQube project key (ex: agent-factory-dc)" },
+      },
+      required: ["projectKey"]
+    }
+  },
+
+  // ============================================
+  // CI/CD PIPELINE TOOLS
+  // ============================================
+  {
+    name: "cicd_trigger_pipeline",
+    description: "Inicia o pipeline CI/CD: merge dry-run → install → UTE → CQE → SonarQube → contract → coverage.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev: { type: "string", description: "Código BDEV (ex: BDEV00000011)" },
+        mvp: { type: "string", description: "MVP actual (ex: MVP1)" },
+        branch: { type: "string", description: "Feature branch a validar" },
+      },
+      required: ["bdev", "mvp", "branch"]
+    }
+  },
+  {
+    name: "cicd_get_status",
+    description: "Retorna o estado actual do pipeline CI/CD (steps, status, timing).",
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "cicd_rerun_failed",
+    description: "Re-executa apenas os steps que falharam no último pipeline CI/CD.",
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "cicd_get_report",
+    description: "Retorna report completo do último pipeline CI/CD.",
+    inputSchema: { type: "object", properties: {} }
+  },
+
+  // ============================================
+  // DEPLOY TOOLS
+  // ============================================
+  {
+    name: "deploy_start",
+    description: "Inicia deploy: stop serviços → merge → build → start → health check → update Jira/Registry.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev: { type: "string", description: "Código BDEV" },
+        mvp: { type: "string", description: "MVP actual" },
+        branch: { type: "string", description: "Feature branch a deployar" },
+      },
+      required: ["bdev", "mvp", "branch"]
+    }
+  },
+  {
+    name: "deploy_status",
+    description: "Retorna estado actual do deploy (steps, serviços, PIDs).",
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "deploy_health_check",
+    description: "Executa health check em todos os serviços geridos.",
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "deploy_rollback",
+    description: "Faz rollback do último deploy (git revert + restart serviços).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bdev: { type: "string", description: "Código BDEV a reverter" },
+      },
+      required: ["bdev"]
     }
   },
 
@@ -3184,12 +4276,1795 @@ ${storyVariants.map(v => `      <${component_name} variant="${v.toLowerCase()}" 
         message: 'Falha ao compilar bctt-design-system'
       }, null, 2);
     }
+  },
+
+  // ============================================
+  // PHASE 2 — TAA (Technical Architecture Agent) HANDLERS
+  // ============================================
+
+  taa_read_bdev: async (args) => {
+    const { epic_key } = args as { epic_key: string };
+    try {
+      const jira = getJiraClient();
+      const epic = await jira.getIssue(epic_key);
+
+      // Fetch children (Features + Stories) under this epic
+      const jql = `parent = ${epic_key} OR "Epic Link" = ${epic_key} ORDER BY issuetype ASC, created ASC`;
+      const children = await jira.searchIssues(jql, 100);
+
+      // Group by MVP label
+      const byMvp: Record<string, Array<{ key: string; summary: string; type: string; status: string; labels: string[] }>> = {};
+
+      for (const issue of children.issues) {
+        const labels = issue.fields.labels || [];
+        const mvp = labels.find((l: string) => l.toLowerCase().startsWith('mvp')) || 'unassigned';
+        if (!byMvp[mvp]) byMvp[mvp] = [];
+        byMvp[mvp].push({
+          key: issue.key,
+          summary: issue.fields.summary,
+          type: issue.fields.issuetype?.name || 'Unknown',
+          status: issue.fields.status?.name || 'Unknown',
+          labels,
+        });
+      }
+
+      return JSON.stringify({
+        agent: "TAA",
+        action: "read_bdev",
+        success: true,
+        epic: {
+          key: epic.key,
+          summary: epic.fields.summary,
+          status: epic.fields.status?.name || 'Unknown',
+        },
+        children_count: children.issues.length,
+        by_mvp: byMvp,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "TAA",
+        action: "read_bdev",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  taa_generate_contract: async (args) => {
+    const { bdev_code, apis, events, shared_types, microservices, pages, cache_strategy, event_strategy, deep_dives } = args as {
+      bdev_code: string;
+      apis: Array<{
+        method: string;
+        path: string;
+        description: string;
+        request_body?: Record<string, unknown>;
+        response_body?: Record<string, unknown>;
+        error_codes?: string[];
+      }>;
+      events?: Array<{
+        name: string;
+        payload?: Record<string, unknown>;
+        source?: string;
+        target?: string;
+      }>;
+      shared_types?: Record<string, unknown>;
+      microservices?: Array<{
+        name: string;
+        system: string;
+        mount_path: string;
+        port?: number;
+        routes?: Array<{ method: string; path: string; description?: string; downstream?: string }>;
+        dependencies?: string[];
+        tech_stack?: string[];
+      }>;
+      pages?: Array<{
+        name: string;
+        route: string;
+        auth_required?: boolean;
+        components?: string[];
+        api_calls?: string[];
+        cache_reads?: string[];
+        cache_writes?: string[];
+      }>;
+      cache_strategy?: {
+        storage_type?: string;
+        items?: Array<{ key: string; written_by?: string; read_by?: string[]; cleared_on?: string; ttl?: string }>;
+        server_cache?: boolean;
+        notes?: string;
+      };
+      event_strategy?: {
+        pattern?: string;
+        events_consumed?: string[];
+        events_declared_not_consumed?: string[];
+        retry_logic?: string;
+        notes?: string;
+      };
+      deep_dives?: Array<{
+        system?: string;
+        data_flow_summary?: string;
+        architecture_notes?: string;
+        gaps?: string[];
+        recommendations?: string[];
+        implementation_tasks?: Array<{
+          description: string;
+          user_story_key: string;
+        }>;
+      }>;
+    };
+
+    const contract = {
+      version: "2.1",
+      bdev_code,
+      generated_at: new Date().toISOString(),
+      generated_by: "TAA",
+      apis: apis || [],
+      events: events || [],
+      shared_types: shared_types || {},
+      ...(microservices ? { microservices } : {}),
+      ...(pages ? { pages } : {}),
+      ...(cache_strategy ? { cache_strategy } : {}),
+      ...(event_strategy ? { event_strategy } : {}),
+      ...(deep_dives ? { deep_dives } : {}),
+    };
+
+    const contractDir = getDataDir('contracts');
+    const contractPath = path.join(contractDir, `${bdev_code}.json`);
+    fs.writeFileSync(contractPath, JSON.stringify(contract, null, 2));
+
+    return JSON.stringify({
+      agent: "TAA",
+      action: "generate_contract",
+      success: true,
+      contract_path: contractPath,
+      summary: {
+        bdev_code,
+        api_count: apis.length,
+        event_count: (events || []).length,
+        shared_type_count: Object.keys(shared_types || {}).length,
+        microservice_count: (microservices || []).length,
+        page_count: (pages || []).length,
+        has_cache_strategy: !!cache_strategy,
+        has_event_strategy: !!event_strategy,
+        deep_dive_count: (deep_dives || []).length,
+      },
+      message: `Interface Contract v2.1 para ${bdev_code} gerado com ${apis.length} APIs, ${(events || []).length} eventos, ${(microservices || []).length} microserviços, ${(pages || []).length} páginas, ${(deep_dives || []).length} deep dives.`,
+    }, null, 2);
+  },
+
+  taa_update_jira_status: async (args) => {
+    const { issue_key, status } = args as { issue_key: string; status: string };
+    try {
+      const jira = getJiraClient();
+      const result = await jira.transitionIssue(issue_key, status);
+
+      return JSON.stringify({
+        agent: "TAA",
+        action: "update_jira_status",
+        success: true,
+        issue_key,
+        from_status: result.from,
+        to_status: result.to,
+        message: `Issue ${issue_key} transicionada de '${result.from}' para '${result.to}'.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "TAA",
+        action: "update_jira_status",
+        success: false,
+        issue_key,
+        requested_status: status,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  taa_transition_mvp_issues: async (args) => {
+    const { epic_key, mvp_label } = args as { epic_key: string; mvp_label: string };
+    try {
+      const jira = getJiraClient();
+      const jql = `parent = ${epic_key} AND labels = "${mvp_label}" AND issuetype = Story ORDER BY created ASC`;
+      const result = await jira.searchIssues(jql, 100);
+
+      const issues = result.issues || [];
+      const transitioned: Array<{ key: string; from: string; to: string }> = [];
+      const failed: Array<{ key: string; error: string }> = [];
+
+      for (const issue of issues) {
+        try {
+          const tr = await jira.transitionIssue(issue.key, 'In Progress');
+          transitioned.push({ key: issue.key, from: tr.from, to: tr.to });
+        } catch (err) {
+          failed.push({ key: issue.key, error: String(err) });
+        }
+      }
+
+      return JSON.stringify({
+        agent: "TAA",
+        action: "transition_mvp_issues",
+        success: true,
+        epic_key,
+        mvp_label,
+        issues_found: issues.length,
+        transitioned,
+        failed,
+        message: `${transitioned.length}/${issues.length} User Stories transicionadas para 'In Progress'.${failed.length ? ` ${failed.length} falharam.` : ''}`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "TAA",
+        action: "transition_mvp_issues",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  taa_read_code: async (args) => {
+    const { project, file_path } = args as { project: string; file_path: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+      const fullPath = path.join(projectPath, file_path);
+
+      if (!fs.existsSync(fullPath)) {
+        return JSON.stringify({
+          agent: "TAA",
+          action: "read_code",
+          success: false,
+          error: `File not found: ${file_path} in project ${project}`,
+          project_path: projectPath,
+        }, null, 2);
+      }
+
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      return JSON.stringify({
+        agent: "TAA",
+        action: "read_code",
+        success: true,
+        project,
+        file_path,
+        content: content.length > 5000 ? content.substring(0, 5000) + '\n... [TRUNCATED]' : content,
+        size_bytes: content.length,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "TAA",
+        action: "read_code",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  taa_publish_to_jira: async (args) => {
+    const { epic_key, bdev_code } = args as { epic_key: string; bdev_code: string };
+    try {
+      // 1. Read contract JSON
+      const contractPath = path.join(getDataDir('contracts'), `${bdev_code}.json`);
+      if (!fs.existsSync(contractPath)) {
+        return JSON.stringify({
+          agent: "TAA",
+          action: "publish_to_jira",
+          success: false,
+          error: `Contract not found: ${contractPath}. Generate it first with taa_generate_contract.`,
+        }, null, 2);
+      }
+      const contract: ContractData = JSON.parse(fs.readFileSync(contractPath, 'utf-8'));
+      const deepDives = resolveDeepDives(contract);
+
+      const contractDir = getDataDir('contracts');
+      const results: string[] = [];
+
+      // 2. Generate architecture SVG (shows what BDEV introduces)
+      const archSvg = generateArchitectureSvg(contract);
+      const archPath = path.join(contractDir, `${bdev_code}-architecture.svg`);
+      fs.writeFileSync(archPath, archSvg);
+      results.push(`Architecture SVG: ${archPath}`);
+
+      // 3. Generate per-system deep dive SVGs
+      const deepDivePaths: Array<{ system: string; name: string; path: string }> = [];
+      for (const dd of deepDives) {
+        const sysName = dd.system || 'system';
+        const deepSvg = generateDeepDiveSvg(contract, dd);
+        const fileName = `${bdev_code}-${sysName}-deepdive.svg`;
+        const filePath = path.join(contractDir, fileName);
+        fs.writeFileSync(filePath, deepSvg);
+        deepDivePaths.push({ system: sysName, name: fileName, path: filePath });
+        results.push(`Deep Dive SVG (${sysName}): ${filePath}`);
+      }
+
+      // 4. Generate HTML documentation
+      const html = generateDocHtml(contract);
+      const htmlPath = path.join(contractDir, `${bdev_code}-docs.html`);
+      fs.writeFileSync(htmlPath, html);
+      results.push(`HTML Docs: ${htmlPath}`);
+
+      // 5. Attach files to Jira Epic
+      const jira = getJiraClient();
+      const filesToAttach = [
+        { name: `${bdev_code}.json`, path: contractPath },
+        { name: `${bdev_code}-architecture.svg`, path: archPath },
+        ...deepDivePaths.map(dd => ({ name: dd.name, path: dd.path })),
+        { name: `${bdev_code}-docs.html`, path: htmlPath },
+      ];
+
+      const attached: string[] = [];
+      const attachFailed: string[] = [];
+      for (const file of filesToAttach) {
+        try {
+          const buf = fs.readFileSync(file.path);
+          await jira.addAttachment(epic_key, file.name, buf);
+          attached.push(file.name);
+        } catch (err) {
+          attachFailed.push(`${file.name}: ${String(err).substring(0, 80)}`);
+        }
+      }
+
+      // 6. Create Subtasks under User Stories from implementation_tasks
+      const tasksCreated: string[] = [];
+      for (const dd of deepDives) {
+        const tasks = normalizeImplTasks(dd.implementation_tasks);
+        for (const task of tasks) {
+          if (!task.user_story_key) continue; // skip tasks without US association
+          try {
+            const result = await jira.createSubtask({
+              parentKey: task.user_story_key,
+              summary: `[${bdev_code}] ${task.description}`,
+              labels: ['interface-contract', dd.system || 'general'],
+              description: `Tarefa identificada pelo TAA na análise deep dive do sistema ${dd.system || 'geral'}.`,
+            });
+            tasksCreated.push(result.key);
+          } catch (err) {
+            attachFailed.push(`Subtask "${task.description.substring(0, 40)}": ${String(err).substring(0, 80)}`);
+          }
+        }
+      }
+
+      // 7. Add ADF comment
+      const comment = generateJiraComment(contract, attached);
+      let commentId: string | null = null;
+      try {
+        const commentResult = await jira.addComment(epic_key, JSON.stringify(comment.body));
+        commentId = commentResult.id;
+      } catch (err) {
+        // Fallback: try plain text comment
+        try {
+          const plainText = `Interface Contract ${bdev_code} publicado com ${contract.apis.length} APIs, ${contract.events.length} eventos, ${deepDives.length} deep dives. Ver attachments para documentação completa.`;
+          const fallback = await jira.addComment(epic_key, plainText);
+          commentId = fallback.id;
+        } catch (err2) {
+          attachFailed.push(`Comment: ${String(err2).substring(0, 80)}`);
+        }
+      }
+
+      return JSON.stringify({
+        agent: "TAA",
+        action: "publish_to_jira",
+        success: true,
+        epic_key,
+        bdev_code,
+        files_generated: results,
+        files_attached: attached,
+        tasks_created: tasksCreated,
+        attach_failed: attachFailed.length > 0 ? attachFailed : undefined,
+        comment_id: commentId,
+        message: `Entregáveis publicados no ${epic_key}: ${attached.length} ficheiros anexados, ${tasksCreated.length} tasks criadas${commentId ? ', comment adicionado' : ''}.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "TAA",
+        action: "publish_to_jira",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — FDE (Frontend Developer Engineer) HANDLERS
+  // ============================================
+
+  fde_read_contract: async (args) => {
+    const { bdev_code } = args as { bdev_code: string };
+    try {
+      const contractPath = path.join(getDataDir('contracts'), `${bdev_code}.json`);
+
+      if (!fs.existsSync(contractPath)) {
+        return JSON.stringify({
+          agent: "FDE",
+          action: "read_contract",
+          success: false,
+          error: `Contract not found for ${bdev_code}. TAA must generate it first using taa_generate_contract.`,
+        }, null, 2);
+      }
+
+      const contract = JSON.parse(fs.readFileSync(contractPath, 'utf-8'));
+      return JSON.stringify({
+        agent: "FDE",
+        action: "read_contract",
+        success: true,
+        contract,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FDE",
+        action: "read_contract",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fde_submit_dev_plan: async (args) => {
+    const { bdev_code, plan } = args as { bdev_code: string; plan: any };
+    const warnings: string[] = [];
+    if (plan.tables_to_modify?.length > 0) {
+      warnings.push(`⚠️ MODIFICA ${plan.tables_to_modify.length} tabela(s) existente(s)`);
+    }
+    if (plan.function_changes?.length > 0) {
+      warnings.push(`⚠️ ALTERA ${plan.function_changes.length} função(ões) existente(s)`);
+    }
+    const planDir = getDataDir('dev-plans');
+    const planFile = path.join(planDir, `${bdev_code}-fde.json`);
+    fs.writeFileSync(planFile, JSON.stringify({
+      bdev_code, agent: 'fde', plan, warnings,
+      submitted_at: new Date().toISOString(),
+      status: 'pending'
+    }, null, 2));
+    return JSON.stringify({
+      agent: "FDE", action: "submit_dev_plan", success: true, warnings,
+      message: warnings.length > 0
+        ? `Plano submetido com ${warnings.length} aviso(s). Aguarda aprovação do utilizador.`
+        : `Plano submetido. Aguarda aprovação do utilizador.`,
+      instruction: "A sessão de planeamento termina aqui. NÃO escrever código. O plano será apresentado ao utilizador para aprovação."
+    }, null, 2);
+  },
+
+  fde_read_file: async (args) => {
+    const { file_path } = args as { file_path: string };
+    try {
+      const projectPath = resolveProjectPath('digitalChannels');
+      const fullPath = path.join(projectPath, file_path);
+      if (!fs.existsSync(fullPath)) {
+        return JSON.stringify({ agent: "FDE", action: "read_file", success: false, error: `File not found: ${file_path}` });
+      }
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      return JSON.stringify({ agent: "FDE", action: "read_file", success: true, file_path, content: content.slice(0, 5000) });
+    } catch (error) {
+      return JSON.stringify({ agent: "FDE", action: "read_file", success: false, error: String(error) });
+    }
+  },
+
+  fde_check_ds_catalog: async (args) => {
+    const { component_name } = args as { component_name: string };
+
+    // Check in design-system catalog
+    const spec = getComponentSpec(component_name);
+    if (spec) {
+      return JSON.stringify({
+        agent: "FDE",
+        action: "check_ds_catalog",
+        exists: true,
+        component: {
+          name: spec.name,
+          category: spec.category,
+          variants: spec.variants,
+          import_path: `import { ${spec.name.replace(/[^a-zA-Z]/g, '')} } from '@bctt/design-system';`,
+        },
+      }, null, 2);
+    }
+
+    // Search for alternatives
+    const alternatives = searchComponents(component_name);
+    return JSON.stringify({
+      agent: "FDE",
+      action: "check_ds_catalog",
+      exists: false,
+      component_name,
+      alternatives: alternatives.slice(0, 5).map(c => c.name),
+      message: `Componente '${component_name}' não encontrado. Considerar alternativas ou solicitar ao DSLA.`,
+    }, null, 2);
+  },
+
+  fde_create_branch: async (args) => {
+    const { branch_name } = args as { branch_name: string };
+    try {
+      const result = await createBranch('digitalChannels', branch_name);
+      return JSON.stringify({
+        agent: "FDE",
+        action: "create_branch",
+        success: true,
+        project: "digitalChannels",
+        branch: branch_name,
+        message: result,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FDE",
+        action: "create_branch",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fde_write_code: async (args) => {
+    const { file_path, content } = args as { file_path: string; content: string };
+    try {
+      const projectPath = resolveProjectPath('digitalChannels');
+      const fullPath = path.join(projectPath, file_path);
+      const dir = path.dirname(fullPath);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(fullPath, content);
+
+      return JSON.stringify({
+        agent: "FDE",
+        action: "write_code",
+        success: true,
+        file_path,
+        project: "digitalChannels",
+        size_bytes: content.length,
+        message: `File written: ${file_path} (${content.length} bytes)`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FDE",
+        action: "write_code",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fde_commit_push: async (args) => {
+    const { message, files } = args as { message: string; files: string[] };
+    try {
+      const result = await stageAndCommit('digitalChannels', files, message);
+      return JSON.stringify({
+        agent: "FDE",
+        action: "commit_push",
+        success: true,
+        project: "digitalChannels",
+        message: result,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FDE",
+        action: "commit_push",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fde_update_jira_status: async (args) => {
+    const { issue_key, status } = args as { issue_key: string; status: string };
+    try {
+      const jira = getJiraClient();
+      const result = await jira.transitionIssue(issue_key, status);
+      return JSON.stringify({
+        agent: "FDE",
+        action: "update_jira_status",
+        success: true,
+        issue_key,
+        from_status: result.from,
+        to_status: result.to,
+        message: `Issue ${issue_key} transicionada de '${result.from}' para '${result.to}'.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FDE",
+        action: "update_jira_status",
+        success: false,
+        issue_key,
+        requested_status: status,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fde_build_project: async (args) => {
+    const { project } = args as { project: string };
+    const projectMap: Record<string, { cwd: string; cmd: string }> = {
+      'digitalChannels-frontend': {
+        cwd: path.join(PROJECT_PATHS.digitalChannels, 'frontend'),
+        cmd: 'npx tsc --noEmit',
+      },
+      'digitalChannels-bff': {
+        cwd: path.join(PROJECT_PATHS.digitalChannels, 'bff'),
+        cmd: 'npx tsc',
+      },
+    };
+    const config = projectMap[project];
+    if (!config) {
+      return JSON.stringify({ agent: "FDE", action: "build", success: false, error: `Unknown project: ${project}` });
+    }
+    try {
+      const output = execSync(config.cmd, { cwd: config.cwd, timeout: 60000, stdio: 'pipe' }).toString();
+      return JSON.stringify({ agent: "FDE", action: "build", success: true, project, message: "Build succeeded — zero TypeScript errors.", output: output.slice(0, 500) }, null, 2);
+    } catch (error: any) {
+      const stderr = error.stderr?.toString() || error.message;
+      return JSON.stringify({ agent: "FDE", action: "build", success: false, project, errors: stderr.slice(0, 2000) }, null, 2);
+    }
+  },
+
+  fde_smoke_test: async (args) => {
+    const { project } = args as { project: string };
+    const http = await import('http');
+
+    const projectMap: Record<string, { cwd: string; cmd: string; cmdArgs: string[]; port: number; healthUrl: string }> = {
+      'digitalChannels-frontend': {
+        cwd: path.join(PROJECT_PATHS.digitalChannels, 'frontend'),
+        cmd: 'npx',
+        cmdArgs: ['vite', '--port', '15173'],
+        port: 15173,
+        healthUrl: 'http://localhost:15173/',
+      },
+      'digitalChannels-bff': {
+        cwd: path.join(PROJECT_PATHS.digitalChannels, 'bff'),
+        cmd: 'npx',
+        cmdArgs: ['tsx', 'src/server.ts'],
+        port: 14020,
+        healthUrl: 'http://localhost:14020/health',
+      },
+    };
+
+    const config = projectMap[project];
+    if (!config) {
+      return JSON.stringify({ agent: "FDE", action: "smoke_test", success: false, error: `Unknown project: ${project}` });
+    }
+
+    const startTime = Date.now();
+    let stderr = '';
+
+    const child = spawn(config.cmd, config.cmdArgs, {
+      cwd: config.cwd,
+      shell: true,
+      stdio: 'pipe',
+      env: { ...process.env, PORT: String(config.port) },
+    });
+
+    child.stderr?.on('data', (d: Buffer) => { stderr += d.toString(); });
+
+    const result = await new Promise<{ success: boolean; error?: string }>((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve({ success: false, error: `Timeout: server did not respond within 15s. stderr: ${stderr.slice(0, 1000)}` });
+      }, 15000);
+
+      child.on('exit', (code) => {
+        clearTimeout(timeout);
+        resolve({ success: false, error: `Process exited with code ${code}. stderr: ${stderr.slice(0, 1000)}` });
+      });
+
+      const healthInterval = setInterval(() => {
+        const req = http.get(config.healthUrl, (res) => {
+          if (res.statusCode === 200) {
+            clearTimeout(timeout);
+            clearInterval(healthInterval);
+            resolve({ success: true });
+          }
+        });
+        req.on('error', () => {});
+        req.setTimeout(1000, () => req.destroy());
+      }, 1000);
+    });
+
+    try {
+      if (child.pid) {
+        execSync(`taskkill /F /T /PID ${child.pid}`, { stdio: 'ignore' });
+      }
+    } catch {}
+
+    const duration = Date.now() - startTime;
+
+    return JSON.stringify({
+      agent: "FDE",
+      action: "smoke_test",
+      success: result.success,
+      project,
+      duration_ms: duration,
+      message: result.success
+        ? `Smoke test PASSED — ${project} started OK in ${duration}ms`
+        : `Smoke test FAILED — ${result.error}`,
+      ...(result.error && !result.success ? { errors: result.error } : {}),
+    }, null, 2);
+  },
+
+  // ============================================
+  // PHASE 2 — BDE (Backend Developer Engineer) HANDLERS
+  // ============================================
+
+  bde_read_contract: async (args) => {
+    const { bdev_code } = args as { bdev_code: string };
+    try {
+      const contractPath = path.join(getDataDir('contracts'), `${bdev_code}.json`);
+
+      if (!fs.existsSync(contractPath)) {
+        return JSON.stringify({
+          agent: "BDE",
+          action: "read_contract",
+          success: false,
+          error: `Contract not found for ${bdev_code}. TAA must generate it first using taa_generate_contract.`,
+        }, null, 2);
+      }
+
+      const contract = JSON.parse(fs.readFileSync(contractPath, 'utf-8'));
+      return JSON.stringify({
+        agent: "BDE",
+        action: "read_contract",
+        success: true,
+        contract,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BDE",
+        action: "read_contract",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bde_submit_dev_plan: async (args) => {
+    const { bdev_code, plan } = args as { bdev_code: string; plan: any };
+    const warnings: string[] = [];
+    if (plan.tables_to_modify?.length > 0) {
+      warnings.push(`⚠️ MODIFICA ${plan.tables_to_modify.length} tabela(s) existente(s)`);
+    }
+    if (plan.function_changes?.length > 0) {
+      warnings.push(`⚠️ ALTERA ${plan.function_changes.length} função(ões) existente(s)`);
+    }
+    const planDir = getDataDir('dev-plans');
+    const planFile = path.join(planDir, `${bdev_code}-bde.json`);
+    fs.writeFileSync(planFile, JSON.stringify({
+      bdev_code, agent: 'bde', plan, warnings,
+      submitted_at: new Date().toISOString(),
+      status: 'pending'
+    }, null, 2));
+    return JSON.stringify({
+      agent: "BDE", action: "submit_dev_plan", success: true, warnings,
+      message: warnings.length > 0
+        ? `Plano submetido com ${warnings.length} aviso(s). Aguarda aprovação do utilizador.`
+        : `Plano submetido. Aguarda aprovação do utilizador.`,
+      instruction: "A sessão de planeamento termina aqui. NÃO escrever código. O plano será apresentado ao utilizador para aprovação."
+    }, null, 2);
+  },
+
+  bde_read_file: async (args) => {
+    const { project, file_path } = args as { project: string; file_path: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+      const fullPath = path.join(projectPath, file_path);
+      if (!fs.existsSync(fullPath)) {
+        return JSON.stringify({ agent: "BDE", action: "read_file", success: false, error: `File not found: ${file_path} in ${project}` });
+      }
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      return JSON.stringify({ agent: "BDE", action: "read_file", success: true, project, file_path, content: content.slice(0, 5000) });
+    } catch (error) {
+      return JSON.stringify({ agent: "BDE", action: "read_file", success: false, error: String(error) });
+    }
+  },
+
+  bde_create_branch: async (args) => {
+    const { project, branch_name } = args as { project: string; branch_name: string };
+    try {
+      const result = await createBranch(project, branch_name);
+      return JSON.stringify({
+        agent: "BDE",
+        action: "create_branch",
+        success: true,
+        project,
+        branch: branch_name,
+        message: result,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BDE",
+        action: "create_branch",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bde_write_code: async (args) => {
+    const { project, file_path, content } = args as { project: string; file_path: string; content: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+      const fullPath = path.join(projectPath, file_path);
+      const dir = path.dirname(fullPath);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(fullPath, content);
+
+      return JSON.stringify({
+        agent: "BDE",
+        action: "write_code",
+        success: true,
+        project,
+        file_path,
+        size_bytes: content.length,
+        message: `File written: ${file_path} in ${project} (${content.length} bytes)`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BDE",
+        action: "write_code",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bde_commit_push: async (args) => {
+    const { project, message, files } = args as { project: string; message: string; files: string[] };
+    try {
+      const result = await stageAndCommit(project, files, message);
+      return JSON.stringify({
+        agent: "BDE",
+        action: "commit_push",
+        success: true,
+        project,
+        message: result,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BDE",
+        action: "commit_push",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bde_update_jira_status: async (args) => {
+    const { issue_key, status } = args as { issue_key: string; status: string };
+    try {
+      const jira = getJiraClient();
+      const result = await jira.transitionIssue(issue_key, status);
+      return JSON.stringify({
+        agent: "BDE",
+        action: "update_jira_status",
+        success: true,
+        issue_key,
+        from_status: result.from,
+        to_status: result.to,
+        message: `Issue ${issue_key} transicionada de '${result.from}' para '${result.to}'.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BDE",
+        action: "update_jira_status",
+        success: false,
+        issue_key,
+        requested_status: status,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bde_build_project: async (args) => {
+    const { project } = args as { project: string };
+    const projectMap: Record<string, { cwd: string; cmd: string }> = {
+      'core': { cwd: PROJECT_PATHS.core, cmd: 'npx tsc' },
+      'middleware': { cwd: PROJECT_PATHS.middleware, cmd: 'npx tsc' },
+      'digitalChannels-bff': {
+        cwd: path.join(PROJECT_PATHS.digitalChannels, 'bff'),
+        cmd: 'npx tsc',
+      },
+    };
+    const config = projectMap[project];
+    if (!config) {
+      return JSON.stringify({ agent: "BDE", action: "build", success: false, error: `Unknown project: ${project}` });
+    }
+    try {
+      const output = execSync(config.cmd, { cwd: config.cwd, timeout: 60000, stdio: 'pipe' }).toString();
+      return JSON.stringify({ agent: "BDE", action: "build", success: true, project, message: "Build succeeded — zero TypeScript errors.", output: output.slice(0, 500) }, null, 2);
+    } catch (error: any) {
+      const stderr = error.stderr?.toString() || error.message;
+      return JSON.stringify({ agent: "BDE", action: "build", success: false, project, errors: stderr.slice(0, 2000) }, null, 2);
+    }
+  },
+
+  bde_smoke_test: async (args) => {
+    const { project } = args as { project: string };
+    const http = await import('http');
+
+    const projectMap: Record<string, { cwd: string; cmd: string; cmdArgs: string[]; port: number; dbFile?: string }> = {
+      'core': {
+        cwd: PROJECT_PATHS.core,
+        cmd: 'node',
+        cmdArgs: ['dist/server.js'],
+        port: 14001,
+        dbFile: path.join(PROJECT_PATHS.core, 'data', 'core.db'),
+      },
+      'middleware': {
+        cwd: PROJECT_PATHS.middleware,
+        cmd: 'node',
+        cmdArgs: ['dist/server.js'],
+        port: 14010,
+      },
+      'digitalChannels-bff': {
+        cwd: path.join(PROJECT_PATHS.digitalChannels, 'bff'),
+        cmd: 'npx',
+        cmdArgs: ['tsx', 'src/server.ts'],
+        port: 14020,
+      },
+    };
+
+    const config = projectMap[project];
+    if (!config) {
+      return JSON.stringify({ agent: "BDE", action: "smoke_test", success: false, error: `Unknown project: ${project}` });
+    }
+
+    // Backup DB if exists (Core only)
+    let dbBackedUp = false;
+    if (config.dbFile && fs.existsSync(config.dbFile)) {
+      fs.renameSync(config.dbFile, config.dbFile + '.bak');
+      dbBackedUp = true;
+    }
+
+    const startTime = Date.now();
+    let stderr = '';
+
+    try {
+      const child = spawn(config.cmd, config.cmdArgs, {
+        cwd: config.cwd,
+        shell: true,
+        stdio: 'pipe',
+        env: { ...process.env, PORT: String(config.port) },
+      });
+
+      child.stderr?.on('data', (d: Buffer) => { stderr += d.toString(); });
+
+      // Wait for either: health check pass, process exit, or timeout
+      const result = await new Promise<{ success: boolean; error?: string }>((resolve) => {
+        const timeout = setTimeout(() => {
+          resolve({ success: false, error: `Timeout: server did not respond within 15s. stderr: ${stderr.slice(0, 1000)}` });
+        }, 15000);
+
+        child.on('exit', (code) => {
+          clearTimeout(timeout);
+          resolve({ success: false, error: `Process exited with code ${code}. stderr: ${stderr.slice(0, 1000)}` });
+        });
+
+        // Poll health endpoint every second
+        const healthInterval = setInterval(() => {
+          const req = http.get(`http://localhost:${config.port}/health`, (res) => {
+            if (res.statusCode === 200) {
+              clearTimeout(timeout);
+              clearInterval(healthInterval);
+              resolve({ success: true });
+            }
+          });
+          req.on('error', () => {}); // Ignore connection errors while starting
+          req.setTimeout(1000, () => req.destroy());
+        }, 1000);
+      });
+
+      // Kill the process
+      try {
+        if (child.pid) {
+          execSync(`taskkill /F /T /PID ${child.pid}`, { stdio: 'ignore' });
+        }
+      } catch {}
+
+      const duration = Date.now() - startTime;
+
+      return JSON.stringify({
+        agent: "BDE",
+        action: "smoke_test",
+        success: result.success,
+        project,
+        duration_ms: duration,
+        port: config.port,
+        message: result.success
+          ? `Smoke test PASSED — server started and /health responded OK in ${duration}ms`
+          : `Smoke test FAILED — ${result.error}`,
+        ...(result.error && !result.success ? { errors: result.error } : {}),
+      }, null, 2);
+    } finally {
+      // Restore DB backup
+      if (dbBackedUp && config.dbFile) {
+        try { fs.unlinkSync(config.dbFile); } catch {}
+        fs.renameSync(config.dbFile + '.bak', config.dbFile);
+      }
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — UTE (Unit Test Engineer) HANDLERS
+  // ============================================
+
+  ute_run_tests: async (args) => {
+    const { project, branch, scope } = args as { project: string; branch?: string; scope?: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+
+      // Optionally checkout branch first
+      if (branch) {
+        await checkoutBranch(project, branch);
+      }
+
+      // Build vitest command (sanitize scope to prevent command injection)
+      let cmd = 'npx vitest run --reporter=json';
+      if (scope) {
+        const sanitized = scope.replace(/[;&|`$(){}!<>]/g, '');
+        cmd += ` ${sanitized}`;
+      }
+
+      const output = execSync(cmd, {
+        cwd: projectPath,
+        timeout: 120000, // 2 minutes
+        stdio: 'pipe',
+        encoding: 'utf-8',
+      });
+
+      return JSON.stringify({
+        agent: "UTE",
+        action: "run_tests",
+        success: true,
+        project,
+        branch: branch || 'current',
+        output: output.length > 5000 ? output.substring(0, 5000) + '\n... [TRUNCATED]' : output,
+        message: `Tests executed in ${project}${branch ? ` on branch ${branch}` : ''}${scope ? ` (scope: ${scope})` : ''}.`,
+      }, null, 2);
+    } catch (error: any) {
+      // vitest exits with non-zero on test failures — capture stdout
+      const stdout = error.stdout ? String(error.stdout) : '';
+      const stderr = error.stderr ? String(error.stderr) : '';
+      return JSON.stringify({
+        agent: "UTE",
+        action: "run_tests",
+        success: false,
+        project,
+        test_output: stdout.length > 5000 ? stdout.substring(0, 5000) + '\n... [TRUNCATED]' : stdout,
+        error_output: stderr.length > 2000 ? stderr.substring(0, 2000) + '\n... [TRUNCATED]' : stderr,
+        message: `Tests failed or errored in ${project}.`,
+      }, null, 2);
+    }
+  },
+
+  ute_generate_report: async (args) => {
+    const { project, test_output } = args as { project: string; test_output: string };
+    try {
+      // Attempt to parse vitest JSON output
+      let parsed: any;
+      try {
+        parsed = JSON.parse(test_output);
+      } catch {
+        // If not valid JSON, return raw analysis
+        return JSON.stringify({
+          agent: "UTE",
+          action: "generate_report",
+          success: true,
+          project,
+          report: {
+            format: "raw",
+            raw_output: test_output.substring(0, 3000),
+            message: "Output não é JSON válido. Análise manual necessária.",
+          },
+        }, null, 2);
+      }
+
+      const testResults = parsed.testResults || [];
+      const numTotalTests = parsed.numTotalTests || 0;
+      const numPassedTests = parsed.numPassedTests || 0;
+      const numFailedTests = parsed.numFailedTests || 0;
+
+      const failures = testResults
+        .filter((tr: any) => tr.status === 'failed')
+        .flatMap((tr: any) => (tr.assertionResults || [])
+          .filter((ar: any) => ar.status === 'failed')
+          .map((ar: any) => ({
+            test_name: ar.fullName || ar.title,
+            file: tr.name,
+            error_message: (ar.failureMessages || []).join('\n').substring(0, 500),
+          }))
+        );
+
+      return JSON.stringify({
+        agent: "UTE",
+        action: "generate_report",
+        success: true,
+        project,
+        report: {
+          total: numTotalTests,
+          passed: numPassedTests,
+          failed: numFailedTests,
+          pass_rate: numTotalTests > 0 ? `${Math.round((numPassedTests / numTotalTests) * 100)}%` : 'N/A',
+          failures: failures.slice(0, 20), // Limit to 20 for context
+          summary: numFailedTests === 0
+            ? `All ${numTotalTests} tests passed in ${project}.`
+            : `${numFailedTests}/${numTotalTests} tests failed in ${project}.`,
+        },
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "UTE",
+        action: "generate_report",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  ute_dispatch_to_fbs: async (args) => {
+    const { failures } = args as {
+      failures: Array<{
+        test_name: string;
+        file: string;
+        error_message: string;
+        stack_trace?: string;
+      }>;
+    };
+
+    // Store failures for FBS agent consumption
+    const dispatchDir = getDataDir('dispatches');
+    const dispatchFile = path.join(dispatchDir, `fbs-failures-${Date.now()}.json`);
+    const dispatchData = {
+      dispatched_at: new Date().toISOString(),
+      dispatched_by: "UTE",
+      target: "FBS",
+      failures,
+    };
+    fs.writeFileSync(dispatchFile, JSON.stringify(dispatchData, null, 2));
+
+    return JSON.stringify({
+      agent: "UTE",
+      action: "dispatch_to_fbs",
+      success: true,
+      dispatched: failures.length,
+      dispatch_file: dispatchFile,
+      message: `${failures.length} frontend failures dispatched to FBS agent.`,
+    }, null, 2);
+  },
+
+  ute_dispatch_to_bbs: async (args) => {
+    const { failures } = args as {
+      failures: Array<{
+        test_name: string;
+        file: string;
+        error_message: string;
+        stack_trace?: string;
+      }>;
+    };
+
+    // Store failures for BBS agent consumption
+    const dispatchDir = getDataDir('dispatches');
+    const dispatchFile = path.join(dispatchDir, `bbs-failures-${Date.now()}.json`);
+    const dispatchData = {
+      dispatched_at: new Date().toISOString(),
+      dispatched_by: "UTE",
+      target: "BBS",
+      failures,
+    };
+    fs.writeFileSync(dispatchFile, JSON.stringify(dispatchData, null, 2));
+
+    return JSON.stringify({
+      agent: "UTE",
+      action: "dispatch_to_bbs",
+      success: true,
+      dispatched: failures.length,
+      dispatch_file: dispatchFile,
+      message: `${failures.length} backend failures dispatched to BBS agent.`,
+    }, null, 2);
+  },
+
+  ute_retest_branch: async (args) => {
+    const { project, branch } = args as { project: string; branch: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+
+      // Checkout branch
+      await checkoutBranch(project, branch);
+
+      // Run tests
+      const output = execSync('npx vitest run --reporter=json', {
+        cwd: projectPath,
+        timeout: 120000,
+        stdio: 'pipe',
+        encoding: 'utf-8',
+      });
+
+      return JSON.stringify({
+        agent: "UTE",
+        action: "retest_branch",
+        success: true,
+        project,
+        branch,
+        output: output.length > 5000 ? output.substring(0, 5000) + '\n... [TRUNCATED]' : output,
+        message: `Retest of ${project}/${branch} completed.`,
+      }, null, 2);
+    } catch (error: any) {
+      const stdout = error.stdout ? String(error.stdout) : '';
+      return JSON.stringify({
+        agent: "UTE",
+        action: "retest_branch",
+        success: false,
+        project,
+        branch,
+        test_output: stdout.length > 5000 ? stdout.substring(0, 5000) + '\n... [TRUNCATED]' : stdout,
+        message: `Retest of ${project}/${branch} failed.`,
+      }, null, 2);
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — FBS (Frontend Bug Solver) HANDLERS
+  // ============================================
+
+  fbs_read_jira_bug: async (args) => {
+    const { issue_key } = args as { issue_key: string };
+    try {
+      const jira = getJiraClient();
+      const issue = await jira.getIssue(issue_key);
+
+      return JSON.stringify({
+        agent: "FBS",
+        action: "read_jira_bug",
+        success: true,
+        issue: {
+          key: issue.key,
+          summary: issue.fields.summary,
+          status: issue.fields.status?.name || 'Unknown',
+          type: issue.fields.issuetype?.name || 'Unknown',
+          description: issue.fields.description ? JSON.stringify(issue.fields.description).substring(0, 2000) : null,
+          labels: issue.fields.labels || [],
+          priority: (issue.fields as any).priority?.name || 'Unknown',
+        },
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FBS",
+        action: "read_jira_bug",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fbs_analyze_code: async (args) => {
+    const { project, file_path } = args as { project: string; file_path: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+      const fullPath = path.join(projectPath, file_path);
+
+      if (!fs.existsSync(fullPath)) {
+        return JSON.stringify({
+          agent: "FBS",
+          action: "analyze_code",
+          success: false,
+          error: `File not found: ${file_path} in project ${project}`,
+        }, null, 2);
+      }
+
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      return JSON.stringify({
+        agent: "FBS",
+        action: "analyze_code",
+        success: true,
+        project,
+        file_path,
+        content: content.length > 5000 ? content.substring(0, 5000) + '\n... [TRUNCATED]' : content,
+        size_bytes: content.length,
+        lines: content.split('\n').length,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FBS",
+        action: "analyze_code",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fbs_create_branch: async (args) => {
+    const { branch_name } = args as { branch_name: string };
+    try {
+      const result = await createBranch('digitalChannels', branch_name);
+      return JSON.stringify({
+        agent: "FBS",
+        action: "create_branch",
+        success: true,
+        project: "digitalChannels",
+        branch: branch_name,
+        message: result,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FBS",
+        action: "create_branch",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fbs_apply_fix: async (args) => {
+    const { file_path, content } = args as { file_path: string; content: string };
+    try {
+      const projectPath = resolveProjectPath('digitalChannels');
+      const fullPath = path.join(projectPath, file_path);
+      const dir = path.dirname(fullPath);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(fullPath, content);
+
+      return JSON.stringify({
+        agent: "FBS",
+        action: "apply_fix",
+        success: true,
+        file_path,
+        project: "digitalChannels",
+        size_bytes: content.length,
+        message: `Fix applied to ${file_path} (${content.length} bytes)`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FBS",
+        action: "apply_fix",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  fbs_update_jira_status: async (args) => {
+    const { issue_key, status } = args as { issue_key: string; status: string };
+    try {
+      const jira = getJiraClient();
+      const result = await jira.transitionIssue(issue_key, status);
+
+      return JSON.stringify({
+        agent: "FBS",
+        action: "update_jira_status",
+        success: true,
+        issue_key,
+        from: result.from,
+        to: result.to,
+        message: `Bug ${issue_key} transicionado de '${result.from}' para '${result.to}'.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "FBS",
+        action: "update_jira_status",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — BBS (Backend Bug Solver) HANDLERS
+  // ============================================
+
+  bbs_read_jira_bug: async (args) => {
+    const { issue_key } = args as { issue_key: string };
+    try {
+      const jira = getJiraClient();
+      const issue = await jira.getIssue(issue_key);
+
+      return JSON.stringify({
+        agent: "BBS",
+        action: "read_jira_bug",
+        success: true,
+        issue: {
+          key: issue.key,
+          summary: issue.fields.summary,
+          status: issue.fields.status?.name || 'Unknown',
+          type: issue.fields.issuetype?.name || 'Unknown',
+          description: issue.fields.description ? JSON.stringify(issue.fields.description).substring(0, 2000) : null,
+          labels: issue.fields.labels || [],
+          priority: (issue.fields as any).priority?.name || 'Unknown',
+        },
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BBS",
+        action: "read_jira_bug",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bbs_analyze_code: async (args) => {
+    const { project, file_path } = args as { project: string; file_path: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+      const fullPath = path.join(projectPath, file_path);
+
+      if (!fs.existsSync(fullPath)) {
+        return JSON.stringify({
+          agent: "BBS",
+          action: "analyze_code",
+          success: false,
+          error: `File not found: ${file_path} in project ${project}`,
+        }, null, 2);
+      }
+
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      return JSON.stringify({
+        agent: "BBS",
+        action: "analyze_code",
+        success: true,
+        project,
+        file_path,
+        content: content.length > 5000 ? content.substring(0, 5000) + '\n... [TRUNCATED]' : content,
+        size_bytes: content.length,
+        lines: content.split('\n').length,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BBS",
+        action: "analyze_code",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bbs_create_branch: async (args) => {
+    const { project, branch_name } = args as { project: string; branch_name: string };
+    try {
+      const result = await createBranch(project, branch_name);
+      return JSON.stringify({
+        agent: "BBS",
+        action: "create_branch",
+        success: true,
+        project,
+        branch: branch_name,
+        message: result,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BBS",
+        action: "create_branch",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bbs_apply_fix: async (args) => {
+    const { project, file_path, content } = args as { project: string; file_path: string; content: string };
+    try {
+      const projectPath = resolveProjectPath(project);
+      const fullPath = path.join(projectPath, file_path);
+      const dir = path.dirname(fullPath);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(fullPath, content);
+
+      return JSON.stringify({
+        agent: "BBS",
+        action: "apply_fix",
+        success: true,
+        project,
+        file_path,
+        size_bytes: content.length,
+        message: `Fix applied to ${file_path} in ${project} (${content.length} bytes)`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BBS",
+        action: "apply_fix",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  bbs_notify_fbs: async (args) => {
+    const { bug_key, impact_description } = args as { bug_key: string; impact_description: string };
+
+    // Store notification for FBS consumption
+    const notifyDir = getDataDir('notifications');
+    const notifyFile = path.join(notifyDir, `bbs-to-fbs-${bug_key}-${Date.now()}.json`);
+    const notification = {
+      created_at: new Date().toISOString(),
+      from: "BBS",
+      to: "FBS",
+      bug_key,
+      impact_description,
+    };
+    fs.writeFileSync(notifyFile, JSON.stringify(notification, null, 2));
+
+    return JSON.stringify({
+      agent: "BBS",
+      action: "notify_fbs",
+      success: true,
+      bug_key,
+      notification_file: notifyFile,
+      message: `FBS notified of backend impact for ${bug_key}: ${impact_description.substring(0, 100)}`,
+    }, null, 2);
+  },
+
+  bbs_update_jira_status: async (args) => {
+    const { issue_key, status } = args as { issue_key: string; status: string };
+    try {
+      const jira = getJiraClient();
+      const result = await jira.transitionIssue(issue_key, status);
+
+      return JSON.stringify({
+        agent: "BBS",
+        action: "update_jira_status",
+        success: true,
+        issue_key,
+        from: result.from,
+        to: result.to,
+        message: `Bug ${issue_key} transicionado de '${result.from}' para '${result.to}'.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "BBS",
+        action: "update_jira_status",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  // ============================================
+  // PHASE 2 — SHARED / REGISTRY HANDLERS
+  // ============================================
+
+  read_implementation_registry: async () => {
+    try {
+      const registryPath = path.join(getDataDir('registry'), 'implementation-registry.json');
+
+      if (!fs.existsSync(registryPath)) {
+        // Initialize with empty registry
+        const emptyRegistry = {
+          version: "1.0",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          components: {},
+        };
+        fs.writeFileSync(registryPath, JSON.stringify(emptyRegistry, null, 2));
+        return JSON.stringify({
+          agent: "Shared",
+          action: "read_implementation_registry",
+          success: true,
+          registry: emptyRegistry,
+          message: "Registry initialized (empty). Use update_implementation_registry to add entries.",
+        }, null, 2);
+      }
+
+      const registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
+      return JSON.stringify({
+        agent: "Shared",
+        action: "read_implementation_registry",
+        success: true,
+        registry,
+        component_count: Object.keys(registry.components || {}).length,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "Shared",
+        action: "read_implementation_registry",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  update_implementation_registry: async (args) => {
+    const { updates } = args as { updates: Record<string, unknown> };
+    try {
+      const registryPath = path.join(getDataDir('registry'), 'implementation-registry.json');
+
+      let registry: any = {
+        version: "1.0",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        components: {},
+      };
+
+      if (fs.existsSync(registryPath)) {
+        registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
+      }
+
+      // Merge updates into registry components
+      registry.components = {
+        ...(registry.components || {}),
+        ...updates,
+      };
+      registry.updated_at = new Date().toISOString();
+
+      fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2));
+
+      return JSON.stringify({
+        agent: "Shared",
+        action: "update_implementation_registry",
+        success: true,
+        updates_applied: Object.keys(updates).length,
+        total_components: Object.keys(registry.components).length,
+        message: `Registry updated: ${Object.keys(updates).length} entries added/updated. Total: ${Object.keys(registry.components).length} components.`,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({
+        agent: "Shared",
+        action: "update_implementation_registry",
+        success: false,
+        error: String(error),
+      }, null, 2);
+    }
+  },
+
+  // ============================================
+  // RESET / ENVIRONMENT HANDLER
+  // ============================================
+
+  reset_bug_environment: async (args) => {
+    const { confirm } = args as { confirm: boolean };
+    if (!confirm) {
+      return JSON.stringify({
+        action: "reset_bug_environment",
+        success: false,
+        message: "Reset cancelado. Passa confirm=true para executar.",
+      }, null, 2);
+    }
+
+    const results: Array<{ step: string; success: boolean; detail: string }> = [];
+
+    // Step 1: Stop bug watcher
+    try {
+      stopBugWatcher();
+      results.push({ step: "stop_bug_watcher", success: true, detail: "Bug watcher parado" });
+    } catch (err) {
+      results.push({ step: "stop_bug_watcher", success: false, detail: String(err) });
+    }
+
+    // Step 2: Git reset WithErrors to initial-bugs tag
+    try {
+      const gitResult = await resetToTag('digitalChannelsWithErrors', 'initial-bugs');
+      results.push({ step: "git_reset", success: true, detail: gitResult });
+    } catch (err) {
+      results.push({ step: "git_reset", success: false, detail: String(err) });
+    }
+
+    // Step 3: Transition all 6 bugs back to "To Do" in Jira
+    const bugKeys = ['BCTT-368', 'BCTT-369', 'BCTT-370', 'BCTT-371', 'BCTT-372', 'BCTT-373'];
+    const jira = getJiraClient();
+
+    for (const bugKey of bugKeys) {
+      try {
+        const result = await jira.transitionIssue(bugKey, 'To Do');
+        results.push({ step: `jira_reset_${bugKey}`, success: true, detail: `${result.from} → ${result.to}` });
+      } catch (err) {
+        // Bug might already be in "To Do" — not a real error
+        results.push({ step: `jira_reset_${bugKey}`, success: false, detail: String(err) });
+      }
+    }
+
+    // Step 4: Reset bug watcher state (clear processedBugs)
+    try {
+      resetBugWatcher();
+      results.push({ step: "reset_watcher_state", success: true, detail: "processedBugs limpo, contadores a zero" });
+    } catch (err) {
+      results.push({ step: "reset_watcher_state", success: false, detail: String(err) });
+    }
+
+    const allSuccess = results.every(r => r.success);
+    return JSON.stringify({
+      action: "reset_bug_environment",
+      success: allSuccess,
+      steps: results,
+      message: allSuccess
+        ? "Ambiente de bugs reposto ao estado inicial. WithErrors no commit 'initial-bugs', 6 bugs em 'To Do' no Jira."
+        : `Reset parcial: ${results.filter(r => r.success).length}/${results.length} passos OK.`,
+    }, null, 2);
   }
 };
 
 // Merge all handlers (agent tools + jira tools)
 const allToolHandlers = {
   ...toolHandlers,
+  // ============================================
+  // CQE HANDLERS
+  // ============================================
+
+  cqe_validate_code: async (args: any) => {
+    const { project } = args as { project: string };
+    const projectPath = resolveProjectPath(project);
+    const report = runCQE(projectPath);
+    return JSON.stringify(report, null, 2);
+  },
+
+  cqe_sonarqube_scan: async (args: any) => {
+    const { project } = args as { project: string };
+    const projectPath = resolveProjectPath(project);
+    const sonarHost = process.env.SONAR_HOST_URL || 'http://localhost:9000';
+    const sonarToken = process.env.SONAR_TOKEN;
+    if (!sonarToken) {
+      return JSON.stringify({ success: false, error: 'SONAR_TOKEN not configured in .env' });
+    }
+    try {
+      const output = execSync(
+        `npx sonar-scanner -Dsonar.host.url=${sonarHost} -Dsonar.token=${sonarToken} 2>&1`,
+        { cwd: projectPath, timeout: 300000, encoding: 'utf-8' }
+      );
+      return JSON.stringify({ success: true, output: output.substring(0, 1000) });
+    } catch (err: any) {
+      return JSON.stringify({ success: false, error: String(err.message).substring(0, 500) });
+    }
+  },
+
+  cqe_sonarqube_status: async (args: any) => {
+    const { projectKey } = args as { projectKey: string };
+    const sonarHost = process.env.SONAR_HOST_URL || 'http://localhost:9000';
+    const sonarToken = process.env.SONAR_TOKEN;
+    if (!sonarToken) {
+      return JSON.stringify({ success: false, error: 'SONAR_TOKEN not configured' });
+    }
+    try {
+      const output = execSync(
+        `curl -s -u ${sonarToken}: "${sonarHost}/api/qualitygates/project_status?projectKey=${projectKey}"`,
+        { timeout: 15000, encoding: 'utf-8' }
+      );
+      return output;
+    } catch (err: any) {
+      return JSON.stringify({ success: false, error: String(err.message).substring(0, 200) });
+    }
+  },
+
+  // ============================================
+  // CI/CD PIPELINE HANDLERS
+  // ============================================
+
+  cicd_trigger_pipeline: async (args: any) => {
+    const { bdev, mvp, branch } = args as { bdev: string; mvp: string; branch: string };
+    const pipeline = await triggerCICDPipeline(bdev, mvp, branch);
+    return JSON.stringify({ success: true, pipelineId: pipeline.id, status: pipeline.status, steps: pipeline.steps.length }, null, 2);
+  },
+
+  cicd_get_status: async () => {
+    const status = getCICDStatus();
+    if (!status) return JSON.stringify({ status: 'idle', message: 'No pipeline running or completed' });
+    return JSON.stringify(status, null, 2);
+  },
+
+  cicd_rerun_failed: async () => {
+    const pipeline = await rerunFailedSteps();
+    if (!pipeline) return JSON.stringify({ success: false, error: 'No pipeline to rerun' });
+    return JSON.stringify({ success: true, status: pipeline.status, steps: pipeline.steps.map(s => ({ id: s.id, status: s.status })) }, null, 2);
+  },
+
+  cicd_get_report: async () => {
+    const report = getCICDReport();
+    if (!report) return JSON.stringify({ success: false, error: 'No pipeline report available' });
+    return JSON.stringify(report, null, 2);
+  },
+
+  // ============================================
+  // DEPLOY HANDLERS
+  // ============================================
+
+  deploy_start: async (args: any) => {
+    const { bdev, mvp, branch } = args as { bdev: string; mvp: string; branch: string };
+    const status = await startDeploy(bdev, mvp, branch);
+    return JSON.stringify({ success: true, status: status.status, steps: status.steps.length }, null, 2);
+  },
+
+  deploy_status: async () => {
+    const status = getDeployStatus();
+    return JSON.stringify(status, null, 2);
+  },
+
+  deploy_health_check: async () => {
+    const results = await healthCheck();
+    return JSON.stringify({ services: results }, null, 2);
+  },
+
+  deploy_rollback: async (args: any) => {
+    const { bdev } = args as { bdev: string };
+    try {
+      await rollback(bdev);
+      return JSON.stringify({ success: true, message: `Rollback completo para ${bdev}` });
+    } catch (err: any) {
+      return JSON.stringify({ success: false, error: String(err.message) });
+    }
+  },
+
   ...jiraToolHandlers,
 };
 
@@ -3198,7 +6073,7 @@ export async function handleToolCall(
   args: Record<string, unknown> | undefined,
   options?: { demoMode?: boolean }
 ): Promise<{ content: Array<{ type: "text"; text: string }> }> {
-  const handler = allToolHandlers[name];
+  const handler = (allToolHandlers as Record<string, (args: any) => Promise<string>>)[name];
 
   if (!handler) {
     return {

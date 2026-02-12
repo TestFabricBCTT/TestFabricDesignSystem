@@ -1,13 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Project, AgentIteration } from '@/types';
+import { Project, AgentIteration, PhaseId } from '@/types';
 
 const STORAGE_KEY = 'agent-factory-projects';
 
-const PIPELINE_AGENTS = ['ba', 'fa', 'da', 'pa', 'dsla'] as const;
+export const PHASE1_AGENTS = ['ba', 'fa', 'da', 'dsla', 'pa'] as const;
+export const PHASE2_AGENTS = ['taa', 'fde', 'bde', 'ute', 'fbs', 'bbs'] as const;
 
-function createEmptyAgents(): Record<string, AgentIteration> {
+export function getPipelineAgents(phaseId?: PhaseId): readonly string[] {
+  if (phaseId === 'desenvolvimento') return PHASE2_AGENTS;
+  return PHASE1_AGENTS;
+}
+
+function createEmptyAgents(phaseId?: PhaseId): Record<string, AgentIteration> {
   const agents: Record<string, AgentIteration> = {};
-  for (const agentId of PIPELINE_AGENTS) {
+  const pipeline = getPipelineAgents(phaseId);
+  for (const agentId of pipeline) {
     agents[agentId] = {
       agentId,
       status: 'not_started',
@@ -17,10 +24,19 @@ function createEmptyAgents(): Record<string, AgentIteration> {
   return agents;
 }
 
+function migrateProject(project: Project): Project {
+  // Projects without phaseId are Phase 1 (created before Batch 4)
+  if (!project.phaseId) {
+    return { ...project, phaseId: 'concepcao' };
+  }
+  return project;
+}
+
 function loadFromStorage(): Project[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const projects: Project[] = raw ? JSON.parse(raw) : [];
+    return projects.map(migrateProject);
   } catch {
     return [];
   }
@@ -33,7 +49,7 @@ function saveToStorage(projects: Project[]): void {
 export interface UseProjectHistoryReturn {
   projects: Project[];
   activeProject: Project | null;
-  createProject: (title: string) => Project;
+  createProject: (title: string, phaseId?: PhaseId) => Project;
   updateAgentIteration: (
     projectId: string,
     agentId: string,
@@ -41,7 +57,7 @@ export interface UseProjectHistoryReturn {
   ) => void;
   updateProject: (
     projectId: string,
-    data: Partial<Pick<Project, 'title' | 'bdevCode'>>,
+    data: Partial<Pick<Project, 'title' | 'bdevCode' | 'mvp'>>,
   ) => void;
   deleteProject: (id: string) => void;
   setActiveProject: (id: string | null) => void;
@@ -59,14 +75,15 @@ export const useProjectHistory = (): UseProjectHistoryReturn => {
   const activeProject =
     projects.find((p) => p.id === activeProjectId) ?? null;
 
-  const createProject = useCallback((title: string): Project => {
+  const createProject = useCallback((title: string, phaseId: PhaseId = 'concepcao'): Project => {
     const now = new Date().toISOString();
     const project: Project = {
       id: `proj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       title,
+      phaseId,
       createdAt: now,
       updatedAt: now,
-      agents: createEmptyAgents(),
+      agents: createEmptyAgents(phaseId),
     };
     setProjects((prev) => [project, ...prev]);
     setActiveProjectId(project.id);
@@ -104,7 +121,7 @@ export const useProjectHistory = (): UseProjectHistoryReturn => {
   const updateProject = useCallback(
     (
       projectId: string,
-      data: Partial<Pick<Project, 'title' | 'bdevCode'>>,
+      data: Partial<Pick<Project, 'title' | 'bdevCode' | 'mvp'>>,
     ) => {
       setProjects((prev) =>
         prev.map((p) =>
