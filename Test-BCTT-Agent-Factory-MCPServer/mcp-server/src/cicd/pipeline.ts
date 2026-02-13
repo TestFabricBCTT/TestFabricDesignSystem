@@ -7,8 +7,12 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { runCQE, CQEReport } from '../quality/cqe.js';
 import * as git from '../git/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || path.resolve(__dirname, '..', '..', '..', '..');
 const MCP_SERVER_ROOT = path.resolve(process.cwd());

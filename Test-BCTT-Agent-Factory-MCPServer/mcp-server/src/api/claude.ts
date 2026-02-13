@@ -50,8 +50,8 @@ const AGENT_UPSTREAM: Record<string, string[]> = {
   bbs: ["ute"],
 };
 
-const HANDOFF_FALLBACK_CHARS = 4000;
-const HANDOFF_MAX_RETRIES = 0; // Fast pipeline always produces complete output; fallback (last 4000 chars) is sufficient
+const HANDOFF_FALLBACK_CHARS = 8000;
+const HANDOFF_MAX_RETRIES = 1; // At least 1 retry when HANDOFF block not found
 
 /**
  * Extrai o bloco ### HANDOFF de uma lista de mensagens.
@@ -64,17 +64,23 @@ function findHandoffBlock(
   const assistantMsgs = messages.filter((m) => m.role === "assistant");
   if (assistantMsgs.length === 0) return null;
 
+  // Flexible regex: accepts ## HANDOFF, ### HANDOFF, ### HANDOFF:, ### Handoff, etc.
+  const handoffRegex = /^#{2,3}\s*HANDOFF\s*:?\s*$/im;
+
   for (
     let i = assistantMsgs.length - 1;
     i >= Math.max(0, assistantMsgs.length - 3);
     i--
   ) {
     const content = assistantMsgs[i].content;
-    const idx = content.indexOf("### HANDOFF");
-    if (idx !== -1) {
-      let handoff = content.substring(idx);
-      const nextSection = handoff.indexOf("\n### ", 5);
-      if (nextSection > 0) handoff = handoff.substring(0, nextSection);
+    const match = handoffRegex.exec(content);
+    if (match) {
+      let handoff = content.substring(match.index);
+      // Cut at next section heading (## or ###)
+      const nextSection = handoff.match(/\n#{2,3}\s+(?!HANDOFF)/);
+      if (nextSection && nextSection.index && nextSection.index > 0) {
+        handoff = handoff.substring(0, nextSection.index);
+      }
       return handoff.trim();
     }
   }
@@ -91,13 +97,16 @@ function extractFallback(
   if (assistantMsgs.length === 0) return null;
 
   const lastMsg = assistantMsgs[assistantMsgs.length - 1].content;
-  const truncated =
-    lastMsg.length > HANDOFF_FALLBACK_CHARS
-      ? lastMsg.slice(-HANDOFF_FALLBACK_CHARS)
-      : lastMsg;
-  return (
-    "[Resumo automático - sem bloco HANDOFF estruturado]\n\n" + truncated
-  );
+  const isTruncated = lastMsg.length > HANDOFF_FALLBACK_CHARS;
+  const truncated = isTruncated
+    ? lastMsg.slice(-HANDOFF_FALLBACK_CHARS)
+    : lastMsg;
+
+  // Explicit truncation marker so downstream agents (DSLA) can detect incomplete context
+  const marker = isTruncated
+    ? `[AVISO: Handoff TRUNCADO — output do agente excedeu ${HANDOFF_FALLBACK_CHARS} chars. Informação pode estar incompleta. Extrai o máximo possível.]\n\n`
+    : "[Resumo automático - sem bloco HANDOFF estruturado]\n\n";
+  return marker + truncated;
 }
 
 /**
@@ -117,11 +126,15 @@ async function requestHandoffFromAgent(
         "Inclui TODOS os deliverables do trabalho que fizeste nesta sessão. " +
         'Formato obrigatório: começar com "### HANDOFF" seguido dos campos estruturados.'
     );
-    if (result.response.includes("### HANDOFF")) {
-      const idx = result.response.indexOf("### HANDOFF");
-      let handoff = result.response.substring(idx);
-      const nextSection = handoff.indexOf("\n### ", 5);
-      if (nextSection > 0) handoff = handoff.substring(0, nextSection);
+    // Use same flexible regex as findHandoffBlock
+    const handoffRegex = /^#{2,3}\s*HANDOFF\s*:?\s*$/im;
+    const match = handoffRegex.exec(result.response);
+    if (match) {
+      let handoff = result.response.substring(match.index);
+      const nextSection = handoff.match(/\n#{2,3}\s+(?!HANDOFF)/);
+      if (nextSection && nextSection.index && nextSection.index > 0) {
+        handoff = handoff.substring(0, nextSection.index);
+      }
       console.log(
         `[handoff] ${agentId} produced HANDOFF block (${handoff.length} chars)`
       );
@@ -159,6 +172,7 @@ async function getUpstreamHandoff(
 
     // 1. Tentar encontrar bloco HANDOFF existente
     let handoff = findHandoffBlock(conv.messages);
+    let quality: 'STRUCTURED' | 'RETRY' | 'FALLBACK' | 'TRUNCATED' = 'STRUCTURED';
 
     // 2. Se não encontrar, pedir ao agente (retries)
     if (!handoff) {
@@ -170,18 +184,23 @@ async function getUpstreamHandoff(
           `[handoff] Retry ${retry + 1}/${HANDOFF_MAX_RETRIES} for ${upId}`
         );
         handoff = await requestHandoffFromAgent(sessionId, upId);
+        if (handoff) quality = 'RETRY';
       }
     }
 
     // 3. Fallback se tudo falhar
     if (!handoff) {
+      const lastMsg = conv.messages.filter(m => m.role === 'assistant').pop();
+      const isTruncated = lastMsg && lastMsg.content.length > HANDOFF_FALLBACK_CHARS;
+      quality = isTruncated ? 'TRUNCATED' : 'FALLBACK';
       console.log(
-        `[handoff] All retries failed for ${upId}, using fallback (${HANDOFF_FALLBACK_CHARS} chars)`
+        `[handoff] All retries failed for ${upId}, using fallback (${HANDOFF_FALLBACK_CHARS} chars, ${quality})`
       );
       handoff = extractFallback(conv.messages);
     }
 
     if (handoff) {
+      console.log(`[handoff] ${upId} → ${agentId}: quality=${quality}, ${handoff.length} chars`);
       parts.push(`## Entrega do ${upId.toUpperCase()}\n${handoff}`);
     }
   }

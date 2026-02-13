@@ -12,23 +12,14 @@ const meta: Meta<typeof DatePicker> = {
       control: 'text',
       description: 'Label do campo de data',
     },
-    error: {
+    variant: {
       control: 'select',
-      options: ['true', 'false'],
-      description: 'Estado de erro',
+      options: ['desktop', 'mobile'],
+      description: 'Variante desktop ou mobile',
     },
     disabled: {
-      control: 'select',
-      options: ['true', 'false'],
+      control: 'boolean',
       description: 'Estado desabilitado',
-    },
-    helperText: {
-      control: 'text',
-      description: 'Texto de ajuda ou erro',
-    },
-    placeholder: {
-      control: 'text',
-      description: 'Placeholder do campo',
     },
   },
 };
@@ -36,24 +27,19 @@ const meta: Meta<typeof DatePicker> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const DefaultVariant: Story = {
-  args: { variant: 'default' },
+export const Desktop: Story = {
+  args: { variant: 'desktop' },
 };
 
-export const Error: Story = {
-  args: { variant: 'error' },
-};
-
-export const Disabled: Story = {
-  args: { variant: 'disabled' },
+export const Mobile: Story = {
+  args: { variant: 'mobile' },
 };
 
 export const AllVariants: Story = {
   render: () => (
     <Stack direction="row" spacing={2}>
-      <DatePicker variant="default" />
-      <DatePicker variant="error" />
-      <DatePicker variant="disabled" />
+      <DatePicker variant="desktop" />
+      <DatePicker variant="mobile" />
     </Stack>
   ),
 };

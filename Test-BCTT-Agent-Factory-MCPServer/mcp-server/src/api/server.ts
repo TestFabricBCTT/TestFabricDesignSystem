@@ -491,6 +491,38 @@ app.post("/chat/stream", async (req: Request, res: Response) => {
       }
     }
 
+    // FA Jira retry: if FA completed without creating Jira issues, retry automatically
+    if (agentId === "fa" && (useFast || usePipeline)) {
+      const jiraKeyPattern = /\b[A-Z]{2,10}-\d+\b/;
+      const hasJiraKeys = jiraKeyPattern.test(responseText);
+      if (!hasJiraKeys) {
+        console.log(`[fa-jira-retry] FA output has no Jira keys — retrying Jira creation...`);
+        res.write(`data: ${JSON.stringify({ type: "status", message: "FA não criou Jira — a tentar automaticamente..." })}\n\n`);
+        try {
+          const jiraRetryResult = await sendMessageWithFastPipeline(
+            sessionId,
+            "fa",
+            `Executa APENAS o passo 8 (EXPORTAÇÃO JIRA). Usa OBRIGATORIAMENTE a tool jira_bulk_create_with_document com os dados dos requisitos seguintes:\n\n${responseText.slice(-4000)}`,
+            () => {}
+          );
+          if (jiraRetryResult.response) {
+            console.log(`[fa-jira-retry] Jira retry completed (${jiraRetryResult.response.length} chars)`);
+            const retryHasKeys = jiraKeyPattern.test(jiraRetryResult.response);
+            console.log(`[fa-jira-retry] Jira keys found after retry: ${retryHasKeys}`);
+            responseText += `\n\n---\n**Jira (criado automaticamente):**\n${jiraRetryResult.response}`;
+            const jiraSuffix = `\n\n---\n**Jira (criado automaticamente):**\n${jiraRetryResult.response}`;
+            const chunkSize = 500;
+            for (let i = 0; i < jiraSuffix.length; i += chunkSize) {
+              res.write(`data: ${JSON.stringify({ type: "chunk", content: jiraSuffix.slice(i, i + chunkSize) })}\n\n`);
+            }
+          }
+        } catch (jiraError) {
+          console.error(`[fa-jira-retry] Jira retry failed:`, jiraError);
+          res.write(`data: ${JSON.stringify({ type: "status", message: "Jira retry falhou — continua sem Jira" })}\n\n`);
+        }
+      }
+    }
+
     // Auto-advance: signal next agent transition
     const AGENT_DOWNSTREAM: Record<string, string> = {
       // Phase 1

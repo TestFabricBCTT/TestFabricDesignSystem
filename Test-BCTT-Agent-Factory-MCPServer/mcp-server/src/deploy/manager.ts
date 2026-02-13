@@ -9,6 +9,7 @@ import { spawn, exec, execSync, ChildProcess } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
+import { fileURLToPath } from 'url';
 import * as git from '../git/index.js';
 import { SERVICES, ManagedService } from './services.js';
 
@@ -362,7 +363,8 @@ async function runDeploySteps(
   try {
     const projects = ['TestAgentFactoryCore', 'TestAgentFactoryMiddleware', 'TestAgentFactoryDigitalChannels'];
     const results: string[] = [];
-    const WORKSPACE = process.env.WORKSPACE_ROOT || path.resolve(__dirname, '..', '..', '..', '..');
+    const __dirname_esm = path.dirname(fileURLToPath(import.meta.url));
+    const WORKSPACE = process.env.WORKSPACE_ROOT || path.resolve(__dirname_esm, '..', '..', '..', '..');
     for (const proj of projects) {
       const projPath = path.join(WORKSPACE, proj);
       if (!fs.existsSync(path.join(projPath, 'package.json'))) continue;

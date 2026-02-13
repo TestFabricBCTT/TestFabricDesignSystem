@@ -15,7 +15,7 @@ const AGENT_MAX_TURNS: Record<string, number> = {
   // Phase 1
   fa: 30,
   da: 25,
-  dsla: 10,
+  dsla: 20,
   pa: 15,
   // Phase 2
   taa: 20,
@@ -73,22 +73,25 @@ const CONSOLIDATED_PROMPTS: Record<string, string> = {
    - NUNCA envies features com user_stories vazio
    - O documento Word é anexado automaticamente ao Epic
 
-9. RESUMO FINAL
-   Apresenta resultado claro e organizado:
-   - User Stories (lista com títulos e MVPs)
-   - Sistemas backend impactados (Core/Middleware/BFF e porquê)
-   - Regras principais
-   - Fluxo e dependências
-   - Validação (aprovado/gaps)
-   - Documento Word gerado
-   - Issues Jira criadas (keys e estrutura)
-   - Próximos passos (avanço para DA)
+9. RESUMO FINAL E HANDOFF
+   Apresenta resultado claro e organizado, seguido de OBRIGATORIAMENTE um bloco ### HANDOFF:
+
+   ### HANDOFF
+   **Projeto:** [nome da funcionalidade]
+   **BDEV:** [código BDEV usado — formato BDEVxxxxxxxx]
+   **User Stories:** [lista resumida com IDs]
+   **Ecrãs identificados:** [lista de ecrãs para o DA]
+   **Issues Jira:** [keys criadas — BCTT-xxx]
+   **Sistemas backend:** [lista de sistemas impactados]
+
+   ATENÇÃO: O bloco ### HANDOFF é OBRIGATÓRIO. Sem ele, o DA não recebe contexto.
 
 REGRAS CRÍTICAS:
 - Executa TODOS os passos de 1 a 9 por ordem. NUNCA saltar passos.
 - Chama as tools MCP conforme necessário em cada passo
 - Sê completo e detalhado em cada passo
-- O resumo final é a resposta que o utilizador vai ver`,
+- O resumo final é a resposta que o utilizador vai ver
+- O bloco ### HANDOFF DEVE ser a última secção da resposta`,
 
   da: `Executa o trabalho COMPLETO do DA numa única sessão, seguindo estes passos na ordem:
 
@@ -116,53 +119,114 @@ REGRAS CRÍTICAS:
    IMPORTANTE: Consolida TODAS as traduções numa ÚNICA chamada a da_create_screen_copy (não por ecrã).
    Usa da_get_standard_translations para traduções padrão. Gera chaves i18n.
 
-5. RESUMO FINAL
-   Apresenta entrega organizada:
-   - **BDEV:** [código BDEV recebido do FA — OBRIGATÓRIO, formato BDEVxxxxxxxx]
-   - Wireframes criados (lista de ecrãs)
-   - Fluxos de exceção definidos
-   - Traduções geradas
-   - Componentes em falta no Design System
-   - Próximos passos (PA — Prototype Agent)
+5. RESUMO FINAL E HANDOFF
+   OBRIGATÓRIO: No fim da resposta, inclui EXACTAMENTE este bloco (com "### HANDOFF" como título markdown nível 3):
+
+   ### HANDOFF
+   **BDEV:** BDEVxxxxxxxx
+   **Ecrãs:** [lista de ecrãs criados com IDs e nomes]
+   **Componentes novos para DSLA:** [lista de componentes em falta identificados no passo 1, com: nome (PascalCase), atomic_level (atom/molecule/organism), base_mui_component (nome MUI a wrapar), variants, props — OU "Nenhum" se todos já existem]
+   **Fluxos de exceção:** [resumo dos fluxos definidos]
+   **Traduções:** [resumo das traduções PT/EN]
+
+   ATENÇÃO: O bloco ### HANDOFF é OBRIGATÓRIO. Sem ele, o DSLA e PA não recebem contexto.
 
 REGRAS CRÍTICAS:
 - Executa TODOS os passos sequencialmente
 - Sections dos wireframes devem ser específicos (não genéricos)
 - Propaga SEMPRE o código BDEV recebido do FA (formato BDEVxxxxxxxx) em TODAS as tools (da_create_wireframes, da_generate_figma_spec, da_generate_ux_flow, da_create_screen_copy) e no HANDOFF
 - O BDEV é o código que começa por "BDEV" (ex: BDEV00000011), NÃO a key Jira (ex: BCTT-297)
-- O resumo final é a resposta que o utilizador vai ver`,
+- O resumo final é a resposta que o utilizador vai ver
+- O bloco ### HANDOFF DEVE ser a última secção da resposta`,
 
   dsla: `Executa o trabalho COMPLETO do DSLA numa única sessão:
 
 1. ANÁLISE DO HANDOFF
    Verifica se há "Componentes novos para DSLA" no handoff recebido do DA.
+   Se a mensagem começa com "[AVISO: Handoff TRUNCADO", extrai o máximo de informação possível — nomes de componentes, props, etc.
    Se não há componentes novos, avança directamente para o RESUMO FINAL.
 
 2. VERIFICAÇÃO DE COMPONENTES EXISTENTES
    Para cada componente identificado, usa dsla_get_component_spec para verificar se já existe no catálogo.
    Se já existe, salta para o próximo. Se não existe, cria-o no passo seguinte.
 
-3. CRIAÇÃO DE COMPONENTES
-   Para cada componente novo:
-   a. Usa dsla_create_component com: component_name (PascalCase), atomic_level, base_mui_component (componente MUI a wrapar), variants, props
-   b. Usa dsla_generate_stories com: component_name, variants, props (OBRIGATÓRIO — sem props não há controls interactivos no Storybook)
-      Exemplo de props: [{ name: "variant", type: "string", options: ["primary", "secondary"], description: "Variante visual" }, { name: "disabled", type: "boolean", description: "Estado desabilitado" }]
+3. CRIAÇÃO DE COMPONENTES — REGRAS DE QUALIDADE
+   Para cada componente novo, PREFERE fornecer código completo via component_code e story_code.
+
+   a. dsla_create_component — PREFERIDO: fornecer component_code com código TSX completo.
+      O código DEVE:
+      - Importar de '@mui/material' (NUNCA de @mui/lab, @mui/x-date-pickers, @mui/x-data-grid — NÃO estão instalados)
+      - Usar React.forwardRef com interface Props tipada
+      - Mapear TODAS as props para o componente MUI (não apenas spread)
+      - Incluir displayName e default export
+      - Renderizar conteúdo VISÍVEL (não wrappers vazios)
+
+      Exemplo de BOM componente (ResultCard):
+      \`\`\`tsx
+      import React from 'react';
+      import { Card, CardContent, Typography, Box } from '@mui/material';
+
+      export interface ResultCardProps {
+        title?: string;
+        value?: string;
+        description?: string;
+        variant?: 'default' | 'highlight' | 'success';
+      }
+
+      export const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
+        ({ title = 'Resultado', value = '0,00 €', description, variant = 'default' }, ref) => {
+          const bgColor = variant === 'highlight' ? '#FFF3E0' : variant === 'success' ? '#E8F5E9' : undefined;
+          return (
+            <Card ref={ref} sx={{ bgcolor: bgColor }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">{title}</Typography>
+                <Typography variant="h4" fontWeight={700}>{value}</Typography>
+                {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
+              </CardContent>
+            </Card>
+          );
+        }
+      );
+      ResultCard.displayName = 'ResultCard';
+      export default ResultCard;
+      \`\`\`
+
+      Se NÃO forneceres component_code, a tool gera um template automático — mas é menos rico.
+
+      NUNCA usar children como prop default — só para componentes container (Card, Dialog, etc.).
+
+   b. dsla_generate_stories — PREFERIDO: fornecer story_code com código completo.
+      Se não, fornecer default_args com valores reais que tornem o componente visível:
+      - Exemplo: { value: 75, label: 'Progresso', children: 'Texto visível' }
+      - Exemplo: { steps: ['Simulação', 'Dados', 'Resultado'], activeStep: 1 }
+      - Exemplo: { title: 'Prestação Mensal', value: '523,45 €', description: 'Taxa fixa 3.2%' }
+      NUNCA criar stories que passem apenas { variant: 'xxx' } — o componente ficará vazio no Storybook.
+
    c. Usa dsla_check_accessibility para verificar conformidade WCAG
+
+   DEPENDÊNCIAS MUI DISPONÍVEIS:
+   - @mui/material@6 ✅ (Box, Card, Typography, Stepper, Step, StepLabel, Slider, TextField, LinearProgress, CircularProgress, etc.)
+   - @mui/icons-material@6 ✅
+   - @mui/lab ❌ NÃO INSTALADO (Timeline, TreeView, LoadingButton NÃO disponíveis — usar Stepper como alternativa a Timeline)
+   - @mui/x-date-pickers ❌ NÃO INSTALADO
+   - @mui/x-data-grid ❌ NÃO INSTALADO
 
 4. BUILD DO DESIGN SYSTEM
    Após criar TODOS os componentes, usa dsla_build_design_system para compilar.
    Se o build FALHAR:
    - Analisa os erros de TypeScript no output
-   - Corrige os ficheiros usando dsla_create_component (re-cria o componente com código corrigido)
+   - Corrige usando dsla_create_component com component_code corrigido
    - Tenta build novamente (máximo 2 tentativas)
    O build DEVE ter sucesso antes de avançar para o HANDOFF.
 
 5. RESUMO FINAL
    Apresenta: componentes criados (ou "Nenhum"), ficheiros escritos, resultado do build, notas para PA.
 
-REGRAS:
+REGRAS CRÍTICAS:
 - Usa APENAS tools com prefixo dsla_
-- Segue o padrão forwardRef + MUI wrapper (como Button.tsx): import { X as MuiX } from '@mui/material'
+- PREFERE component_code/story_code para componentes ricos e visíveis
+- NUNCA importar de @mui/lab — usar alternativas de @mui/material
+- NUNCA criar componentes que rendem vazio (sem props default, sem conteúdo)
 - Se não há componentes novos, produz HANDOFF imediatamente
 - Build com SUCESSO é OBRIGATÓRIO antes do HANDOFF
 - O resumo final é a resposta que o utilizador vai ver`,

@@ -17,6 +17,15 @@ const config: StorybookConfig = {
   typescript: {
     reactDocgen: 'react-docgen-typescript',
   },
+  async viteFinal(config) {
+    return {
+      ...config,
+      server: {
+        ...config.server,
+        allowedHosts: ['storybook.dcscreatedbyai.pt'],
+      },
+    };
+  },
 };
 
 export default config;

@@ -16,6 +16,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import { execSync, spawn } from 'child_process';
+import { fileURLToPath } from 'url';
 import {
   createBranch,
   checkoutBranch,
@@ -49,6 +50,9 @@ function getBcttDesignSystemPath(): string {
 // ============================================
 // WORKSPACE & PROJECT PATHS (Phase 2)
 // ============================================
+
+const __filename_esm = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename_esm);
 
 const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || path.resolve(__dirname, '..', '..', '..', '..');
 const MCP_SERVER_ROOT = path.resolve(process.cwd());
@@ -1141,6 +1145,10 @@ export const tools: Tool[] = [
           type: "string",
           description: "Link do design no Figma (opcional)"
         },
+        component_code: {
+          type: "string",
+          description: "Full TSX source code for the component. If provided, written directly instead of auto-generated template. Must include imports, interface, forwardRef, displayName, and default export."
+        },
         props: {
           type: "array",
           items: {
@@ -1186,6 +1194,14 @@ export const tools: Tool[] = [
             }
           },
           description: "Props do componente para gerar argTypes interactivos no Storybook"
+        },
+        story_code: {
+          type: "string",
+          description: "Full stories TSX source code. If provided, written directly instead of auto-generated. Must include Meta, StoryObj, at least one named export, and AllVariants."
+        },
+        default_args: {
+          type: "object",
+          description: "Default args for stories to render visible content (e.g. { children: 'Click me', value: 75, label: 'Status', steps: ['Step 1', 'Step 2'] }). Applied to all generated story variants."
         }
       },
       required: ["component_name"]
@@ -4032,36 +4048,95 @@ const toolHandlers: Record<string, (args: Record<string, unknown>) => Promise<st
 
   // DSLA Tools — write real files to bctt-design-system project
   dsla_create_component: async (args) => {
-    const { component_name, atomic_level, props, base_mui_component, variants, design_tokens } = args as {
+    const { component_name, atomic_level, props, base_mui_component, variants, design_tokens, component_code } = args as {
       component_name: string;
       atomic_level: string;
       props?: Array<{ name: string; type: string; required: boolean; description: string }>;
       base_mui_component?: string;
       variants?: string[];
       design_tokens?: Record<string, string>;
+      component_code?: string;
     };
+
+    // ── MUI dependency whitelist ──
+    // Only @mui/material is installed (NOT @mui/lab, @mui/x-date-pickers, @mui/x-data-grid)
+    const MUI_MATERIAL_COMPONENTS = [
+      'Accordion', 'AccordionActions', 'AccordionDetails', 'AccordionSummary',
+      'Alert', 'AlertTitle', 'AppBar', 'Autocomplete', 'Avatar', 'AvatarGroup',
+      'Backdrop', 'Badge', 'BottomNavigation', 'BottomNavigationAction', 'Box',
+      'Breadcrumbs', 'Button', 'ButtonBase', 'ButtonGroup',
+      'Card', 'CardActionArea', 'CardActions', 'CardContent', 'CardHeader', 'CardMedia',
+      'Checkbox', 'Chip', 'CircularProgress', 'Collapse', 'Container', 'CssBaseline',
+      'Dialog', 'DialogActions', 'DialogContent', 'DialogContentText', 'DialogTitle',
+      'Divider', 'Drawer', 'Fab', 'Fade', 'FilledInput', 'FormControl',
+      'FormControlLabel', 'FormGroup', 'FormHelperText', 'FormLabel', 'Grid',
+      'Grow', 'Icon', 'IconButton', 'ImageList', 'ImageListItem', 'ImageListItemBar',
+      'Input', 'InputAdornment', 'InputBase', 'InputLabel',
+      'LinearProgress', 'Link', 'List', 'ListItem', 'ListItemAvatar', 'ListItemButton',
+      'ListItemIcon', 'ListItemSecondaryAction', 'ListItemText', 'ListSubheader',
+      'Menu', 'MenuItem', 'MenuList', 'MobileStepper', 'Modal',
+      'NativeSelect', 'OutlinedInput',
+      'Pagination', 'PaginationItem', 'Paper', 'Popover', 'Popper',
+      'Radio', 'RadioGroup', 'Rating',
+      'Select', 'Skeleton', 'Slide', 'Slider', 'Snackbar', 'SnackbarContent',
+      'SpeedDial', 'SpeedDialAction', 'SpeedDialIcon', 'Stack',
+      'Step', 'StepButton', 'StepConnector', 'StepContent', 'StepIcon', 'StepLabel', 'Stepper',
+      'SvgIcon', 'SwipeableDrawer', 'Switch',
+      'Tab', 'Table', 'TableBody', 'TableCell', 'TableContainer', 'TableFooter',
+      'TableHead', 'TablePagination', 'TableRow', 'TableSortLabel', 'Tabs', 'TextField',
+      'ToggleButton', 'ToggleButtonGroup', 'Toolbar', 'Tooltip',
+      'Typography', 'Zoom',
+    ];
+
+    const muiBase = base_mui_component || 'Box';
+    if (!MUI_MATERIAL_COMPONENTS.includes(muiBase)) {
+      return JSON.stringify({
+        agent: "DSLA",
+        action: "create_component",
+        success: false,
+        error: `MUI component '${muiBase}' is NOT available. Only @mui/material is installed (NOT @mui/lab, @mui/x-date-pickers, @mui/x-data-grid). Available alternatives: ${MUI_MATERIAL_COMPONENTS.filter(c => c.toLowerCase().includes(muiBase.toLowerCase().slice(0, 4))).join(', ') || 'Box, Card, Paper, Stepper, Accordion'}. Use one of these instead.`,
+      }, null, 2);
+    }
 
     const dsRoot = getBcttDesignSystemPath();
     const componentDir = path.join(dsRoot, 'src', 'components', component_name);
     fs.mkdirSync(componentDir, { recursive: true });
 
-    // Generate props interface
-    const componentProps = props || [
-      { name: 'variant', type: `'${(variants || ['default']).join("' | '")}'`, required: false, description: 'Variante visual' },
-      { name: 'children', type: 'React.ReactNode', required: true, description: 'Conteudo' },
-    ];
-    const propsInterface = componentProps
-      .map(p => `  /** ${p.description} */\n  ${p.name}${p.required ? '' : '?'}: ${p.type};`)
-      .join('\n');
+    let code: string;
 
-    // Generate component code (following Button.tsx pattern: forwardRef + MUI wrapper)
-    // Always alias MUI imports to avoid naming conflicts (e.g. Chip vs MuiChip)
-    const muiBase = base_mui_component || 'Box';
-    const muiAlias = `Mui${muiBase}`;
-    const muiPropsAlias = `Mui${muiBase}Props`;
-    const muiImport = `import { ${muiBase} as ${muiAlias}, type ${muiBase}Props as ${muiPropsAlias} } from '@mui/material';`;
+    if (component_code) {
+      // ── Path 1 (preferred): Use provided code directly ──
+      code = component_code;
+    } else {
+      // ── Path 2 (fallback): Generate improved template ──
+      const componentProps = props || [
+        { name: 'variant', type: `'${(variants || ['default']).join("' | '")}'`, required: false, description: 'Variante visual' },
+      ];
+      const propsInterface = componentProps
+        .map(p => `  /** ${p.description} */\n  ${p.name}${p.required ? '' : '?'}: ${p.type};`)
+        .join('\n');
 
-    const code = `import React from 'react';
+      const muiAlias = `Mui${muiBase}`;
+      const muiPropsAlias = `Mui${muiBase}Props`;
+      const muiImport = `import { ${muiBase} as ${muiAlias}, type ${muiBase}Props as ${muiPropsAlias} } from '@mui/material';`;
+
+      // Build prop destructuring (all named props, not just variant)
+      const propNames = componentProps.map(p => p.name);
+      const hasVariant = propNames.includes('variant');
+      const defaultVariant = hasVariant ? (variants || ['default'])[0] : null;
+      const destructured = propNames
+        .map(p => p === 'variant' && defaultVariant ? `variant = '${defaultVariant}'` : p)
+        .join(', ');
+
+      // Build prop passing to MUI (explicit, not spread)
+      const muiPropMapping: string[] = [];
+      if (hasVariant) muiPropMapping.push('variant={variant}');
+      propNames.filter(p => p !== 'variant' && p !== 'children').forEach(p => {
+        muiPropMapping.push(`${p}={${p}}`);
+      });
+      const hasChildren = propNames.includes('children');
+
+      code = `import React from 'react';
 ${muiImport}
 
 export interface ${component_name}Props extends Omit<${muiPropsAlias}, 'variant'> {
@@ -4069,11 +4144,10 @@ ${propsInterface}
 }
 
 export const ${component_name} = React.forwardRef<HTMLDivElement, ${component_name}Props>(
-  ({ variant = '${(variants || ['default'])[0]}', children, ...props }, ref) => {
+  ({ ${destructured}, ...rest }, ref) => {
     return (
-      <${muiAlias} ref={ref} {...props}>
-        {children}
-      </${muiAlias}>
+      <${muiAlias} ref={ref} ${muiPropMapping.join(' ')} {...rest}${hasChildren ? '' : ' /'}>
+${hasChildren ? `        {children}\n      </${muiAlias}>` : ''}
     );
   }
 );
@@ -4081,6 +4155,7 @@ export const ${component_name} = React.forwardRef<HTMLDivElement, ${component_na
 ${component_name}.displayName = '${component_name}';
 export default ${component_name};
 `;
+    }
 
     // Write component file
     fs.writeFileSync(path.join(componentDir, `${component_name}.tsx`), code);
@@ -4099,6 +4174,23 @@ export default ${component_name};
       }
     }
 
+    // ── Also update src/index.ts (root barrel) ──
+    const rootBarrel = path.join(dsRoot, 'src', 'index.ts');
+    if (fs.existsSync(rootBarrel)) {
+      const rootContent = fs.readFileSync(rootBarrel, 'utf-8');
+      // Check if component is already exported from './components'
+      if (!rootContent.includes(component_name)) {
+        // Find the closing line of the BCTT Components export block
+        const componentsBlockEnd = rootContent.indexOf("} from './components';");
+        if (componentsBlockEnd !== -1) {
+          const updated = rootContent.slice(0, componentsBlockEnd) +
+            `  ${component_name},\n  type ${component_name}Props,\n` +
+            rootContent.slice(componentsBlockEnd);
+          fs.writeFileSync(rootBarrel, updated);
+        }
+      }
+    }
+
     return JSON.stringify({
       agent: "DSLA",
       action: "create_component",
@@ -4107,10 +4199,12 @@ export default ${component_name};
         name: component_name,
         atomic_level,
         base_mui_component: muiBase,
+        code_source: component_code ? 'provided' : 'template',
         files_written: [
           `src/components/${component_name}/${component_name}.tsx`,
           `src/components/${component_name}/index.ts`,
           `src/components/index.ts (updated)`,
+          `src/index.ts (updated)`,
         ],
       },
       message: `Componente ${component_name} criado em bctt-design-system/src/components/${component_name}/`
@@ -4118,60 +4212,102 @@ export default ${component_name};
   },
 
   dsla_generate_stories: async (args) => {
-    const { component_name, variants, props } = args as {
+    const { component_name, variants, props, story_code, default_args } = args as {
       component_name: string;
       variants?: string[];
       props?: Array<{ name: string; type: string; required?: boolean; description?: string; options?: string[] }>;
+      story_code?: string;
+      default_args?: Record<string, unknown>;
     };
 
     const dsRoot = getBcttDesignSystemPath();
-    const storyVariants = variants || ['Default', 'Primary', 'Secondary'];
-
-    // Build argTypes from props
-    let argTypesBlock = '';
-    if (props && props.length > 0) {
-      const argEntries = props.map(p => {
-        // Determine control type from prop metadata
-        if (p.options || p.type?.includes('|')) {
-          const opts = p.options || p.type.split('|').map(s => s.trim().replace(/['"]/g, ''));
-          return `    ${p.name}: {\n      control: 'select',\n      options: [${opts.map(o => `'${o}'`).join(', ')}],\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
-        }
-        if (p.type === 'boolean') {
-          return `    ${p.name}: {\n      control: 'boolean',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
-        }
-        if (p.type === 'number') {
-          return `    ${p.name}: {\n      control: 'number',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
-        }
-        if (p.type?.includes('=>') || p.type?.includes('Function') || p.name.startsWith('on')) {
-          return `    ${p.name}: { action: '${p.name}' }`;
-        }
-        return `    ${p.name}: {\n      control: 'text',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
-      });
-      argTypesBlock = `  argTypes: {\n${argEntries.join(',\n')},\n  },`;
+    const componentDir = path.join(dsRoot, 'src', 'components', component_name);
+    if (!fs.existsSync(componentDir)) {
+      fs.mkdirSync(componentDir, { recursive: true });
     }
 
-    // Sanitize variant names for JS export (avoid reserved keywords like 'default')
-    const sanitizeExportName = (v: string) => {
-      // Convert hyphens/underscores to PascalCase: "read-only" → "ReadOnly"
-      const camelCase = v.replace(/[-_]+(.)/g, (_: string, c: string) => c.toUpperCase());
-      const capitalized = camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
-      // Remove non-alphanumeric chars
-      const clean = capitalized.replace(/[^a-zA-Z0-9]/g, '');
-      // Avoid JS reserved keywords
-      if (['Default', 'New', 'Delete', 'Return', 'Switch', 'Case'].includes(clean)) {
-        return `${clean}Variant`;
-      }
-      return clean;
-    };
+    let storiesCode: string;
 
-    const storiesCode = `import type { Meta, StoryObj } from '@storybook/react';
+    if (story_code) {
+      // ── Path 1 (preferred): Use provided code directly ──
+      storiesCode = story_code;
+    } else {
+      // ── Path 2 (fallback): Generate improved template ──
+      const storyVariants = variants || ['Default', 'Primary', 'Secondary'];
+
+      // Build argTypes from props
+      let argTypesBlock = '';
+      if (props && props.length > 0) {
+        const argEntries = props.map(p => {
+          if (p.options || p.type?.includes('|')) {
+            const opts = p.options || p.type.split('|').map(s => s.trim().replace(/['"]/g, ''));
+            return `    ${p.name}: {\n      control: 'select',\n      options: [${opts.map(o => `'${o}'`).join(', ')}],\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+          }
+          if (p.type === 'boolean') {
+            return `    ${p.name}: {\n      control: 'boolean',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+          }
+          if (p.type === 'number') {
+            return `    ${p.name}: {\n      control: 'number',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+          }
+          if (p.type?.includes('=>') || p.type?.includes('Function') || p.name.startsWith('on')) {
+            return `    ${p.name}: { action: '${p.name}' }`;
+          }
+          return `    ${p.name}: {\n      control: 'text',\n      description: '${(p.description || p.name).replace(/'/g, "\\'")}',\n    }`;
+        });
+        argTypesBlock = `  argTypes: {\n${argEntries.join(',\n')},\n  },`;
+      }
+
+      // Sanitize variant names for JS export
+      const sanitizeExportName = (v: string) => {
+        const camelCase = v.replace(/[-_]+(.)/g, (_: string, c: string) => c.toUpperCase());
+        const capitalized = camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+        const clean = capitalized.replace(/[^a-zA-Z0-9]/g, '');
+        if (['Default', 'New', 'Delete', 'Return', 'Switch', 'Case'].includes(clean)) {
+          return `${clean}Variant`;
+        }
+        return clean;
+      };
+
+      // Build default_args string for story args
+      const defaultArgsStr = default_args && Object.keys(default_args).length > 0
+        ? Object.entries(default_args).map(([k, v]) => {
+            const val = typeof v === 'string' ? `'${v.replace(/'/g, "\\'")}'`
+              : Array.isArray(v) ? JSON.stringify(v)
+              : JSON.stringify(v);
+            return `${k}: ${val}`;
+          }).join(', ')
+        : '';
+
+      // Build story args combining variant + default_args
+      const buildArgs = (variant: string) => {
+        const parts = [`variant: '${variant.toLowerCase()}'`];
+        if (defaultArgsStr) parts.push(defaultArgsStr);
+        return parts.join(', ');
+      };
+
+      // Build render props for AllVariants
+      const buildRenderProps = (variant: string) => {
+        const parts = [`variant="${variant.toLowerCase()}"`];
+        if (default_args) {
+          Object.entries(default_args).forEach(([k, v]) => {
+            if (typeof v === 'string') {
+              parts.push(`${k}="${v}"`);
+            } else {
+              parts.push(`${k}={${JSON.stringify(v)}}`);
+            }
+          });
+        }
+        return parts.join(' ');
+      };
+
+      storiesCode = `import type { Meta, StoryObj } from '@storybook/react';
 import { Stack } from '@mui/material';
 import { ${component_name} } from './${component_name}';
 
 const meta: Meta<typeof ${component_name}> = {
   title: 'Components/${component_name}',
   component: ${component_name},
-  parameters: { layout: 'centered' },
+  parameters: { layout: 'padded' },
   tags: ['autodocs'],
 ${argTypesBlock}
 };
@@ -4180,23 +4316,19 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 ${storyVariants.map(v => `export const ${sanitizeExportName(v)}: Story = {
-  args: { variant: '${v.toLowerCase()}' },
+  args: { ${buildArgs(v)} },
 };`).join('\n\n')}
 
 export const AllVariants: Story = {
   render: () => (
-    <Stack direction="row" spacing={2}>
-${storyVariants.map(v => `      <${component_name} variant="${v.toLowerCase()}" />`).join('\n')}
+    <Stack spacing={2}>
+${storyVariants.map(v => `      <${component_name} ${buildRenderProps(v)} />`).join('\n')}
     </Stack>
   ),
 };
 `;
-
-    // Ensure directory exists and write story file
-    const componentDir = path.join(dsRoot, 'src', 'components', component_name);
-    if (!fs.existsSync(componentDir)) {
-      fs.mkdirSync(componentDir, { recursive: true });
     }
+
     fs.writeFileSync(path.join(componentDir, `${component_name}.stories.tsx`), storiesCode);
 
     return JSON.stringify({
@@ -4206,7 +4338,8 @@ ${storyVariants.map(v => `      <${component_name} variant="${v.toLowerCase()}" 
       stories: {
         component: component_name,
         file_written: `src/components/${component_name}/${component_name}.stories.tsx`,
-        variants: storyVariants,
+        code_source: story_code ? 'provided' : 'template',
+        variants: variants || ['Default', 'Primary', 'Secondary'],
       },
       message: `Stories criadas para ${component_name} em bctt-design-system`
     }, null, 2);

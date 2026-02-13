@@ -979,12 +979,15 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
       if (true) {
         try {
           const tmpDir = os.tmpdir();
+          // Sort by file modification time (newest first) — NOT alphabetically!
+          // Alphabetical sort fails when filenames have inconsistent prefixes (e.g. fa-doc-BDEV > fa-doc-177...)
           const docFiles = fs.readdirSync(tmpDir)
             .filter((f: string) => f.startsWith('fa-doc-'))
-            .sort()
-            .reverse(); // newest first (timestamp in filename)
+            .map((f: string) => ({ name: f, mtime: fs.statSync(path.join(tmpDir, f)).mtimeMs }))
+            .sort((a, b) => b.mtime - a.mtime); // newest by mtime
           if (docFiles.length > 0) {
-            const stored = JSON.parse(fs.readFileSync(path.join(tmpDir, docFiles[0]), 'utf-8'));
+            const newestFile = docFiles[0].name;
+            const stored = JSON.parse(fs.readFileSync(path.join(tmpDir, newestFile), 'utf-8'));
             // Validate integrity via checksum
             if (stored.checksum) {
               const actual = crypto.createHash('sha256').update(stored.base64).digest('hex');
@@ -993,23 +996,20 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
               } else {
                 docBase64 = stored.base64;
                 docName = docName || stored.fileName;
-                console.error(`[Jira] Document loaded from temp file (${docFiles[0]}, checksum OK)`);
+                console.error(`[Jira] Document loaded from temp file (${newestFile}, checksum OK, fileName: ${stored.fileName})`);
               }
             } else {
               // Legacy temp file without checksum — use as-is
               docBase64 = stored.base64;
               docName = docName || stored.fileName;
-              console.error(`[Jira] Document loaded from temp file (${docFiles[0]}, no checksum)`);
+              console.error(`[Jira] Document loaded from temp file (${newestFile}, no checksum, fileName: ${stored.fileName})`);
             }
           }
-          // Cleanup old temp files (>1 hour)
+          // Cleanup ALL old fa-doc temp files after reading the newest one
           for (const f of docFiles.slice(1)) {
             try {
-              const filePath = path.join(tmpDir, f);
-              const stat = fs.statSync(filePath);
-              if (Date.now() - stat.mtimeMs > 3600000) {
-                fs.unlinkSync(filePath);
-              }
+              fs.unlinkSync(path.join(tmpDir, f.name));
+              console.error(`[Jira] Cleaned up old temp file: ${f.name}`);
             } catch {}
           }
         } catch (e) {
@@ -1022,6 +1022,15 @@ export const jiraToolHandlers: Record<string, (args: Record<string, unknown>) =>
           const fileBuffer = Buffer.from(docBase64, 'base64');
           await client.addAttachment(result.epicKey, docName, fileBuffer);
           attachmentResult = { success: true, filename: docName };
+          // Cleanup the used temp file after successful attachment
+          try {
+            const tmpDir = os.tmpdir();
+            const remaining = fs.readdirSync(tmpDir).filter((f: string) => f.startsWith('fa-doc-'));
+            for (const f of remaining) {
+              fs.unlinkSync(path.join(tmpDir, f));
+            }
+            console.error(`[Jira] Cleaned up all fa-doc temp files after successful attachment`);
+          } catch {}
         } catch (e) {
           attachmentResult = { success: false, error: String(e) };
         }

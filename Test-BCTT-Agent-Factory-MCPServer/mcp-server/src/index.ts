@@ -52,12 +52,13 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 
 // Start the server
 async function main() {
+  console.error(`[MCP] Starting... ${tools.length} tools loaded, ${prompts.length} prompts loaded.`);
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Test-BCTT-Agent-Factory MCP Server running on stdio");
+  console.error("[MCP] Server running on stdio — ready for tool calls.");
 }
 
 main().catch((error) => {
-  console.error("Fatal error:", error);
+  console.error("[MCP] Fatal error during startup:", error);
   process.exit(1);
 });

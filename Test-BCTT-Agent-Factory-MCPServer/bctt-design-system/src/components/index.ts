@@ -36,3 +36,21 @@ export { FilterChip, type FilterChipProps } from './FilterChip';
 
 // DatePicker
 export { DatePicker, type DatePickerProps } from './DatePicker';
+
+// ProgressBar
+export { ProgressBar, type ProgressBarProps } from './ProgressBar';
+
+// FileUpload
+export { FileUpload, type FileUploadProps } from './FileUpload';
+
+// CurrencyInput
+export { CurrencyInput, type CurrencyInputProps } from './CurrencyInput';
+
+// SliderWithInput
+export { SliderWithInput, type SliderWithInputProps } from './SliderWithInput';
+
+// ResultCard
+export { ResultCard, type ResultCardProps } from './ResultCard';
+
+// Timeline
+export { Timeline, type TimelineProps } from './Timeline';

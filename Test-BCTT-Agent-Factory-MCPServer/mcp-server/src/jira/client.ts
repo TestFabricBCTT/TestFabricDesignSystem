@@ -381,22 +381,29 @@ export class JiraClient {
   // ============================================
 
   async getNextBDEVCode(): Promise<BDEVCode> {
-    // Search for existing BDEVs in the project
+    // Search for ALL existing BDEVs in the project (up to 100)
+    // and find the maximum number to ensure correct increment
     const jql = `project = ${this.config.projectKey} AND summary ~ "BDEV*" ORDER BY created DESC`;
-    const result = await this.searchIssues(jql, 1);
+    const result = await this.searchIssues(jql, 100);
 
-    let nextNumber = 1;
+    let maxNumber = 0;
 
-    if (result.issues.length > 0) {
-      const lastBDEV = result.issues[0].fields.summary;
-      // Extract number from [BDEV00000001] format
-      const match = lastBDEV.match(/\[BDEV(\d{8})\]/);
+    for (const issue of result.issues) {
+      const summary = issue.fields.summary;
+      // Match both [BDEV00000001] and BDEV00000001 formats
+      const match = summary.match(/\[?BDEV(\d{8})\]?/);
       if (match) {
-        nextNumber = parseInt(match[1], 10) + 1;
+        const num = parseInt(match[1], 10);
+        if (num > maxNumber) {
+          maxNumber = num;
+        }
       }
     }
 
+    const nextNumber = maxNumber + 1;
     const paddedNumber = String(nextNumber).padStart(8, '0');
+
+    console.log(`[jira] BDEV counter: found ${result.issues.length} issues, max=${maxNumber}, next=${nextNumber}`);
 
     return {
       code: `BDEV${paddedNumber}`,
