@@ -1,0 +1,2122 @@
+{
+  "version": "2.1",
+  "bdev_code": "BDEV00000016",
+  "generated_at": "2026-02-13T16:45:46.302Z",
+  "generated_by": "TAA",
+  "apis": [
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/simulate",
+      "description": "Simular condições de crédito habitação — calcula prestação, TAEG, mapa de amortização",
+      "request_body": {
+        "propertyValue": "number",
+        "loanAmount": "number",
+        "termMonths": "number",
+        "rateType": "string (fixed|variable|mixed)",
+        "spreadPercentage": "number",
+        "purpose": "string (purchase|construction|transfer)"
+      },
+      "response_body": {
+        "simulationId": "string",
+        "monthlyPayment": "number",
+        "taeg": "number",
+        "totalInterest": "number",
+        "totalCost": "number",
+        "amortizationSchedule": "AmortizationEntry[]",
+        "dsti": "number",
+        "ltv": "number"
+      },
+      "error_codes": [
+        "400_INVALID_PARAMS",
+        "422_LTV_EXCEEDED",
+        "422_DSTI_EXCEEDED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/simulations/:simulationId",
+      "description": "Obter simulação anterior por ID",
+      "response_body": {
+        "simulationId": "string",
+        "monthlyPayment": "number",
+        "taeg": "number",
+        "params": "SimulationParams",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications",
+      "description": "Criar novo pedido de crédito habitação (draft)",
+      "request_body": {
+        "simulationId": "string?",
+        "applicant": "ApplicantData",
+        "coApplicant": "ApplicantData?",
+        "property": "PropertyData",
+        "loanAmount": "number",
+        "termMonths": "number",
+        "purpose": "string"
+      },
+      "response_body": {
+        "applicationId": "string",
+        "status": "draft",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "400_INVALID_DATA",
+        "409_DUPLICATE"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/applications/:applicationId",
+      "description": "Obter detalhes completos do pedido",
+      "response_body": {
+        "applicationId": "string",
+        "status": "string",
+        "applicant": "ApplicantData",
+        "coApplicant": "ApplicantData?",
+        "property": "PropertyData",
+        "documents": "Document[]",
+        "timeline": "TimelineEntry[]",
+        "approvalLevel": "string?",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "403_FORBIDDEN"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/mortgage/applications/:applicationId",
+      "description": "Actualizar pedido em estado draft",
+      "request_body": {
+        "applicant": "ApplicantData?",
+        "coApplicant": "ApplicantData?",
+        "property": "PropertyData?",
+        "loanAmount": "number?",
+        "termMonths": "number?"
+      },
+      "response_body": {
+        "applicationId": "string",
+        "status": "draft",
+        "updatedAt": "string"
+      },
+      "error_codes": [
+        "400_INVALID_DATA",
+        "404_NOT_FOUND",
+        "409_NOT_DRAFT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/submit",
+      "description": "Submeter pedido para análise — valida documentos obrigatórios",
+      "response_body": {
+        "applicationId": "string",
+        "status": "submitted",
+        "submittedAt": "string"
+      },
+      "error_codes": [
+        "400_MISSING_DOCUMENTS",
+        "404_NOT_FOUND",
+        "409_NOT_DRAFT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/documents",
+      "description": "Upload de documento para o pedido (multipart/form-data)",
+      "request_body": {
+        "file": "binary",
+        "documentType": "string (irs|payslip|id|property_deed|other)",
+        "description": "string?"
+      },
+      "response_body": {
+        "documentId": "string",
+        "fileName": "string",
+        "documentType": "string",
+        "uploadedAt": "string"
+      },
+      "error_codes": [
+        "400_INVALID_FILE",
+        "413_FILE_TOO_LARGE",
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/crc-check",
+      "description": "Consultar CRC — MOCK: retorna score simulado após 3s",
+      "response_body": {
+        "checkId": "string",
+        "status": "processing",
+        "estimatedTime": "3s"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "429_RATE_LIMITED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/applications/:applicationId/crc-result",
+      "description": "Obter resultado CRC (mock: score 600-850)",
+      "response_body": {
+        "checkId": "string",
+        "status": "completed",
+        "score": "number (600-850)",
+        "recommendation": "string (approve|reject|conditional)",
+        "checkedAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "202_STILL_PROCESSING"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/property-valuation",
+      "description": "Solicitar avaliação de imóvel — sistema interno (24-48h)",
+      "request_body": {
+        "propertyAddress": "string",
+        "propertyType": "string",
+        "declaredValue": "number"
+      },
+      "response_body": {
+        "valuationId": "string",
+        "status": "pending",
+        "estimatedCompletion": "string (24-48h)"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "409_ALREADY_REQUESTED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/applications/:applicationId/property-valuation",
+      "description": "Obter resultado da avaliação de imóvel",
+      "response_body": {
+        "valuationId": "string",
+        "status": "string (pending|completed)",
+        "valuatedAmount": "number?",
+        "report": "object?",
+        "completedAt": "string?"
+      },
+      "error_codes": [
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/generate-documentation",
+      "description": "Gerar documentação regulamentar FIN/FINE",
+      "request_body": {
+        "documentTypes": "string[] (fin|fine)"
+      },
+      "response_body": {
+        "documents": [
+          {
+            "documentId": "string",
+            "type": "string",
+            "status": "generated",
+            "generatedAt": "string"
+          }
+        ]
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "409_NOT_APPROVED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/applications/:applicationId/documents/:documentId/download",
+      "description": "Download de documento (PDF)",
+      "response_body": {
+        "type": "binary/pdf"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "403_FORBIDDEN"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/approval-workflow",
+      "description": "Iniciar workflow de aprovação multinível (L1≤400k, L2 400k-1M, L3>1M)",
+      "response_body": {
+        "workflowId": "string",
+        "requiredLevel": "string (L1|L2|L3)",
+        "status": "pending",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "409_ALREADY_STARTED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/applications/:applicationId/approval-workflow",
+      "description": "Estado do workflow de aprovação",
+      "response_body": {
+        "workflowId": "string",
+        "requiredLevel": "string",
+        "currentLevel": "string",
+        "approvals": [
+          {
+            "level": "string",
+            "approvedBy": "string",
+            "approvedAt": "string"
+          }
+        ],
+        "status": "string (pending|approved|rejected)"
+      },
+      "error_codes": [
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/approve",
+      "description": "Aprovar pedido (gestor L1/L2/L3 conforme montante)",
+      "request_body": {
+        "comments": "string?",
+        "conditions": "string[]?"
+      },
+      "response_body": {
+        "applicationId": "string",
+        "approvalLevel": "string",
+        "status": "string",
+        "approvedAt": "string"
+      },
+      "error_codes": [
+        "403_INSUFFICIENT_LEVEL",
+        "404_NOT_FOUND",
+        "409_ALREADY_DECIDED"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/applications/:applicationId/reject",
+      "description": "Rejeitar pedido (gestor)",
+      "request_body": {
+        "reason": "string",
+        "comments": "string?"
+      },
+      "response_body": {
+        "applicationId": "string",
+        "status": "rejected",
+        "rejectedAt": "string"
+      },
+      "error_codes": [
+        "403_FORBIDDEN",
+        "404_NOT_FOUND",
+        "409_ALREADY_DECIDED"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/contracts",
+      "description": "Gerar contrato de crédito habitação",
+      "request_body": {
+        "applicationId": "string"
+      },
+      "response_body": {
+        "contractId": "string",
+        "status": "generated",
+        "documentUrl": "string",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "409_NOT_APPROVED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/contracts/:contractId",
+      "description": "Obter contrato gerado",
+      "response_body": {
+        "contractId": "string",
+        "applicationId": "string",
+        "status": "string",
+        "documentUrl": "string",
+        "signedAt": "string?",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/contracts/:contractId/sign",
+      "description": "Assinar contrato via CMD — MOCK: aceita qualquer OTP",
+      "request_body": {
+        "phoneNumber": "string",
+        "otp": "string"
+      },
+      "response_body": {
+        "contractId": "string",
+        "status": "signed",
+        "signedAt": "string",
+        "signatureId": "string"
+      },
+      "error_codes": [
+        "400_INVALID_OTP",
+        "404_NOT_FOUND",
+        "409_ALREADY_SIGNED"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/contracts/:contractId/disburse",
+      "description": "Executar desembolso — integração real Core Banking (retry + idempotency)",
+      "request_body": {
+        "disbursementId": "string"
+      },
+      "response_body": {
+        "disbursementId": "string",
+        "contractId": "string",
+        "amount": "number",
+        "status": "string (completed|pending)",
+        "transactionId": "string?",
+        "disbursedAt": "string?"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "409_NOT_SIGNED",
+        "502_CORE_BANKING_ERROR",
+        "504_TIMEOUT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/loans/:loanId",
+      "description": "Detalhes do empréstimo activo",
+      "response_body": {
+        "loanId": "string",
+        "contractId": "string",
+        "totalAmount": "number",
+        "outstandingBalance": "number",
+        "monthlyPayment": "number",
+        "nextPaymentDate": "string",
+        "interestRate": "number",
+        "taeg": "number",
+        "startDate": "string",
+        "endDate": "string",
+        "status": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/loans/:loanId/payments",
+      "description": "Histórico de pagamentos do empréstimo",
+      "response_body": {
+        "payments": [
+          {
+            "paymentId": "string",
+            "amount": "number",
+            "principal": "number",
+            "interest": "number",
+            "paidAt": "string",
+            "status": "string"
+          }
+        ],
+        "pagination": "PaginationMeta"
+      },
+      "error_codes": [
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/loans/:loanId/amortization",
+      "description": "Simular amortização antecipada",
+      "request_body": {
+        "amount": "number",
+        "type": "string (partial|total)"
+      },
+      "response_body": {
+        "simulationId": "string",
+        "currentBalance": "number",
+        "newBalance": "number",
+        "savedInterest": "number",
+        "newMonthlyPayment": "number?",
+        "newEndDate": "string?",
+        "earlyRepaymentFee": "number"
+      },
+      "error_codes": [
+        "400_INVALID_AMOUNT",
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/loans/:loanId/amortization/confirm",
+      "description": "Confirmar amortização antecipada",
+      "request_body": {
+        "simulationId": "string"
+      },
+      "response_body": {
+        "amortizationId": "string",
+        "status": "completed",
+        "newBalance": "number",
+        "confirmedAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND",
+        "409_SIMULATION_EXPIRED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/notifications",
+      "description": "Listar notificações do utilizador",
+      "response_body": {
+        "notifications": [
+          {
+            "notificationId": "string",
+            "type": "string",
+            "title": "string",
+            "message": "string",
+            "read": "boolean",
+            "createdAt": "string"
+          }
+        ],
+        "pagination": "PaginationMeta"
+      },
+      "error_codes": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/mortgage/notifications/:notificationId/read",
+      "description": "Marcar notificação como lida",
+      "response_body": {
+        "notificationId": "string",
+        "read": true,
+        "readAt": "string"
+      },
+      "error_codes": [
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/backoffice/dashboard/kpis",
+      "description": "Dashboard KPIs — total pedidos, pendentes aprovação, aprovados/rejeitados mês, tempo médio processamento, total desembolsado, avaliações pendentes",
+      "response_body": {
+        "totalApplications": "number",
+        "pendingApproval": "number",
+        "approvedThisMonth": "number",
+        "rejectedThisMonth": "number",
+        "avgProcessingTimeDays": "number",
+        "totalDisbursed": "number",
+        "pendingValuations": "number",
+        "conversionRate": "number"
+      },
+      "error_codes": [
+        "403_FORBIDDEN"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/backoffice/applications",
+      "description": "Lista de pedidos para backoffice com filtros avançados",
+      "request_body": {
+        "status": "string?",
+        "approvalLevel": "string?",
+        "assignedTo": "string?",
+        "dateFrom": "string?",
+        "dateTo": "string?",
+        "search": "string?",
+        "page": "number?",
+        "limit": "number?"
+      },
+      "response_body": {
+        "applications": "BackofficeApplication[]",
+        "pagination": "PaginationMeta",
+        "filters": "ActiveFilters"
+      },
+      "error_codes": [
+        "403_FORBIDDEN"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/backoffice/applications/:applicationId",
+      "description": "Detalhe completo de pedido para backoffice — inclui dados cliente, CRC, avaliação, timeline, docs, notas internas",
+      "response_body": {
+        "applicationId": "string",
+        "applicant": "ApplicantData",
+        "coApplicant": "ApplicantData?",
+        "property": "PropertyData",
+        "loanAmount": "number",
+        "approvalLevel": "string",
+        "status": "string",
+        "crcResult": "CRCResult?",
+        "valuationResult": "ValuationResult?",
+        "documents": "Document[]",
+        "timeline": "TimelineEntry[]",
+        "notes": "InternalNote[]",
+        "assignedTo": "string?",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "403_FORBIDDEN",
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/backoffice/applications/:applicationId/assign",
+      "description": "Atribuir pedido a gestor L1/L2/L3 conforme montante",
+      "request_body": {
+        "assignedTo": "string (userId do gestor)"
+      },
+      "response_body": {
+        "applicationId": "string",
+        "assignedTo": "string",
+        "assignedAt": "string"
+      },
+      "error_codes": [
+        "403_FORBIDDEN",
+        "404_NOT_FOUND",
+        "409_ALREADY_ASSIGNED"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/backoffice/applications/:applicationId/request-info",
+      "description": "Solicitar informações adicionais ao cliente — gera notificação",
+      "request_body": {
+        "requestedDocuments": "string[]",
+        "message": "string"
+      },
+      "response_body": {
+        "requestId": "string",
+        "applicationId": "string",
+        "status": "info_requested",
+        "sentAt": "string"
+      },
+      "error_codes": [
+        "403_FORBIDDEN",
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/mortgage/backoffice/applications/:applicationId/notes",
+      "description": "Adicionar nota interna ao pedido (visível só para gestores)",
+      "request_body": {
+        "note": "string"
+      },
+      "response_body": {
+        "noteId": "string",
+        "applicationId": "string",
+        "userId": "string",
+        "note": "string",
+        "createdAt": "string"
+      },
+      "error_codes": [
+        "403_FORBIDDEN",
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/backoffice/valuations/pending",
+      "description": "Fila de avaliações de imóvel pendentes (ordenadas por data)",
+      "response_body": {
+        "valuations": [
+          {
+            "valuationId": "string",
+            "applicationId": "string",
+            "propertyAddress": "string",
+            "propertyType": "string",
+            "declaredValue": "number",
+            "assignedTo": "string?",
+            "createdAt": "string"
+          }
+        ],
+        "pagination": "PaginationMeta"
+      },
+      "error_codes": [
+        "403_FORBIDDEN"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/backoffice/valuations/:valuationId/assign-appraiser",
+      "description": "Atribuir avaliador interno a uma avaliação de imóvel",
+      "request_body": {
+        "appraiserId": "string"
+      },
+      "response_body": {
+        "valuationId": "string",
+        "appraiserId": "string",
+        "assignedAt": "string"
+      },
+      "error_codes": [
+        "403_FORBIDDEN",
+        "404_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/mortgage/backoffice/valuations/:valuationId/submit",
+      "description": "Submeter resultado de avaliação de imóvel",
+      "request_body": {
+        "valuatedAmount": "number",
+        "report": {
+          "condition": "string",
+          "location_score": "number",
+          "market_comparison": "number",
+          "notes": "string"
+        }
+      },
+      "response_body": {
+        "valuationId": "string",
+        "status": "completed",
+        "valuatedAmount": "number",
+        "completedAt": "string"
+      },
+      "error_codes": [
+        "403_FORBIDDEN",
+        "404_NOT_FOUND",
+        "409_ALREADY_COMPLETED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/backoffice/audit-logs",
+      "description": "Log de todas as operações críticas — aprovações, rejeições, desembolsos, atribuições",
+      "request_body": {
+        "action": "string?",
+        "userId": "string?",
+        "dateFrom": "string?",
+        "dateTo": "string?",
+        "page": "number?",
+        "limit": "number?"
+      },
+      "response_body": {
+        "logs": [
+          {
+            "logId": "string",
+            "action": "string",
+            "userId": "string",
+            "targetId": "string",
+            "details": "object",
+            "createdAt": "string"
+          }
+        ],
+        "pagination": "PaginationMeta"
+      },
+      "error_codes": [
+        "403_FORBIDDEN"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/backoffice/reports/monthly",
+      "description": "Relatório mensal — volume, taxa aprovação, ticket médio, tempo médio",
+      "request_body": {
+        "month": "number?",
+        "year": "number?"
+      },
+      "response_body": {
+        "month": "number",
+        "year": "number",
+        "totalApplications": "number",
+        "approvedCount": "number",
+        "rejectedCount": "number",
+        "approvalRate": "number",
+        "avgTicket": "number",
+        "totalDisbursed": "number",
+        "avgProcessingDays": "number"
+      },
+      "error_codes": [
+        "403_FORBIDDEN"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/mortgage/backoffice/reports/export",
+      "description": "Exportar relatório para Excel (XLSX)",
+      "request_body": {
+        "reportType": "string (monthly|applications|audit)",
+        "dateFrom": "string?",
+        "dateTo": "string?"
+      },
+      "response_body": {
+        "type": "binary/xlsx"
+      },
+      "error_codes": [
+        "403_FORBIDDEN"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "mortgage.simulation.created",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "simulationId": "string",
+        "userId": "string"
+      }
+    },
+    {
+      "name": "mortgage.application.created",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "userId": "string"
+      }
+    },
+    {
+      "name": "mortgage.application.submitted",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "userId": "string",
+        "loanAmount": "number"
+      }
+    },
+    {
+      "name": "mortgage.application.statusChanged",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "userId": "string",
+        "oldStatus": "string",
+        "newStatus": "string"
+      }
+    },
+    {
+      "name": "mortgage.crc.completed",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "userId": "string",
+        "score": "number",
+        "recommendation": "string"
+      }
+    },
+    {
+      "name": "mortgage.valuation.completed",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "valuationId": "string",
+        "valuatedAmount": "number"
+      }
+    },
+    {
+      "name": "mortgage.documentation.generated",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "documentIds": "string[]",
+        "types": "string[]"
+      }
+    },
+    {
+      "name": "mortgage.approval.levelCompleted",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "level": "string",
+        "approvedBy": "string"
+      }
+    },
+    {
+      "name": "mortgage.approval.completed",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "userId": "string",
+        "finalStatus": "string",
+        "approvalLevel": "string"
+      }
+    },
+    {
+      "name": "mortgage.contract.created",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "contractId": "string",
+        "applicationId": "string"
+      }
+    },
+    {
+      "name": "mortgage.contract.signed",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "contractId": "string",
+        "userId": "string",
+        "signedAt": "string"
+      }
+    },
+    {
+      "name": "mortgage.disbursement.completed",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "contractId": "string",
+        "amount": "number",
+        "transactionId": "string"
+      }
+    },
+    {
+      "name": "mortgage.payment.due",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "loanId": "string",
+        "userId": "string",
+        "amount": "number",
+        "dueDate": "string"
+      }
+    },
+    {
+      "name": "mortgage.payment.received",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "loanId": "string",
+        "paymentId": "string",
+        "amount": "number"
+      }
+    },
+    {
+      "name": "mortgage.notification.sent",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "notificationId": "string",
+        "userId": "string",
+        "type": "string",
+        "title": "string"
+      }
+    },
+    {
+      "name": "mortgage.backoffice.newApplication",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "loanAmount": "number",
+        "requiredLevel": "string"
+      }
+    },
+    {
+      "name": "mortgage.backoffice.applicationAssigned",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "assignedTo": "string",
+        "assignedBy": "string"
+      }
+    },
+    {
+      "name": "mortgage.backoffice.valuationPending",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "valuationId": "string",
+        "applicationId": "string",
+        "propertyAddress": "string"
+      }
+    },
+    {
+      "name": "mortgage.backoffice.actionRequired",
+      "source": "core",
+      "target": "digitalChannels",
+      "payload": {
+        "applicationId": "string",
+        "reason": "string",
+        "daysPending": "number"
+      }
+    }
+  ],
+  "shared_types": {
+    "SimulationParams": {
+      "propertyValue": "number",
+      "loanAmount": "number",
+      "termMonths": "number",
+      "rateType": "string",
+      "spreadPercentage": "number",
+      "purpose": "string"
+    },
+    "AmortizationEntry": {
+      "month": "number",
+      "payment": "number",
+      "principal": "number",
+      "interest": "number",
+      "balance": "number"
+    },
+    "ApplicantData": {
+      "fullName": "string",
+      "nif": "string",
+      "birthDate": "string",
+      "email": "string",
+      "phone": "string",
+      "address": "string",
+      "employmentType": "string",
+      "monthlyIncome": "number",
+      "employerName": "string?"
+    },
+    "PropertyData": {
+      "address": "string",
+      "type": "string (apartment|house|land)",
+      "area": "number",
+      "yearBuilt": "number?",
+      "energyClass": "string?",
+      "registryNumber": "string"
+    },
+    "Document": {
+      "documentId": "string",
+      "fileName": "string",
+      "documentType": "string",
+      "uploadedAt": "string",
+      "size": "number"
+    },
+    "TimelineEntry": {
+      "event": "string",
+      "status": "string",
+      "timestamp": "string",
+      "description": "string?"
+    },
+    "CRCResult": {
+      "checkId": "string",
+      "score": "number",
+      "recommendation": "string",
+      "checkedAt": "string"
+    },
+    "ValuationResult": {
+      "valuationId": "string",
+      "valuatedAmount": "number",
+      "report": "object",
+      "completedAt": "string"
+    },
+    "InternalNote": {
+      "noteId": "string",
+      "userId": "string",
+      "userName": "string",
+      "note": "string",
+      "createdAt": "string"
+    },
+    "BackofficeApplication": {
+      "applicationId": "string",
+      "applicantName": "string",
+      "loanAmount": "number",
+      "status": "string",
+      "approvalLevel": "string",
+      "assignedTo": "string?",
+      "createdAt": "string",
+      "daysPending": "number"
+    },
+    "PaginationMeta": {
+      "page": "number",
+      "limit": "number",
+      "total": "number",
+      "totalPages": "number"
+    },
+    "ActiveFilters": {
+      "status": "string[]",
+      "approvalLevels": "string[]",
+      "dateRange": "object"
+    }
+  },
+  "microservices": [
+    {
+      "name": "mortgage-service",
+      "system": "digitalChannels",
+      "port": 4005,
+      "mount_path": "/api/mortgage",
+      "tech_stack": [
+        "Express",
+        "TypeScript",
+        "Socket.IO",
+        "Axios",
+        "exceljs"
+      ],
+      "dependencies": [
+        "auth-service",
+        "core-api"
+      ],
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/simulate",
+          "downstream": "http://core-api:3000/api/v1/mortgage/simulate",
+          "description": "Proxy simulação"
+        },
+        {
+          "method": "GET",
+          "path": "/simulations/:simulationId",
+          "downstream": "http://core-api:3000/api/v1/mortgage/simulations/:simulationId",
+          "description": "Proxy get simulation"
+        },
+        {
+          "method": "POST",
+          "path": "/applications",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications",
+          "description": "Proxy criar pedido"
+        },
+        {
+          "method": "GET",
+          "path": "/applications/:applicationId",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId",
+          "description": "Proxy get pedido"
+        },
+        {
+          "method": "PATCH",
+          "path": "/applications/:applicationId",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId",
+          "description": "Proxy update draft"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/submit",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/submit",
+          "description": "Proxy submit"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/documents",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/documents",
+          "description": "Proxy upload doc"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/crc-check",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/crc-check",
+          "description": "Proxy CRC check (mock)"
+        },
+        {
+          "method": "GET",
+          "path": "/applications/:applicationId/crc-result",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/crc-result",
+          "description": "Proxy CRC result"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/property-valuation",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/property-valuation",
+          "description": "Proxy solicitar avaliação"
+        },
+        {
+          "method": "GET",
+          "path": "/applications/:applicationId/property-valuation",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/property-valuation",
+          "description": "Proxy get avaliação"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/generate-documentation",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/generate-documentation",
+          "description": "Proxy gerar FIN/FINE"
+        },
+        {
+          "method": "GET",
+          "path": "/applications/:applicationId/documents/:documentId/download",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/documents/:documentId/download",
+          "description": "Proxy download doc"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/approval-workflow",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/approval-workflow",
+          "description": "Proxy iniciar workflow"
+        },
+        {
+          "method": "GET",
+          "path": "/applications/:applicationId/approval-workflow",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/approval-workflow",
+          "description": "Proxy estado workflow"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/approve",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/approve",
+          "description": "Proxy aprovar"
+        },
+        {
+          "method": "POST",
+          "path": "/applications/:applicationId/reject",
+          "downstream": "http://core-api:3000/api/v1/mortgage/applications/:applicationId/reject",
+          "description": "Proxy rejeitar"
+        },
+        {
+          "method": "POST",
+          "path": "/contracts",
+          "downstream": "http://core-api:3000/api/v1/mortgage/contracts",
+          "description": "Proxy gerar contrato"
+        },
+        {
+          "method": "GET",
+          "path": "/contracts/:contractId",
+          "downstream": "http://core-api:3000/api/v1/mortgage/contracts/:contractId",
+          "description": "Proxy get contrato"
+        },
+        {
+          "method": "POST",
+          "path": "/contracts/:contractId/sign",
+          "downstream": "http://core-api:3000/api/v1/mortgage/contracts/:contractId/sign",
+          "description": "Proxy assinatura CMD (mock)"
+        },
+        {
+          "method": "POST",
+          "path": "/contracts/:contractId/disburse",
+          "downstream": "http://core-api:3000/api/v1/mortgage/contracts/:contractId/disburse",
+          "description": "Proxy desembolso (Core Banking)"
+        },
+        {
+          "method": "GET",
+          "path": "/loans/:loanId",
+          "downstream": "http://core-api:3000/api/v1/mortgage/loans/:loanId",
+          "description": "Proxy get empréstimo"
+        },
+        {
+          "method": "GET",
+          "path": "/loans/:loanId/payments",
+          "downstream": "http://core-api:3000/api/v1/mortgage/loans/:loanId/payments",
+          "description": "Proxy histórico pagamentos"
+        },
+        {
+          "method": "POST",
+          "path": "/loans/:loanId/amortization",
+          "downstream": "http://core-api:3000/api/v1/mortgage/loans/:loanId/amortization",
+          "description": "Proxy simular amortização"
+        },
+        {
+          "method": "POST",
+          "path": "/loans/:loanId/amortization/confirm",
+          "downstream": "http://core-api:3000/api/v1/mortgage/loans/:loanId/amortization/confirm",
+          "description": "Proxy confirmar amortização"
+        },
+        {
+          "method": "GET",
+          "path": "/notifications",
+          "downstream": "http://core-api:3000/api/v1/mortgage/notifications",
+          "description": "Proxy listar notificações"
+        },
+        {
+          "method": "PATCH",
+          "path": "/notifications/:notificationId/read",
+          "downstream": "http://core-api:3000/api/v1/mortgage/notifications/:notificationId/read",
+          "description": "Proxy marcar lida"
+        },
+        {
+          "method": "GET",
+          "path": "/backoffice/dashboard/kpis",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/dashboard/kpis",
+          "description": "Proxy backoffice KPIs"
+        },
+        {
+          "method": "GET",
+          "path": "/backoffice/applications",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/applications",
+          "description": "Proxy backoffice lista pedidos"
+        },
+        {
+          "method": "GET",
+          "path": "/backoffice/applications/:applicationId",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId",
+          "description": "Proxy backoffice detalhe pedido"
+        },
+        {
+          "method": "POST",
+          "path": "/backoffice/applications/:applicationId/assign",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId/assign",
+          "description": "Proxy atribuir gestor"
+        },
+        {
+          "method": "POST",
+          "path": "/backoffice/applications/:applicationId/request-info",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId/request-info",
+          "description": "Proxy solicitar info"
+        },
+        {
+          "method": "PATCH",
+          "path": "/backoffice/applications/:applicationId/notes",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId/notes",
+          "description": "Proxy notas internas"
+        },
+        {
+          "method": "GET",
+          "path": "/backoffice/valuations/pending",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/valuations/pending",
+          "description": "Proxy fila avaliações"
+        },
+        {
+          "method": "POST",
+          "path": "/backoffice/valuations/:valuationId/assign-appraiser",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/valuations/:valuationId/assign-appraiser",
+          "description": "Proxy atribuir avaliador"
+        },
+        {
+          "method": "POST",
+          "path": "/backoffice/valuations/:valuationId/submit",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/valuations/:valuationId/submit",
+          "description": "Proxy submeter avaliação"
+        },
+        {
+          "method": "GET",
+          "path": "/backoffice/audit-logs",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/audit-logs",
+          "description": "Proxy audit logs"
+        },
+        {
+          "method": "GET",
+          "path": "/backoffice/reports/monthly",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/reports/monthly",
+          "description": "Proxy relatório mensal"
+        },
+        {
+          "method": "GET",
+          "path": "/backoffice/reports/export",
+          "downstream": "http://core-api:3000/api/v1/mortgage/backoffice/reports/export",
+          "description": "Proxy exportar XLSX"
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "MortgageSimulatorPage",
+      "route": "/mortgage/simulator",
+      "auth_required": false,
+      "components": [
+        "MortgageSimulatorForm",
+        "AmortizationTable",
+        "TAEGDisplay",
+        "LTVIndicator"
+      ],
+      "api_calls": [
+        "POST /api/v1/mortgage/simulate"
+      ],
+      "cache_reads": [
+        "mortgage.lastSimulation"
+      ],
+      "cache_writes": [
+        "mortgage.lastSimulation"
+      ]
+    },
+    {
+      "name": "MortgageApplicationPage",
+      "route": "/mortgage/application",
+      "auth_required": true,
+      "components": [
+        "MortgageApplicationWizard",
+        "ApplicantForm",
+        "CoApplicantForm",
+        "PropertyForm",
+        "DocumentUploader",
+        "ProgressStepper"
+      ],
+      "api_calls": [
+        "POST /api/v1/mortgage/applications",
+        "PATCH /api/v1/mortgage/applications/:applicationId",
+        "POST /api/v1/mortgage/applications/:applicationId/documents",
+        "POST /api/v1/mortgage/applications/:applicationId/submit"
+      ],
+      "cache_reads": [
+        "mortgage.draftApplication",
+        "mortgage.lastSimulation"
+      ],
+      "cache_writes": [
+        "mortgage.draftApplication"
+      ]
+    },
+    {
+      "name": "MortgageApplicationDetailPage",
+      "route": "/mortgage/applications/:applicationId",
+      "auth_required": true,
+      "components": [
+        "ApplicationTimeline",
+        "ApplicationStatusBadge",
+        "DocumentsList",
+        "ApprovalWorkflowTracker",
+        "CRCResultCard",
+        "ValuationResultCard"
+      ],
+      "api_calls": [
+        "GET /api/v1/mortgage/applications/:applicationId",
+        "GET /api/v1/mortgage/applications/:applicationId/crc-result",
+        "GET /api/v1/mortgage/applications/:applicationId/property-valuation",
+        "GET /api/v1/mortgage/applications/:applicationId/approval-workflow"
+      ],
+      "cache_reads": [
+        "mortgage.application.:id"
+      ],
+      "cache_writes": [
+        "mortgage.application.:id"
+      ]
+    },
+    {
+      "name": "MortgageContractPage",
+      "route": "/mortgage/contracts/:contractId",
+      "auth_required": true,
+      "components": [
+        "ContractViewer",
+        "CMDSignatureWidget",
+        "ContractStatusBadge",
+        "SignatureConfirmation"
+      ],
+      "api_calls": [
+        "GET /api/v1/mortgage/contracts/:contractId",
+        "POST /api/v1/mortgage/contracts/:contractId/sign"
+      ],
+      "cache_reads": [],
+      "cache_writes": []
+    },
+    {
+      "name": "MortgageLoanDashboardPage",
+      "route": "/mortgage/loans/:loanId",
+      "auth_required": true,
+      "components": [
+        "LoanOverview",
+        "PaymentHistory",
+        "NextPaymentCard",
+        "LoanProgressChart",
+        "AmortizationScheduleChart"
+      ],
+      "api_calls": [
+        "GET /api/v1/mortgage/loans/:loanId",
+        "GET /api/v1/mortgage/loans/:loanId/payments"
+      ],
+      "cache_reads": [
+        "mortgage.loan.:loanId"
+      ],
+      "cache_writes": [
+        "mortgage.loan.:loanId"
+      ]
+    },
+    {
+      "name": "MortgageAmortizationPage",
+      "route": "/mortgage/loans/:loanId/amortization",
+      "auth_required": true,
+      "components": [
+        "AmortizationSimulator",
+        "InteractiveSavingsChart",
+        "ComparisonTable",
+        "ConfirmAmortizationDialog"
+      ],
+      "api_calls": [
+        "POST /api/v1/mortgage/loans/:loanId/amortization",
+        "POST /api/v1/mortgage/loans/:loanId/amortization/confirm"
+      ],
+      "cache_reads": [
+        "mortgage.loan.:loanId"
+      ],
+      "cache_writes": []
+    },
+    {
+      "name": "MortgageBackofficeDashboardPage",
+      "route": "/backoffice/mortgage/dashboard",
+      "auth_required": true,
+      "components": [
+        "KPICardsGrid",
+        "ApplicationsQueueChart",
+        "MonthlyVolumeChart",
+        "RecentActivityFeed",
+        "PendingActionsAlert"
+      ],
+      "api_calls": [
+        "GET /api/v1/mortgage/backoffice/dashboard/kpis",
+        "GET /api/v1/mortgage/backoffice/applications"
+      ],
+      "cache_reads": [
+        "backoffice.kpis"
+      ],
+      "cache_writes": [
+        "backoffice.kpis"
+      ]
+    },
+    {
+      "name": "MortgageBackofficeApplicationsPage",
+      "route": "/backoffice/mortgage/applications",
+      "auth_required": true,
+      "components": [
+        "ApplicationsDataTable",
+        "ApplicationFilters",
+        "BulkActionToolbar",
+        "ExportButton"
+      ],
+      "api_calls": [
+        "GET /api/v1/mortgage/backoffice/applications"
+      ],
+      "cache_reads": [
+        "backoffice.applications"
+      ],
+      "cache_writes": [
+        "backoffice.applications"
+      ]
+    },
+    {
+      "name": "MortgageBackofficeApplicationDetailPage",
+      "route": "/backoffice/mortgage/applications/:applicationId",
+      "auth_required": true,
+      "components": [
+        "ApplicationDetailPanel",
+        "ApplicationTimeline",
+        "ApprovalActionButtons",
+        "DocumentViewer",
+        "InternalNotesPanel",
+        "AssignGestorDialog",
+        "RequestInfoDialog",
+        "CRCResultCard",
+        "ValuationResultCard"
+      ],
+      "api_calls": [
+        "GET /api/v1/mortgage/backoffice/applications/:applicationId",
+        "POST /api/v1/mortgage/backoffice/applications/:applicationId/assign",
+        "POST /api/v1/mortgage/applications/:applicationId/approve",
+        "POST /api/v1/mortgage/applications/:applicationId/reject",
+        "POST /api/v1/mortgage/backoffice/applications/:applicationId/request-info",
+        "PATCH /api/v1/mortgage/backoffice/applications/:applicationId/notes"
+      ],
+      "cache_reads": [],
+      "cache_writes": []
+    },
+    {
+      "name": "MortgageBackofficeValuationsPage",
+      "route": "/backoffice/mortgage/valuations",
+      "auth_required": true,
+      "components": [
+        "ValuationsQueue",
+        "ValuationFilters",
+        "AssignAppraiserDialog"
+      ],
+      "api_calls": [
+        "GET /api/v1/mortgage/backoffice/valuations/pending",
+        "POST /api/v1/mortgage/backoffice/valuations/:valuationId/assign-appraiser"
+      ],
+      "cache_reads": [
+        "backoffice.valuations.pending"
+      ],
+      "cache_writes": [
+        "backoffice.valuations.pending"
+      ]
+    },
+    {
+      "name": "MortgageBackofficeValuationDetailPage",
+      "route": "/backoffice/mortgage/valuations/:valuationId",
+      "auth_required": true,
+      "components": [
+        "PropertyValuationForm",
+        "PropertyDetailsCard",
+        "ValuationReportPreview",
+        "SubmitValuationDialog"
+      ],
+      "api_calls": [
+        "POST /api/v1/mortgage/backoffice/valuations/:valuationId/submit"
+      ],
+      "cache_reads": [],
+      "cache_writes": []
+    }
+  ],
+  "cache_strategy": {
+    "storage_type": "mixed",
+    "server_cache": true,
+    "notes": "sessionStorage para dados temporários, localStorage para drafts (7d), memory cache para dados frequentes, Redis server-side para simulações idênticas (TTL 1h). Backoffice usa memory cache com TTL curto para dados real-time.",
+    "items": [
+      {
+        "key": "mortgage.lastSimulation",
+        "written_by": "MortgageSimulatorPage",
+        "read_by": [
+          "MortgageSimulatorPage",
+          "MortgageApplicationPage"
+        ],
+        "ttl": "session",
+        "cleared_on": "logout"
+      },
+      {
+        "key": "mortgage.draftApplication",
+        "written_by": "MortgageApplicationPage",
+        "read_by": [
+          "MortgageApplicationPage"
+        ],
+        "ttl": "604800s",
+        "cleared_on": "application.submitted"
+      },
+      {
+        "key": "mortgage.application.:id",
+        "written_by": "MortgageApplicationDetailPage",
+        "read_by": [
+          "MortgageApplicationDetailPage"
+        ],
+        "ttl": "300s",
+        "cleared_on": "mortgage.application.statusChanged"
+      },
+      {
+        "key": "mortgage.loan.:loanId",
+        "written_by": "MortgageLoanDashboardPage",
+        "read_by": [
+          "MortgageLoanDashboardPage",
+          "MortgageAmortizationPage"
+        ],
+        "ttl": "600s",
+        "cleared_on": "mortgage.payment.received"
+      },
+      {
+        "key": "backoffice.kpis",
+        "written_by": "MortgageBackofficeDashboardPage",
+        "read_by": [
+          "MortgageBackofficeDashboardPage"
+        ],
+        "ttl": "300s",
+        "cleared_on": "manual_refresh"
+      },
+      {
+        "key": "backoffice.applications",
+        "written_by": "MortgageBackofficeApplicationsPage",
+        "read_by": [
+          "MortgageBackofficeApplicationsPage"
+        ],
+        "ttl": "60s",
+        "cleared_on": "mortgage.application.statusChanged"
+      },
+      {
+        "key": "backoffice.valuations.pending",
+        "written_by": "MortgageBackofficeValuationsPage",
+        "read_by": [
+          "MortgageBackofficeValuationsPage"
+        ],
+        "ttl": "120s",
+        "cleared_on": "mortgage.valuation.completed"
+      }
+    ]
+  },
+  "event_strategy": {
+    "pattern": "hybrid",
+    "notes": "REST para operações síncronas (CRUD, simulação, aprovação). Socket.IO para notificações assíncronas (status changes, CRC completion, valuation done, desembolso). Backoffice recebe eventos em namespace /backoffice filtrados por role. Eventos críticos (disbursement, approval) com retry 3x backoff exponencial.",
+    "events_consumed": [
+      "mortgage.application.statusChanged",
+      "mortgage.crc.completed",
+      "mortgage.valuation.completed",
+      "mortgage.documentation.generated",
+      "mortgage.approval.completed",
+      "mortgage.contract.signed",
+      "mortgage.disbursement.completed",
+      "mortgage.payment.due",
+      "mortgage.notification.sent",
+      "mortgage.backoffice.newApplication",
+      "mortgage.backoffice.applicationAssigned",
+      "mortgage.backoffice.valuationPending",
+      "mortgage.backoffice.actionRequired"
+    ],
+    "events_declared_not_consumed": [
+      "mortgage.simulation.created",
+      "mortgage.application.created",
+      "mortgage.application.submitted",
+      "mortgage.approval.levelCompleted",
+      "mortgage.contract.created",
+      "mortgage.payment.received"
+    ],
+    "retry_logic": "Eventos críticos (disbursement.completed, approval.completed, backoffice.actionRequired) — retry 3x com backoff exponencial (1s, 2s, 4s). Dead letter queue após falha."
+  },
+  "deep_dives": [
+    {
+      "system": "core",
+      "data_flow_summary": "Core backend gere todas as tabelas de crédito habitação (15 tabelas + 2 backoffice), motor de cálculo TAEG (biblioteca financeira standard), mock CRC (score 600-850, delay 3s), sistema interno de avaliação (24-48h), motor de aprovação multinível (L1≤400k, L2 400k-1M, L3>1M), mock CMD (aceita qualquer OTP), integração real Core Banking para desembolso (retry + idempotency), geração FIN/FINE via templates, sistema de notificações multicanal, e módulo de backoffice completo (KPIs, atribuição, notas internas, auditoria, relatórios XLSX).",
+      "architecture_notes": "Modelo de dados normalizado com 15 tabelas core + 2 tabelas backoffice (mortgage_application_assignments, mortgage_internal_notes). Motor de aprovação baseado em state machine (draft→submitted→crc_check→valuation→approval→contract→signed→disbursed→active). Auditoria em tabela audit_logs para compliance. RGPD: soft delete com retenção 2 anos. Desembolso: idempotency key (disbursementId), timeout 30s, circuit breaker. Backoffice: atribuição automática por montante, alertas >5 dias sem acção, exportação XLSX via exceljs.",
+      "gaps": [
+        "Motor TAEG — validar com especialista financeiro antes de produção",
+        "Mock CRC — definir timeline para integração real com Banco de Portugal",
+        "Mock CMD — definir timeline para integração real com AMA",
+        "Integração Core Banking — obter documentação API interna de transferências",
+        "Templates FIN/FINE — obter templates oficiais do departamento jurídico",
+        "Regras DSTI — confirmar limites regulatórios actualizados (Banco de Portugal)",
+        "Backoffice — definir SLA por nível de aprovação (ex: L1 2 dias, L2 5 dias, L3 10 dias)",
+        "Exportação XLSX — definir campos obrigatórios para relatórios regulatórios"
+      ],
+      "recommendations": [
+        "Implementar auditoria completa (audit_logs) para compliance regulamentar",
+        "Políticas RGPD: soft delete, retenção 2 anos para pedidos rejeitados",
+        "Dashboard backoffice com KPIs real-time via Socket.IO",
+        "Alertas automáticos para pedidos >5 dias sem acção (event actionRequired)",
+        "Sistema de atribuição automática de gestores por montante do empréstimo",
+        "Circuit breaker para Core Banking: timeout 30s, max retries 3, fallback status=pending",
+        "Cron job diário para alertas de pagamento (7 dias antes do vencimento)",
+        "Índices DB: applicationId, userId, status, createdAt em todas tabelas principais"
+      ],
+      "implementation_tasks": [
+        {
+          "description": "Criar tabela mortgage_simulations e API POST /api/v1/mortgage/simulate com motor TAEG (biblioteca financeira standard)",
+          "user_story_key": "BCTT-537"
+        },
+        {
+          "description": "Criar tabela mortgage_simulations — GET /api/v1/mortgage/simulations/:simulationId",
+          "user_story_key": "BCTT-537"
+        },
+        {
+          "description": "Implementar cálculo TAEG, LTV, DSTI com validação de limites regulatórios",
+          "user_story_key": "BCTT-537"
+        },
+        {
+          "description": "Criar tabela mortgage_applications e API POST /api/v1/mortgage/applications (draft)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar API PATCH /api/v1/mortgage/applications/:applicationId (update draft)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar tabela mortgage_applicants (1:N com applications — titular + co-titular)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar tabela mortgage_properties e validação de dados imóvel",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar tabela mortgage_documents e API POST upload documentos (multipart, max 5MB PDF, 2MB imagens)",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Criar API POST /api/v1/mortgage/applications/:applicationId/submit com validação docs obrigatórios",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Criar API GET /api/v1/mortgage/applications/:applicationId/documents/:documentId/download",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Criar tabela mortgage_crc_checks e API POST CRC check (mock — score 600-850, delay 3s)",
+          "user_story_key": "BCTT-541"
+        },
+        {
+          "description": "Criar API GET CRC result com recomendação baseada em score (approve>750, conditional 650-750, reject<650)",
+          "user_story_key": "BCTT-541"
+        },
+        {
+          "description": "Criar tabela mortgage_valuations e API POST solicitar avaliação (sistema interno)",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar API GET resultado avaliação com relatório (valuatedAmount ±5% do declaredValue)",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar API POST generate-documentation para gerar FIN/FINE via templates",
+          "user_story_key": "BCTT-543"
+        },
+        {
+          "description": "Criar tabela mortgage_approval_workflows e API POST iniciar workflow (determinar nível por montante L1/L2/L3)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API GET estado workflow de aprovação com histórico por nível",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API POST approve com validação de role/nível (gestor_L1≤400k, L2≤1M, L3 sem limite)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API POST reject com motivo obrigatório e registo em audit_logs",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar tabela mortgage_contracts e API POST gerar contrato",
+          "user_story_key": "BCTT-546"
+        },
+        {
+          "description": "Criar tabela mortgage_signatures e API POST sign (mock CMD — aceita qualquer OTP)",
+          "user_story_key": "BCTT-546"
+        },
+        {
+          "description": "Criar API POST disburse com integração real Core Banking (idempotency key, timeout 30s, circuit breaker)",
+          "user_story_key": "BCTT-545"
+        },
+        {
+          "description": "Criar tabela mortgage_loans e API GET detalhes empréstimo activo",
+          "user_story_key": "BCTT-547"
+        },
+        {
+          "description": "Criar tabela mortgage_payments e API GET histórico pagamentos (paginado)",
+          "user_story_key": "BCTT-547"
+        },
+        {
+          "description": "Criar tabela mortgage_amortizations e API POST simular amortização antecipada",
+          "user_story_key": "BCTT-548"
+        },
+        {
+          "description": "Criar API POST confirmar amortização (debitar conta, actualizar saldo empréstimo)",
+          "user_story_key": "BCTT-548"
+        },
+        {
+          "description": "Criar tabela mortgage_notifications e API GET listar notificações (paginado)",
+          "user_story_key": "BCTT-549"
+        },
+        {
+          "description": "Criar API PATCH marcar notificação como lida",
+          "user_story_key": "BCTT-549"
+        },
+        {
+          "description": "Implementar emissão de 15 eventos Socket.IO (simulation.created → notification.sent)",
+          "user_story_key": "BCTT-550"
+        },
+        {
+          "description": "Criar cron job alertas de pagamento (7 dias antes vencimento — evento payment.due)",
+          "user_story_key": "BCTT-549"
+        },
+        {
+          "description": "Criar tabela audit_logs e logging de todas operações críticas",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Implementar soft delete e políticas RGPD (retenção 2 anos pedidos rejeitados)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar API GET /api/v1/mortgage/backoffice/dashboard/kpis — KPIs agregados",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API GET /api/v1/mortgage/backoffice/applications — lista com filtros avançados (status, nível, gestor, datas)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API GET /api/v1/mortgage/backoffice/applications/:applicationId — detalhe completo com notas, CRC, avaliação",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar tabela mortgage_application_assignments e API POST assign gestor (auto por montante)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API POST request-info — solicitar documentos adicionais ao cliente (gera notificação)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar tabela mortgage_internal_notes e API PATCH notes — notas internas visíveis só para gestores",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API GET /api/v1/mortgage/backoffice/valuations/pending — fila de avaliações",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar API POST assign-appraiser — atribuir avaliador interno",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar API POST valuations/:valuationId/submit — submeter resultado avaliação",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar API GET audit-logs — log de operações filtráveis (acção, user, datas)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API GET reports/monthly — relatório mensal (volume, aprovação, ticket médio)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar API GET reports/export — exportar XLSX via exceljs",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Implementar emissão de 4 eventos backoffice Socket.IO (newApplication, assigned, valuationPending, actionRequired)",
+          "user_story_key": "BCTT-550"
+        },
+        {
+          "description": "Criar cron job diário para alertas backoffice — pedidos >5 dias sem acção (evento actionRequired)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar sistema de atribuição automática de gestores por montante (L1≤400k, L2≤1M, L3>1M)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar índices DB: applicationId, userId, status, createdAt em todas tabelas principais",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Implementar state machine para ciclo de vida do pedido (draft→submitted→…→active→closed)",
+          "user_story_key": "BCTT-539"
+        }
+      ]
+    },
+    {
+      "system": "middleware",
+      "data_flow_summary": "Middleware actua como proxy entre Digital Channels e Core. Gere autenticação JWT, validação de roles (gestor_L1/L2/L3, avaliador, admin), rate limiting (global 100 req/min, CRC 1/dia, backoffice 200/min), circuit breaker para Core Banking (timeout 30s), e logging estruturado JSON. Rotas backoffice protegidas por role-based access control.",
+      "architecture_notes": "Todas as rotas /api/v1/mortgage/* passam pelo middleware com validação JWT. Rotas backoffice requerem roles específicos. Rate limiting implementado com Redis (sliding window). Circuit breaker pattern com estados: closed→open→half-open. Métricas Prometheus para latência P50/P95/P99 e taxa de erro por endpoint.",
+      "gaps": [
+        "Definir política de rate limiting exacta para CRC (1 req/dia por userId ou por applicationId?)",
+        "Validação CORS para backoffice — confirmar domínios permitidos",
+        "Política de timeout para uploads de documentos (ficheiros grandes)"
+      ],
+      "recommendations": [
+        "Circuit breaker para Core Banking: timeout 30s, max retries 3, fallback status=pending",
+        "Redis para rate limiting (sliding window) — key por userId + endpoint",
+        "Métricas Prometheus: latência, taxa erro, rate limit hits",
+        "Logs estruturados JSON para auditoria (correlationId em todos requests)",
+        "Validação de roles granular: gestor_L1 só vê e opera até 400k",
+        "Upload: timeout 60s, max size 5MB PDF / 2MB imagens"
+      ],
+      "implementation_tasks": [
+        {
+          "description": "Configurar proxy routes para 39 endpoints mortgage (27 cliente + 12 backoffice) no middleware",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Implementar validação JWT e extracção de roles para rotas mortgage",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Implementar rate limiting Redis: global 100 req/min, CRC 1/dia por userId, backoffice 200/min",
+          "user_story_key": "BCTT-541"
+        },
+        {
+          "description": "Implementar role-based access control para backoffice (gestor_L1/L2/L3, avaliador, admin)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Implementar circuit breaker para endpoint disburse (Core Banking): timeout 30s, retries 3, fallback pending",
+          "user_story_key": "BCTT-545"
+        },
+        {
+          "description": "Configurar upload proxy: timeout 60s, max 5MB PDF / 2MB imagens, multipart/form-data",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Implementar métricas Prometheus e logging estruturado JSON com correlationId",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Configurar CORS para backoffice (domínios específicos)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Implementar validação granular: gestor_L1 só pode approve se loanAmount ≤ 400000",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Configurar Socket.IO namespace /backoffice com filtro por role no middleware",
+          "user_story_key": "BCTT-550"
+        }
+      ]
+    },
+    {
+      "system": "digitalChannels",
+      "data_flow_summary": "Frontend React com 11 páginas (6 cliente + 5 backoffice), 1 microserviço BFF (mortgage-service porta 4005), 39 rotas proxy, Socket.IO client para 13 eventos consumidos (9 cliente + 4 backoffice). Wizard multi-step para pedido, mock CMD com UI realista, gráficos Chart.js, DataTable backoffice, exportação XLSX. Cache strategy mista (sessionStorage, localStorage 7d, memory). Design system Banco CTT com componentes acessíveis WCAG 2.1 AA.",
+      "architecture_notes": "Microserviço mortgage-service (Express + TypeScript) monta em /api/mortgage e faz proxy para core-api:3000. Frontend organizado em: /src/pages/mortgage/ (6 páginas cliente), /src/pages/backoffice/mortgage/ (5 páginas backoffice), /src/components/mortgage/ (componentes partilhados), /src/services/mortgageApi.ts (API client), /src/hooks/useMortgageSocket.ts (Socket.IO). Backoffice usa react-table para DataTable, Chart.js para gráficos, exceljs para XLSX client-side. Auto-save draft a cada 30s via localStorage.",
+      "gaps": [
+        "Componente CMDSignatureWidget — UI mock precisa de design UX aprovado",
+        "DocumentUploader — validação client-side de tipos MIME e tamanhos",
+        "ApplicationTimeline — design UX da linha temporal vertical",
+        "Chart.js gráficos — cores e estilo alinhados com Design System Banco CTT",
+        "Backoffice DataTable — definir colunas exactas e filtros por página",
+        "Backoffice layout — sidebar vs top-nav para backoffice"
+      ],
+      "recommendations": [
+        "Wizard multi-step (4 steps): Dados Pessoais → Co-Titular → Imóvel → Documentos",
+        "Tooltips para termos técnicos (TAEG, DSTI, LTV) com react-tooltip",
+        "Auto-save draft a cada 30s em localStorage (TTL 7 dias)",
+        "Preview documentos com PDF.js antes de download",
+        "Socket.IO: reconnect automático com backoff exponencial",
+        "Lazy loading de páginas backoffice (code splitting)",
+        "Testes E2E Playwright: fluxo completo cliente + fluxo gestor backoffice",
+        "Acessibilidade WCAG 2.1 AA em todos os formulários",
+        "Responsive design: simulador funciona em mobile, backoffice desktop-first",
+        "Error boundaries por página com fallback UI"
+      ],
+      "implementation_tasks": [
+        {
+          "description": "Criar microserviço mortgage-service (Express + TypeScript, porta 4005, mount /api/mortgage)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Configurar 39 rotas proxy no mortgage-service (27 cliente + 12 backoffice)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar mortgageApi.ts — API client com Axios (interceptors, error handling, auth header)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar useMortgageSocket.ts — hook Socket.IO para 13 eventos consumidos",
+          "user_story_key": "BCTT-550"
+        },
+        {
+          "description": "Criar MortgageSimulatorPage — formulário de simulação com cálculo TAEG, LTV, DSTI",
+          "user_story_key": "BCTT-537"
+        },
+        {
+          "description": "Criar componentes MortgageSimulatorForm, AmortizationTable, TAEGDisplay, LTVIndicator",
+          "user_story_key": "BCTT-537"
+        },
+        {
+          "description": "Criar MortgageApplicationPage — wizard 4 steps (Pessoais → Co-Titular → Imóvel → Docs)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar componentes ApplicantForm, CoApplicantForm, PropertyForm, ProgressStepper",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar DocumentUploader — drag&drop, validação tipos/tamanhos, preview",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Implementar auto-save draft a cada 30s (localStorage, TTL 7d)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar MortgageApplicationDetailPage — timeline, status, CRC, avaliação, workflow",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Criar componentes ApplicationTimeline, ApplicationStatusBadge, ApprovalWorkflowTracker",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar componentes CRCResultCard, ValuationResultCard",
+          "user_story_key": "BCTT-541"
+        },
+        {
+          "description": "Criar MortgageContractPage — visualizador PDF + widget assinatura CMD mock",
+          "user_story_key": "BCTT-546"
+        },
+        {
+          "description": "Criar CMDSignatureWidget — UI realista (input telefone, envio SMS simulado, input OTP)",
+          "user_story_key": "BCTT-546"
+        },
+        {
+          "description": "Criar MortgageLoanDashboardPage — overview, pagamentos, gráficos Chart.js",
+          "user_story_key": "BCTT-547"
+        },
+        {
+          "description": "Criar componentes LoanOverview, PaymentHistory, NextPaymentCard, LoanProgressChart",
+          "user_story_key": "BCTT-547"
+        },
+        {
+          "description": "Criar MortgageAmortizationPage — simulador interactivo com gráfico comparativo",
+          "user_story_key": "BCTT-548"
+        },
+        {
+          "description": "Criar componentes AmortizationSimulator, InteractiveSavingsChart, ComparisonTable",
+          "user_story_key": "BCTT-548"
+        },
+        {
+          "description": "Criar tooltips para termos técnicos (TAEG, DSTI, LTV, spread) com react-tooltip",
+          "user_story_key": "BCTT-537"
+        },
+        {
+          "description": "Implementar cache strategy (sessionStorage, localStorage 7d, memory) com clearing automático",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Criar MortgageBackofficeDashboardPage — KPIs, gráficos, actividade recente, alertas",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar componentes KPICardsGrid, ApplicationsQueueChart, MonthlyVolumeChart, RecentActivityFeed",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar MortgageBackofficeApplicationsPage — DataTable com filtros (status, nível, gestor, datas)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar componentes ApplicationsDataTable (react-table), ApplicationFilters, BulkActionToolbar",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar MortgageBackofficeApplicationDetailPage — painel completo com acções (aprovar, rejeitar, atribuir, solicitar info, notas)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar componentes ApprovalActionButtons, InternalNotesPanel, AssignGestorDialog, RequestInfoDialog",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Criar componente DocumentViewer (PDF.js para preview inline)",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Criar MortgageBackofficeValuationsPage — fila de avaliações com atribuição",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar componentes ValuationsQueue, ValuationFilters, AssignAppraiserDialog",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar MortgageBackofficeValuationDetailPage — formulário de avaliação + preview relatório",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar componentes PropertyValuationForm, PropertyDetailsCard, ValuationReportPreview, SubmitValuationDialog",
+          "user_story_key": "BCTT-542"
+        },
+        {
+          "description": "Criar ExportButton com download XLSX (exceljs client-side)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Implementar Socket.IO backoffice — subscrever eventos em namespace /backoffice",
+          "user_story_key": "BCTT-550"
+        },
+        {
+          "description": "Implementar PendingActionsAlert — alertas visuais para pedidos >5 dias sem acção",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Configurar lazy loading (code splitting) para páginas backoffice",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Configurar React Router: 6 rotas cliente (/mortgage/*) + 5 rotas backoffice (/backoffice/mortgage/*)",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Implementar error boundaries por página com fallback UI",
+          "user_story_key": "BCTT-539"
+        },
+        {
+          "description": "Implementar responsive design: simulador mobile-friendly, backoffice desktop-first",
+          "user_story_key": "BCTT-537"
+        },
+        {
+          "description": "Testes E2E Playwright: fluxo completo simulação → pedido → aprovação → contrato → desembolso",
+          "user_story_key": "BCTT-540"
+        },
+        {
+          "description": "Testes E2E Playwright: fluxo backoffice (login gestor → dashboard → detalhe → aprovar → avaliação)",
+          "user_story_key": "BCTT-544"
+        },
+        {
+          "description": "Acessibilidade WCAG 2.1 AA: aria-labels, keyboard navigation, screen reader, contrast",
+          "user_story_key": "BCTT-539"
+        }
+      ]
+    }
+  ]
+}

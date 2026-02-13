@@ -1,0 +1,192 @@
+{
+  "bdev_code": "BDEV00000016",
+  "agent": "bde",
+  "plan": {
+    "summary": "Implementação completa do sistema de Crédito Habitação com 29 APIs REST, 6 microserviços (mortgage-service porta 4001, mortgage-backoffice-service porta 4011, mock-crc-service porta 4051, mock-cmd-service porta 4052, internal-assessment-service porta 4053, core-banking-service porta 4054), 3 tabelas novas (audit_log, gestor_assignments, manual_overrides), aprovações hierárquicas L1/L2/L3, biblioteca TAEG standard, logging de auditoria, eventos Socket.IO. Stack: SQLite via sql.js no Core, Express, proxy middleware com fixRequestBody, queryAll/queryOne/run síncronos.",
+    "tables_to_add": [
+      {
+        "name": "mortgage_simulations",
+        "columns": "id TEXT PRIMARY KEY, property_value REAL, down_payment REAL, loan_amount REAL, term INTEGER, interest_rate REAL, monthly_payment REAL, total_amount REAL, taeg REAL, amortization_table TEXT, created_at DATETIME"
+      },
+      {
+        "name": "mortgage_applications",
+        "columns": "id TEXT PRIMARY KEY, simulation_id TEXT, client_id TEXT, applicant_data TEXT, property_data TEXT, loan_amount REAL, term INTEGER, status TEXT CHECK(status IN ('draft','submitted','pending_l1','pending_l2','pending_l3','pending_crc','pending_cmd','pending_internal','approved','rejected','cancelled')), created_at DATETIME, updated_at DATETIME, FOREIGN KEY(client_id) REFERENCES clients(id), FOREIGN KEY(simulation_id) REFERENCES mortgage_simulations(id)"
+      },
+      {
+        "name": "mortgage_documents",
+        "columns": "id TEXT PRIMARY KEY, application_id TEXT, type TEXT, filename TEXT, url TEXT, uploaded_at DATETIME, FOREIGN KEY(application_id) REFERENCES mortgage_applications(id)"
+      },
+      {
+        "name": "mortgage_approvals",
+        "columns": "id TEXT PRIMARY KEY, application_id TEXT, level TEXT CHECK(level IN ('L1','L2','L3','CRC','CMD','internal')), status TEXT CHECK(status IN ('pending','approved','rejected')), approver_id TEXT, approved_at DATETIME, comments TEXT, FOREIGN KEY(application_id) REFERENCES mortgage_applications(id)"
+      },
+      {
+        "name": "mortgage_clauses",
+        "columns": "id TEXT PRIMARY KEY, application_id TEXT, clause_text TEXT, type TEXT, added_by TEXT, added_at DATETIME, FOREIGN KEY(application_id) REFERENCES mortgage_applications(id)"
+      },
+      {
+        "name": "mortgage_scoring",
+        "columns": "id TEXT PRIMARY KEY, application_id TEXT, score REAL, risk_level TEXT, details TEXT, calculated_at DATETIME, FOREIGN KEY(application_id) REFERENCES mortgage_applications(id)"
+      },
+      {
+        "name": "mortgage_contracts",
+        "columns": "id TEXT PRIMARY KEY, application_id TEXT, contract_number TEXT UNIQUE, status TEXT CHECK(status IN ('generated','sent','signed','active')), generated_at DATETIME, signed_at DATETIME, FOREIGN KEY(application_id) REFERENCES mortgage_applications(id)"
+      },
+      {
+        "name": "mortgage_disbursements",
+        "columns": "id TEXT PRIMARY KEY, contract_id TEXT, amount REAL, recipient TEXT, disbursed_at DATETIME, status TEXT CHECK(status IN ('pending','completed','failed')), FOREIGN KEY(contract_id) REFERENCES mortgage_contracts(id)"
+      },
+      {
+        "name": "audit_log",
+        "columns": "id TEXT PRIMARY KEY, entity_type TEXT, entity_id TEXT, action TEXT, user_id TEXT, timestamp DATETIME, details TEXT, ip_address TEXT"
+      },
+      {
+        "name": "gestor_assignments",
+        "columns": "id TEXT PRIMARY KEY, application_id TEXT, gestor_id TEXT, assigned_at DATETIME, status TEXT CHECK(status IN ('active','completed')), FOREIGN KEY(application_id) REFERENCES mortgage_applications(id)"
+      },
+      {
+        "name": "manual_overrides",
+        "columns": "id TEXT PRIMARY KEY, application_id TEXT, field TEXT, old_value TEXT, new_value TEXT, reason TEXT, performed_by TEXT, performed_at DATETIME, FOREIGN KEY(application_id) REFERENCES mortgage_applications(id)"
+      }
+    ],
+    "files_to_create": [
+      {
+        "project": "core",
+        "path": "src/utils/taeg.ts",
+        "purpose": "Biblioteca standard para cálculo de TAEG (Taxa Anual Efetiva Global) com fórmula regulamentar portuguesa. Exporta calculateTAEG(loanAmount, term, interestRate, fees): number."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageSimulations.ts",
+        "purpose": "Router para simulações de crédito habitação: POST / (criar simulação com TAEG), GET /:id (obter simulação existente). Usa calculateTAEG() do módulo taeg.ts. Retorna amortizationTable como array JSON."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageApplications.ts",
+        "purpose": "Router para pedidos de crédito habitação: POST / (criar aplicação), GET / (listar), GET /:id (obter detalhes), PUT /:id (actualizar), POST /:id/submit (submeter para aprovação L1). Valida status transitions. Emite eventos 'mortgage.application.created', 'mortgage.application.submitted'."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageDocuments.ts",
+        "purpose": "Router para documentos: POST / (upload documento via base64), GET / com query ?applicationId, DELETE /:id. Armazena url como data:mime;base64,... Emite evento 'mortgage.document.uploaded'."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageApprovals.ts",
+        "purpose": "Router para aprovações: POST / (criar aprovação pendente), PUT /:id/approve (aprovar), PUT /:id/reject (rejeitar). Actualiza status da application. Emite eventos 'mortgage.approval.completed'. Valida níveis hierárquicos (L1 antes de L2 antes de L3)."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageClauses.ts",
+        "purpose": "Router para cláusulas: POST / (adicionar cláusula), GET / com query ?applicationId, DELETE /:id. Emite evento 'mortgage.clause.added'."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageScoring.ts",
+        "purpose": "Router para scoring: POST / (calcular score), GET /:applicationId (obter score). Lógica mock: score baseado em loanAmount/applicantData. Emite evento 'mortgage.scoring.calculated'."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageContracts.ts",
+        "purpose": "Router para contratos: POST / (gerar contrato), GET /:id, PUT /:id/sign (assinar contrato), PUT /:id/activate (activar). Emite eventos 'mortgage.contract.generated', 'mortgage.contract.signed', 'mortgage.contract.activated'."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageDisbursements.ts",
+        "purpose": "Router para desembolsos: POST / (criar desembolso), PUT /:id/complete (marcar como completed). Emite evento 'mortgage.disbursement.completed'."
+      },
+      {
+        "project": "core",
+        "path": "src/routes/mortgageBackoffice.ts",
+        "purpose": "Router para operações backoffice (porta 4001, mas rota separada): POST /applications/:id/assign-gestor, POST /applications/:id/override, GET /audit-log com filtros. Usa tabelas gestor_assignments, manual_overrides, audit_log. Emite eventos 'mortgage.gestor.assigned', 'mortgage.override.applied'."
+      },
+      {
+        "project": "core",
+        "path": "src/utils/auditLogger.ts",
+        "purpose": "Módulo de audit logging. Exporta logAudit(entityType, entityId, action, userId, details, ipAddress). INSERT na tabela audit_log. Usado em todas as operações críticas (aprovações, overrides, etc)."
+      },
+      {
+        "project": "middleware",
+        "path": "src/services/mockCrc.ts",
+        "purpose": "Serviço mock CRC (Comissão de Riscos de Crédito). Porta 4051. Router Express com POST /api/crc/validate (retorna approved/rejected após 2s delay). Regra: aprovado se loanAmount < 300000 e riskLevel !== 'high'."
+      },
+      {
+        "project": "middleware",
+        "path": "src/services/mockCmd.ts",
+        "purpose": "Serviço mock CMD (Conselho Macro-Directivo). Porta 4052. Router Express com POST /api/cmd/validate (retorna approved/rejected após 3s delay). Regra: aprovado se loanAmount < 500000."
+      },
+      {
+        "project": "middleware",
+        "path": "src/services/internalAssessment.ts",
+        "purpose": "Serviço de avaliação interna. Porta 4053. Router Express com POST /api/assessment/evaluate (retorna assessmentValue, condition após 1.5s delay). Lógica: assessmentValue = propertyValue * random(0.95, 1.05), condition = 'good'/'fair'/'poor'."
+      },
+      {
+        "project": "middleware",
+        "path": "src/services/coreBanking.ts",
+        "purpose": "Serviço Core Banking real. Porta 4054. Router Express com GET /api/accounts/:id/balance, POST /api/accounts/:id/debit. Proxy direto para http://localhost:4001/api/accounts. Usa fixRequestBody."
+      },
+      {
+        "project": "middleware",
+        "path": "src/routes/mortgageBackofficeProxy.ts",
+        "purpose": "Router na porta 4011 (novo servidor Express dedicado a backoffice). Proxy para http://localhost:4001/api/mortgage-backoffice. Middleware de auth separado para gestores (role: 'backoffice'). Usa fixRequestBody."
+      },
+      {
+        "project": "middleware",
+        "path": "src/serverBackoffice.ts",
+        "purpose": "Entry point do servidor backoffice (porta 4011). Express app com cors, json, authMiddleware (valida role 'backoffice'), mortgageBackofficeProxy router, health check /health. Logging de acesso."
+      },
+      {
+        "project": "middleware",
+        "path": "src/serverMocks.ts",
+        "purpose": "Entry point que lança os 4 serviços mock em portas separadas: mockCrc (4051), mockCmd (4052), internalAssessment (4053), coreBanking (4054). Um único processo com 4 Express apps."
+      }
+    ],
+    "files_to_modify": [
+      {
+        "project": "core",
+        "path": "src/db/schema.ts",
+        "changes": "Adicionar CREATE TABLE para as 11 novas tabelas (mortgage_simulations, mortgage_applications, mortgage_documents, mortgage_approvals, mortgage_clauses, mortgage_scoring, mortgage_contracts, mortgage_disbursements, audit_log, gestor_assignments, manual_overrides). Sem alterar tabelas existentes (clients, accounts, movements, balances, digital_access). Manter queryAll/queryOne/run síncronos conforme código atual."
+      },
+      {
+        "project": "core",
+        "path": "src/server.ts",
+        "changes": "Importar e registar os novos routers: mortgageSimulations em /api/mortgage/simulations, mortgageApplications em /api/mortgage/applications, mortgageDocuments em /api/mortgage/documents, mortgageApprovals em /api/mortgage/approvals, mortgageClauses em /api/mortgage/clauses, mortgageScoring em /api/mortgage/scoring, mortgageContracts em /api/mortgage/contracts, mortgageDisbursements em /api/mortgage/disbursements, mortgageBackoffice em /api/mortgage-backoffice. Sem alterar rotas existentes."
+      },
+      {
+        "project": "core",
+        "path": "src/db/seed.ts",
+        "changes": "Adicionar seed data para mortgage_simulations (2 simulações exemplo), mortgage_applications (1 aplicação em status 'draft'), audit_log (1 entrada exemplo). Usar INSERT com lista explícita de colunas. Manter seed existente de clients/accounts/movements."
+      },
+      {
+        "project": "middleware",
+        "path": "src/routes/proxy.ts",
+        "changes": "Adicionar proxy routes para os novos endpoints de mortgage: router.use('/mortgage', createProxyMiddleware(coreProxy('mortgage'))). Manter função fixRequestBody conforme código actual. Sem alterar proxies existentes (accounts, movements, transfers, clients, term-deposits)."
+      },
+      {
+        "project": "middleware",
+        "path": "src/middleware/auth.ts",
+        "changes": "Adicionar suporte para role 'backoffice' no payload JWT. Exportar função hasRole(req: AuthRequest, role: string): boolean para validação de permissões. Sem alterar lógica de autenticação existente."
+      }
+    ],
+    "tables_to_modify": [],
+    "function_changes": [
+      {
+        "file": "core/src/db/schema.ts",
+        "function_name": "initDatabase",
+        "change": "Adicionar 11 CREATE TABLE IF NOT EXISTS statements para as novas tabelas de mortgage. Manter todas as CREATE TABLE existentes. Não alterar assinatura da função (continua async retornando Promise<Database>)."
+      },
+      {
+        "file": "middleware/src/middleware/auth.ts",
+        "function_name": "authMiddleware",
+        "change": "Adicionar validação para permitir acesso ao /api/v1/mortgage sem role específica (acesso geral autenticado). Criar nova função hasRole() exportada para validações específicas de backoffice."
+      }
+    ]
+  },
+  "warnings": [
+    "⚠️ ALTERA 2 função(ões) existente(s)"
+  ],
+  "submitted_at": "2026-02-13T16:46:51.868Z",
+  "status": "approved",
+  "approval_comments": "Plan approved. Proceed with implementation.",
+  "approved_at": "2026-02-13T16:57:28.877Z"
+}

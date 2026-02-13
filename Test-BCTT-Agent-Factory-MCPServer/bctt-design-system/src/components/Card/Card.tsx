@@ -90,9 +90,13 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         hoverable={hoverable}
         cardVariant={variant}
         sx={{
-          '& > .MuiCardContent-root': {
-            padding: paddingMap[padding],
-          },
+          ...(padding !== 'none' && {
+            padding: (theme: any) => theme.spacing(paddingMap[padding]),
+            '& > .MuiCardContent-root': {
+              padding: 0,
+              '&:last-child': { paddingBottom: 0 },
+            },
+          }),
           ...sx,
         }}
         {...props}

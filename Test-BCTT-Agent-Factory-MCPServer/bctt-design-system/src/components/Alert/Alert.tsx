@@ -8,11 +8,17 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
+type AlertSeverity = 'success' | 'warning' | 'error' | 'info';
+
 export interface AlertProps extends Omit<MuiAlertProps, 'severity' | 'variant'> {
   /**
-   * Tipo/severidade do alerta
+   * Tipo/severidade do alerta (alias BCTT para severity)
    */
-  variant: 'success' | 'warning' | 'error' | 'info';
+  variant?: AlertSeverity;
+  /**
+   * Severidade do alerta (MUI-compatible alias)
+   */
+  severity?: AlertSeverity;
   /**
    * Título do alerta (opcional)
    */
@@ -47,7 +53,8 @@ export interface AlertProps extends Omit<MuiAlertProps, 'severity' | 'variant'> 
  * ```
  */
 export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
-  ({ variant, title, children, closable = false, onClose, ...props }, ref) => {
+  ({ variant, severity, title, children, closable = false, onClose, ...props }, ref) => {
+    const resolvedSeverity = variant || severity || 'info';
     const [open, setOpen] = React.useState(true);
 
     const handleClose = () => {
@@ -59,7 +66,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       <Collapse in={open}>
         <MuiAlert
           ref={ref}
-          severity={variant}
+          severity={resolvedSeverity}
           action={
             closable ? (
               <IconButton

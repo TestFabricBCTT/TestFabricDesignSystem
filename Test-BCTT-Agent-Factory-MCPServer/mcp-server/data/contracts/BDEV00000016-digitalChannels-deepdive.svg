@@ -1,0 +1,414 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 3124" width="1400" height="3124" font-family="Arial, Helvetica, sans-serif">
+  
+  <defs>
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/><stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/><stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/><stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9C27B0"/><stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/><stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="3124" fill="url(#bgGrad)"/>
+
+  <!-- Title -->
+  <rect x="0" y="0" width="1400" height="72" fill="#263238" opacity="0.95"/>
+  <text x="700" y="32" text-anchor="middle" fill="#FFF" font-size="20" font-weight="700">BDEV00000016 &#8212; Digital Channels Deep Dive</text>
+  <text x="700" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12">Análise detalhada &#8212; 2026-02-13</text>
+  <rect x="520" y="62" width="360" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  
+  <!-- Frontend Container -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="100" width="1320" height="320" rx="10" fill="#FFF" stroke="#BBDEFB" stroke-width="1"/>
+    <rect x="40" y="100" width="1320" height="42" rx="10" fill="url(#gradBlue)"/>
+    <rect x="40" y="130" width="1320" height="12" fill="url(#gradBlue)"/>
+    <text x="60" y="128" fill="#FFF" font-size="16">&#128187;</text>
+    <text x="82" y="127" fill="#FFF" font-size="14" font-weight="700">Frontend &#8212; Páginas</text>
+    <rect x="1280" y="110" width="68" height="20" rx="4" fill="#FFF" opacity="0.25"/>
+    <text x="1314" y="124" text-anchor="middle" fill="#FFF" font-size="9" font-weight="600">:5173</text>
+  </g>
+  
+  <g filter="url(#shadowLight)">
+    <rect x="60" y="155" width="300" height="154" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="60" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="60" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="74" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageSimulatorPage</text>
+    <rect x="74" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="80" y="196" fill="#1565C0" font-size="8" font-weight="600">/mortgage/simulator</text>
+    <rect x="280" y="159" width="68" height="18" rx="9" fill="#4CAF50"/><text x="314" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">PUBLIC</text>
+    <text x="74" y="220" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/simulate</text>
+    <text x="74" y="252" fill="#2E7D32" font-size="9">&#128190; reads mortgage.lastSimulation</text>
+    <text x="74" y="266" fill="#2E7D32" font-size="9">&#128190; writes mortgage.lastSimulation</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="380" y="155" width="300" height="216" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="380" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="380" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="394" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageApplicationPage</text>
+    <rect x="394" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="400" y="196" fill="#1565C0" font-size="8" font-weight="600">/mortgage/application</text>
+    <rect x="600" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="634" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="394" y="220" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/applications</text>
+    <text x="394" y="236" fill="#37474F" font-size="10">&#9654; PATCH /api/v1/mortgage/applications/:applicationId</text>
+    <text x="394" y="252" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/applications/:applicationId/documents</text>
+    <text x="394" y="268" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/applications/:applicationId/submit</text>
+    <text x="394" y="300" fill="#2E7D32" font-size="9">&#128190; reads mortgage.draftApplication</text>
+    <text x="394" y="314" fill="#2E7D32" font-size="9">&#128190; reads mortgage.lastSimulation</text>
+    <text x="394" y="328" fill="#2E7D32" font-size="9">&#128190; writes mortgage.draftApplication</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="700" y="155" width="300" height="202" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="700" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="700" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="714" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageApplicationDetailPage</text>
+    <rect x="714" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="720" y="196" fill="#1565C0" font-size="8" font-weight="600">/mortgage/applications/:applicationId</text>
+    <rect x="920" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="954" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="714" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/applications/:applicationId</text>
+    <text x="714" y="236" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/applications/:applicationId/crc-result</text>
+    <text x="714" y="252" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/applications/:applicationId/property-valuation</text>
+    <text x="714" y="268" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/applications/:applicationId/approval-workflow</text>
+    <text x="714" y="300" fill="#2E7D32" font-size="9">&#128190; reads mortgage.application.:id</text>
+    <text x="714" y="314" fill="#2E7D32" font-size="9">&#128190; writes mortgage.application.:id</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="1020" y="155" width="300" height="142" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="1020" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="1020" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="1034" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageContractPage</text>
+    <rect x="1034" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="1040" y="196" fill="#1565C0" font-size="8" font-weight="600">/mortgage/contracts/:contractId</text>
+    <rect x="1240" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="1274" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="1034" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/contracts/:contractId</text>
+    <text x="1034" y="236" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/contracts/:contractId/sign</text>
+    
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="1340" y="155" width="300" height="170" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="1340" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="1340" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="1354" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageLoanDashboardPage</text>
+    <rect x="1354" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="1360" y="196" fill="#1565C0" font-size="8" font-weight="600">/mortgage/loans/:loanId</text>
+    <rect x="1560" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="1594" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="1354" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/loans/:loanId</text>
+    <text x="1354" y="236" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/loans/:loanId/payments</text>
+    <text x="1354" y="268" fill="#2E7D32" font-size="9">&#128190; reads mortgage.loan.:loanId</text>
+    <text x="1354" y="282" fill="#2E7D32" font-size="9">&#128190; writes mortgage.loan.:loanId</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="1660" y="155" width="300" height="156" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="1660" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="1660" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="1674" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageAmortizationPage</text>
+    <rect x="1674" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="1680" y="196" fill="#1565C0" font-size="8" font-weight="600">/mortgage/loans/:loanId/amortization</text>
+    <rect x="1880" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="1914" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="1674" y="220" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/loans/:loanId/amortization</text>
+    <text x="1674" y="236" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/loans/:loanId/amortization/confirm</text>
+    <text x="1674" y="268" fill="#2E7D32" font-size="9">&#128190; reads mortgage.loan.:loanId</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="1980" y="155" width="300" height="170" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="1980" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="1980" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="1994" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageBackofficeDashboardPage</text>
+    <rect x="1994" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="2000" y="196" fill="#1565C0" font-size="8" font-weight="600">/backoffice/mortgage/dashboard</text>
+    <rect x="2200" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="2234" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="1994" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/backoffice/dashboard/kpis</text>
+    <text x="1994" y="236" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/backoffice/applications</text>
+    <text x="1994" y="268" fill="#2E7D32" font-size="9">&#128190; reads backoffice.kpis</text>
+    <text x="1994" y="282" fill="#2E7D32" font-size="9">&#128190; writes backoffice.kpis</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="2300" y="155" width="300" height="154" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="2300" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="2300" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="2314" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageBackofficeApplicationsPage</text>
+    <rect x="2314" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="2320" y="196" fill="#1565C0" font-size="8" font-weight="600">/backoffice/mortgage/applications</text>
+    <rect x="2520" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="2554" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="2314" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/backoffice/applications</text>
+    <text x="2314" y="252" fill="#2E7D32" font-size="9">&#128190; reads backoffice.applications</text>
+    <text x="2314" y="266" fill="#2E7D32" font-size="9">&#128190; writes backoffice.applications</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="2620" y="155" width="300" height="206" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="2620" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="2620" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="2634" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageBackofficeApplicationDetailPage</text>
+    <rect x="2634" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="2640" y="196" fill="#1565C0" font-size="8" font-weight="600">/backoffice/mortgage/applications/:applicationId</text>
+    <rect x="2840" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="2874" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="2634" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/backoffice/applications/:applicationId</text>
+    <text x="2634" y="236" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/backoffice/applications/:applicationId/assign</text>
+    <text x="2634" y="252" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/applications/:applicationId/approve</text>
+    <text x="2634" y="268" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/applications/:applicationId/reject</text>
+    <text x="2634" y="284" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/backoffice/applications/:applicationId/request-info</text>
+    <text x="2634" y="300" fill="#37474F" font-size="10">&#9654; PATCH /api/v1/mortgage/backoffice/applications/:applicationId/notes</text>
+    
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="2940" y="155" width="300" height="170" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="2940" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="2940" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="2954" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageBackofficeValuationsPage</text>
+    <rect x="2954" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="2960" y="196" fill="#1565C0" font-size="8" font-weight="600">/backoffice/mortgage/valuations</text>
+    <rect x="3160" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="3194" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="2954" y="220" fill="#37474F" font-size="10">&#9654; GET /api/v1/mortgage/backoffice/valuations/pending</text>
+    <text x="2954" y="236" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/backoffice/valuations/:valuationId/assign-appraiser</text>
+    <text x="2954" y="268" fill="#2E7D32" font-size="9">&#128190; reads backoffice.valuations.pending</text>
+    <text x="2954" y="282" fill="#2E7D32" font-size="9">&#128190; writes backoffice.valuations.pending</text>
+  </g>
+  <g filter="url(#shadowLight)">
+    <rect x="3260" y="155" width="300" height="140" rx="8" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+    <rect x="3260" y="155" width="300" height="28" rx="8" fill="#1E88E5" opacity="0.12"/>
+    <rect x="3260" y="175" width="300" height="8" fill="#1E88E5" opacity="0.12"/>
+    <text x="3274" y="174" fill="#1565C0" font-size="11" font-weight="700">MortgageBackofficeValuationDetailPage</text>
+    <rect x="3274" y="184" width="auto" height="16" rx="8" fill="#BBDEFB"/>
+    <text x="3280" y="196" fill="#1565C0" font-size="8" font-weight="600">/backoffice/mortgage/valuations/:valuationId</text>
+    <rect x="3480" y="159" width="68" height="18" rx="9" fill="#E65100"/><text x="3514" y="171" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">AUTH</text>
+    <text x="3274" y="220" fill="#37474F" font-size="10">&#9654; POST /api/v1/mortgage/backoffice/valuations/:valuationId/submit</text>
+    
+  </g>
+  
+  <!-- Microservices Container -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="460" width="1320" height="862" rx="10" fill="#FFF" stroke="#FFE0B2" stroke-width="1"/>
+    <rect x="40" y="460" width="1320" height="42" rx="10" fill="url(#gradOrange)"/>
+    <rect x="40" y="490" width="1320" height="12" fill="url(#gradOrange)"/>
+    <text x="60" y="488" fill="#FFF" font-size="16">&#128274;</text>
+    <text x="82" y="487" fill="#FFF" font-size="14" font-weight="700">Microserviços</text>
+  </g>
+  
+  <g filter="url(#shadowLight)">
+    <rect x="60" y="515" width="400" height="802" rx="8" fill="#FFF3E0" stroke="#FFCC80" stroke-width="0.8"/>
+    <rect x="60" y="515" width="400" height="28" rx="8" fill="#FF9800" opacity="0.12"/>
+    <text x="74" y="534" fill="#E65100" font-size="11" font-weight="700">mortgage-service</text>
+    <rect x="340" y="519" width="108" height="18" rx="9" fill="#F57C00"/>
+    <text x="394" y="532" text-anchor="middle" fill="#FFF" font-size="8" font-weight="700">/api/mortgage</text>
+    
+    <text x="74" y="550" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="550" fill="#37474F" font-size="9">/simulate &#8594; http://core-api:3000/api/v1/mortgage/simulate</text>
+    <text x="74" y="568" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="568" fill="#37474F" font-size="9">/simulations/:simulationId &#8594; http://core-api:3000/api/v1/mortgage/simulations/:simulationId</text>
+    <text x="74" y="586" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="586" fill="#37474F" font-size="9">/applications &#8594; http://core-api:3000/api/v1/mortgage/applications</text>
+    <text x="74" y="604" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="604" fill="#37474F" font-size="9">/applications/:applicationId &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId</text>
+    <text x="74" y="622" fill="#E65100" font-size="9" font-weight="700">PATCH</text>
+    <text x="110" y="622" fill="#37474F" font-size="9">/applications/:applicationId &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId</text>
+    <text x="74" y="640" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="640" fill="#37474F" font-size="9">/applications/:applicationId/submit &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/submit</text>
+    <text x="74" y="658" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="658" fill="#37474F" font-size="9">/applications/:applicationId/documents &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/documents</text>
+    <text x="74" y="676" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="676" fill="#37474F" font-size="9">/applications/:applicationId/crc-check &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/crc-check</text>
+    <text x="74" y="694" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="694" fill="#37474F" font-size="9">/applications/:applicationId/crc-result &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/crc-result</text>
+    <text x="74" y="712" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="712" fill="#37474F" font-size="9">/applications/:applicationId/property-valuation &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/property-valuation</text>
+    <text x="74" y="730" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="730" fill="#37474F" font-size="9">/applications/:applicationId/property-valuation &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/property-valuation</text>
+    <text x="74" y="748" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="748" fill="#37474F" font-size="9">/applications/:applicationId/generate-documentation &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/generate-documentation</text>
+    <text x="74" y="766" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="766" fill="#37474F" font-size="9">/applications/:applicationId/documents/:documentId/download &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/documents/:documentId/download</text>
+    <text x="74" y="784" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="784" fill="#37474F" font-size="9">/applications/:applicationId/approval-workflow &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/approval-workflow</text>
+    <text x="74" y="802" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="802" fill="#37474F" font-size="9">/applications/:applicationId/approval-workflow &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/approval-workflow</text>
+    <text x="74" y="820" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="820" fill="#37474F" font-size="9">/applications/:applicationId/approve &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/approve</text>
+    <text x="74" y="838" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="838" fill="#37474F" font-size="9">/applications/:applicationId/reject &#8594; http://core-api:3000/api/v1/mortgage/applications/:applicationId/reject</text>
+    <text x="74" y="856" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="856" fill="#37474F" font-size="9">/contracts &#8594; http://core-api:3000/api/v1/mortgage/contracts</text>
+    <text x="74" y="874" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="874" fill="#37474F" font-size="9">/contracts/:contractId &#8594; http://core-api:3000/api/v1/mortgage/contracts/:contractId</text>
+    <text x="74" y="892" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="892" fill="#37474F" font-size="9">/contracts/:contractId/sign &#8594; http://core-api:3000/api/v1/mortgage/contracts/:contractId/sign</text>
+    <text x="74" y="910" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="910" fill="#37474F" font-size="9">/contracts/:contractId/disburse &#8594; http://core-api:3000/api/v1/mortgage/contracts/:contractId/disburse</text>
+    <text x="74" y="928" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="928" fill="#37474F" font-size="9">/loans/:loanId &#8594; http://core-api:3000/api/v1/mortgage/loans/:loanId</text>
+    <text x="74" y="946" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="946" fill="#37474F" font-size="9">/loans/:loanId/payments &#8594; http://core-api:3000/api/v1/mortgage/loans/:loanId/payments</text>
+    <text x="74" y="964" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="964" fill="#37474F" font-size="9">/loans/:loanId/amortization &#8594; http://core-api:3000/api/v1/mortgage/loans/:loanId/amortization</text>
+    <text x="74" y="982" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="982" fill="#37474F" font-size="9">/loans/:loanId/amortization/confirm &#8594; http://core-api:3000/api/v1/mortgage/loans/:loanId/amortization/confirm</text>
+    <text x="74" y="1000" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1000" fill="#37474F" font-size="9">/notifications &#8594; http://core-api:3000/api/v1/mortgage/notifications</text>
+    <text x="74" y="1018" fill="#E65100" font-size="9" font-weight="700">PATCH</text>
+    <text x="110" y="1018" fill="#37474F" font-size="9">/notifications/:notificationId/read &#8594; http://core-api:3000/api/v1/mortgage/notifications/:notificationId/read</text>
+    <text x="74" y="1036" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1036" fill="#37474F" font-size="9">/backoffice/dashboard/kpis &#8594; http://core-api:3000/api/v1/mortgage/backoffice/dashboard/kpis</text>
+    <text x="74" y="1054" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1054" fill="#37474F" font-size="9">/backoffice/applications &#8594; http://core-api:3000/api/v1/mortgage/backoffice/applications</text>
+    <text x="74" y="1072" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1072" fill="#37474F" font-size="9">/backoffice/applications/:applicationId &#8594; http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId</text>
+    <text x="74" y="1090" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="1090" fill="#37474F" font-size="9">/backoffice/applications/:applicationId/assign &#8594; http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId/assign</text>
+    <text x="74" y="1108" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="1108" fill="#37474F" font-size="9">/backoffice/applications/:applicationId/request-info &#8594; http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId/request-info</text>
+    <text x="74" y="1126" fill="#E65100" font-size="9" font-weight="700">PATCH</text>
+    <text x="110" y="1126" fill="#37474F" font-size="9">/backoffice/applications/:applicationId/notes &#8594; http://core-api:3000/api/v1/mortgage/backoffice/applications/:applicationId/notes</text>
+    <text x="74" y="1144" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1144" fill="#37474F" font-size="9">/backoffice/valuations/pending &#8594; http://core-api:3000/api/v1/mortgage/backoffice/valuations/pending</text>
+    <text x="74" y="1162" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="1162" fill="#37474F" font-size="9">/backoffice/valuations/:valuationId/assign-appraiser &#8594; http://core-api:3000/api/v1/mortgage/backoffice/valuations/:valuationId/assign-appraiser</text>
+    <text x="74" y="1180" fill="#E65100" font-size="9" font-weight="700">POST</text>
+    <text x="110" y="1180" fill="#37474F" font-size="9">/backoffice/valuations/:valuationId/submit &#8594; http://core-api:3000/api/v1/mortgage/backoffice/valuations/:valuationId/submit</text>
+    <text x="74" y="1198" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1198" fill="#37474F" font-size="9">/backoffice/audit-logs &#8594; http://core-api:3000/api/v1/mortgage/backoffice/audit-logs</text>
+    <text x="74" y="1216" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1216" fill="#37474F" font-size="9">/backoffice/reports/monthly &#8594; http://core-api:3000/api/v1/mortgage/backoffice/reports/monthly</text>
+    <text x="74" y="1234" fill="#1565C0" font-size="9" font-weight="700">GET</text>
+    <text x="110" y="1234" fill="#37474F" font-size="9">/backoffice/reports/export &#8594; http://core-api:3000/api/v1/mortgage/backoffice/reports/export</text>
+  </g>
+  
+  <!-- Events Panel -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="1362" width="640" height="460" rx="10" fill="#FFF" stroke="#CE93D8" stroke-width="1" stroke-dasharray="6 3"/>
+    <text x="60" y="1386" fill="#6A1B9A" font-size="13" font-weight="700">&#9889; Socket.IO Events</text>
+    
+    <text x="80" y="1422" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.simulation.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="1442" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.application.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="1462" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.application.submitted — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="1482" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.application.statusChanged — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1502" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.crc.completed — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1522" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.valuation.completed — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1542" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.documentation.generated — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1562" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.approval.levelCompleted — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="1582" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.approval.completed — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1602" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.contract.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="1622" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.contract.signed — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1642" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.disbursement.completed — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1662" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.payment.due — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1682" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.payment.received — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="1702" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.notification.sent — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1722" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.backoffice.newApplication — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1742" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.backoffice.applicationAssigned — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1762" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.backoffice.valuationPending — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1782" fill="#37474F" font-size="10"><tspan fill="#2E7D32" font-weight="700">&#10004;</tspan> mortgage.backoffice.actionRequired — <tspan fill="#78909C" font-size="9">CONSUMIDO</tspan></text>
+    <text x="80" y="1812" fill="#C62828" font-size="9" font-weight="600">Padrão: HYBRID</text>
+  </g>
+  
+  <!-- Cache Panel -->
+  <g filter="url(#shadow)">
+    <rect x="720" y="1362" width="640" height="220" rx="10" fill="#FFF" stroke="#A5D6A7" stroke-width="1"/>
+    <text x="740" y="1386" fill="#2E7D32" font-size="13" font-weight="700">&#128190; Cache Strategy &#8212; mixed</text>
+    
+    <text x="740" y="1422" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">mortgage.lastSimulation</tspan> — MortgageSimulatorPage &#8594; MortgageSimulatorPage, MortgageApplicationPage | TTL: session</text>
+    <text x="740" y="1442" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">mortgage.draftApplication</tspan> — MortgageApplicationPage &#8594; MortgageApplicationPage | TTL: 604800s</text>
+    <text x="740" y="1462" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">mortgage.application.:id</tspan> — MortgageApplicationDetailPage &#8594; MortgageApplicationDetailPage | TTL: 300s</text>
+    <text x="740" y="1482" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">mortgage.loan.:loanId</tspan> — MortgageLoanDashboardPage &#8594; MortgageLoanDashboardPage, MortgageAmortizationPage | TTL: 600s</text>
+    <text x="740" y="1502" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">backoffice.kpis</tspan> — MortgageBackofficeDashboardPage &#8594; MortgageBackofficeDashboardPage | TTL: 300s</text>
+    <text x="740" y="1522" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">backoffice.applications</tspan> — MortgageBackofficeApplicationsPage &#8594; MortgageBackofficeApplicationsPage | TTL: 60s</text>
+    <text x="740" y="1542" fill="#37474F" font-size="10">&#128190; <tspan font-weight="600">backoffice.valuations.pending</tspan> — MortgageBackofficeValuationsPage &#8594; MortgageBackofficeValuationsPage | TTL: 120s</text>
+    <text x="740" y="1572" fill="#78909C" font-size="9" font-style="italic">sessionStorage para dados temporários, localStorage para drafts (7d), memory cache para dados frequentes, Redis server-side para simulações idênticas (TTL 1h). Backoffice usa memory cache com TTL curto para dados real-time.</text>
+  </g>
+  
+  <!-- Implementation Tasks -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="1862" width="1320" height="806" rx="10" fill="#FFF" stroke="#B0BEC5" stroke-width="1"/>
+    <text x="60" y="1886" fill="#37474F" font-size="13" font-weight="700">&#9776; Tarefas de Implementação (42)</text>
+    <text x="80" y="1912" fill="#37474F" font-size="10">&#9654; Criar microserviço mortgage-service (Express + TypeScript, porta 4005, mount /api/mortgage) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="1930" fill="#37474F" font-size="10">&#9654; Configurar 39 rotas proxy no mortgage-service (27 cliente + 12 backoffice) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="1948" fill="#37474F" font-size="10">&#9654; Criar mortgageApi.ts — API client com Axios (interceptors, error handling, auth header) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="1966" fill="#37474F" font-size="10">&#9654; Criar useMortgageSocket.ts — hook Socket.IO para 13 eventos consumidos <tspan fill="#78909C" font-size="8">(BCTT-550)</tspan></text>
+  <text x="80" y="1984" fill="#37474F" font-size="10">&#9654; Criar MortgageSimulatorPage — formulário de simulação com cálculo TAEG, LTV, DSTI <tspan fill="#78909C" font-size="8">(BCTT-537)</tspan></text>
+  <text x="80" y="2002" fill="#37474F" font-size="10">&#9654; Criar componentes MortgageSimulatorForm, AmortizationTable, TAEGDisplay, LTVIndicator <tspan fill="#78909C" font-size="8">(BCTT-537)</tspan></text>
+  <text x="80" y="2020" fill="#37474F" font-size="10">&#9654; Criar MortgageApplicationPage — wizard 4 steps (Pessoais → Co-Titular → Imóvel → Docs) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="2038" fill="#37474F" font-size="10">&#9654; Criar componentes ApplicantForm, CoApplicantForm, PropertyForm, ProgressStepper <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="2056" fill="#37474F" font-size="10">&#9654; Criar DocumentUploader — drag&amp;drop, validação tipos/tamanhos, preview <tspan fill="#78909C" font-size="8">(BCTT-540)</tspan></text>
+  <text x="80" y="2074" fill="#37474F" font-size="10">&#9654; Implementar auto-save draft a cada 30s (localStorage, TTL 7d) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="2092" fill="#37474F" font-size="10">&#9654; Criar MortgageApplicationDetailPage — timeline, status, CRC, avaliação, workflow <tspan fill="#78909C" font-size="8">(BCTT-540)</tspan></text>
+  <text x="80" y="2110" fill="#37474F" font-size="10">&#9654; Criar componentes ApplicationTimeline, ApplicationStatusBadge, ApprovalWorkflowTracker <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2128" fill="#37474F" font-size="10">&#9654; Criar componentes CRCResultCard, ValuationResultCard <tspan fill="#78909C" font-size="8">(BCTT-541)</tspan></text>
+  <text x="80" y="2146" fill="#37474F" font-size="10">&#9654; Criar MortgageContractPage — visualizador PDF + widget assinatura CMD mock <tspan fill="#78909C" font-size="8">(BCTT-546)</tspan></text>
+  <text x="80" y="2164" fill="#37474F" font-size="10">&#9654; Criar CMDSignatureWidget — UI realista (input telefone, envio SMS simulado, input OTP) <tspan fill="#78909C" font-size="8">(BCTT-546)</tspan></text>
+  <text x="80" y="2182" fill="#37474F" font-size="10">&#9654; Criar MortgageLoanDashboardPage — overview, pagamentos, gráficos Chart.js <tspan fill="#78909C" font-size="8">(BCTT-547)</tspan></text>
+  <text x="80" y="2200" fill="#37474F" font-size="10">&#9654; Criar componentes LoanOverview, PaymentHistory, NextPaymentCard, LoanProgressChart <tspan fill="#78909C" font-size="8">(BCTT-547)</tspan></text>
+  <text x="80" y="2218" fill="#37474F" font-size="10">&#9654; Criar MortgageAmortizationPage — simulador interactivo com gráfico comparativo <tspan fill="#78909C" font-size="8">(BCTT-548)</tspan></text>
+  <text x="80" y="2236" fill="#37474F" font-size="10">&#9654; Criar componentes AmortizationSimulator, InteractiveSavingsChart, ComparisonTable <tspan fill="#78909C" font-size="8">(BCTT-548)</tspan></text>
+  <text x="80" y="2254" fill="#37474F" font-size="10">&#9654; Criar tooltips para termos técnicos (TAEG, DSTI, LTV, spread) com react-tooltip <tspan fill="#78909C" font-size="8">(BCTT-537)</tspan></text>
+  <text x="80" y="2272" fill="#37474F" font-size="10">&#9654; Implementar cache strategy (sessionStorage, localStorage 7d, memory) com clearing automático <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="2290" fill="#37474F" font-size="10">&#9654; Criar MortgageBackofficeDashboardPage — KPIs, gráficos, actividade recente, alertas <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2308" fill="#37474F" font-size="10">&#9654; Criar componentes KPICardsGrid, ApplicationsQueueChart, MonthlyVolumeChart, RecentActivityFeed <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2326" fill="#37474F" font-size="10">&#9654; Criar MortgageBackofficeApplicationsPage — DataTable com filtros (status, nível, gestor, datas) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2344" fill="#37474F" font-size="10">&#9654; Criar componentes ApplicationsDataTable (react-table), ApplicationFilters, BulkActionToolbar <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2362" fill="#37474F" font-size="10">&#9654; Criar MortgageBackofficeApplicationDetailPage — painel completo com acções (aprovar, rejeitar, atribuir, solicitar info, notas) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2380" fill="#37474F" font-size="10">&#9654; Criar componentes ApprovalActionButtons, InternalNotesPanel, AssignGestorDialog, RequestInfoDialog <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2398" fill="#37474F" font-size="10">&#9654; Criar componente DocumentViewer (PDF.js para preview inline) <tspan fill="#78909C" font-size="8">(BCTT-540)</tspan></text>
+  <text x="80" y="2416" fill="#37474F" font-size="10">&#9654; Criar MortgageBackofficeValuationsPage — fila de avaliações com atribuição <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="2434" fill="#37474F" font-size="10">&#9654; Criar componentes ValuationsQueue, ValuationFilters, AssignAppraiserDialog <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="2452" fill="#37474F" font-size="10">&#9654; Criar MortgageBackofficeValuationDetailPage — formulário de avaliação + preview relatório <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="2470" fill="#37474F" font-size="10">&#9654; Criar componentes PropertyValuationForm, PropertyDetailsCard, ValuationReportPreview, SubmitValuationDialog <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="2488" fill="#37474F" font-size="10">&#9654; Criar ExportButton com download XLSX (exceljs client-side) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2506" fill="#37474F" font-size="10">&#9654; Implementar Socket.IO backoffice — subscrever eventos em namespace /backoffice <tspan fill="#78909C" font-size="8">(BCTT-550)</tspan></text>
+  <text x="80" y="2524" fill="#37474F" font-size="10">&#9654; Implementar PendingActionsAlert — alertas visuais para pedidos &gt;5 dias sem acção <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2542" fill="#37474F" font-size="10">&#9654; Configurar lazy loading (code splitting) para páginas backoffice <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="2560" fill="#37474F" font-size="10">&#9654; Configurar React Router: 6 rotas cliente (/mortgage/*) + 5 rotas backoffice (/backoffice/mortgage/*) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="2578" fill="#37474F" font-size="10">&#9654; Implementar error boundaries por página com fallback UI <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="2596" fill="#37474F" font-size="10">&#9654; Implementar responsive design: simulador mobile-friendly, backoffice desktop-first <tspan fill="#78909C" font-size="8">(BCTT-537)</tspan></text>
+  <text x="80" y="2614" fill="#37474F" font-size="10">&#9654; Testes E2E Playwright: fluxo completo simulação → pedido → aprovação → contrato → desembolso <tspan fill="#78909C" font-size="8">(BCTT-540)</tspan></text>
+  <text x="80" y="2632" fill="#37474F" font-size="10">&#9654; Testes E2E Playwright: fluxo backoffice (login gestor → dashboard → detalhe → aprovar → avaliação) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="2650" fill="#37474F" font-size="10">&#9654; Acessibilidade WCAG 2.1 AA: aria-labels, keyboard navigation, screen reader, contrast <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  </g>
+  
+  <!-- Strategy + Gaps -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="2688" width="1320" height="396" rx="10" fill="#FFF" stroke="#CFD8DC" stroke-width="1"/>
+    <text x="60" y="2712" fill="#37474F" font-size="13" font-weight="700">&#128260; Análise</text>
+    <rect x="130" y="2698" width="120" height="24" rx="12" fill="#1565C0"/>
+    <text x="190" y="2715" text-anchor="middle" fill="#FFF" font-size="11" font-weight="700">HYBRID</text>
+    <text x="80" y="2748" fill="#37474F" font-size="10">Frontend React com 11 páginas (6 cliente + 5 backoffice), 1 microserviço BFF (mortgage-service porta 4005), 39 rotas proxy, Socket.IO client para 13 eventos consumidos (9 cliente + 4 backoffice). Wizard multi-step para pedido, mock CMD com UI realista, gráficos Chart.js, DataTable backoffice, exportação XLSX. Cache strategy mista (sessionStorage, localStorage 7d, memory). Design system Banco CTT com componentes acessíveis WCAG 2.1 AA.</text>
+    <text x="80" y="2788" fill="#C62828" font-size="9">&#9888; Componente CMDSignatureWidget — UI mock precisa de design UX aprovado</text>
+  <text x="80" y="2804" fill="#C62828" font-size="9">&#9888; DocumentUploader — validação client-side de tipos MIME e tamanhos</text>
+  <text x="80" y="2820" fill="#C62828" font-size="9">&#9888; ApplicationTimeline — design UX da linha temporal vertical</text>
+  <text x="80" y="2836" fill="#C62828" font-size="9">&#9888; Chart.js gráficos — cores e estilo alinhados com Design System Banco CTT</text>
+  <text x="80" y="2852" fill="#C62828" font-size="9">&#9888; Backoffice DataTable — definir colunas exactas e filtros por página</text>
+  <text x="80" y="2868" fill="#C62828" font-size="9">&#9888; Backoffice layout — sidebar vs top-nav para backoffice</text>
+    <text x="80" y="2904" fill="#1565C0" font-size="9">&#128161; Wizard multi-step (4 steps): Dados Pessoais → Co-Titular → Imóvel → Documentos</text>
+  <text x="80" y="2920" fill="#1565C0" font-size="9">&#128161; Tooltips para termos técnicos (TAEG, DSTI, LTV) com react-tooltip</text>
+  <text x="80" y="2936" fill="#1565C0" font-size="9">&#128161; Auto-save draft a cada 30s em localStorage (TTL 7 dias)</text>
+  <text x="80" y="2952" fill="#1565C0" font-size="9">&#128161; Preview documentos com PDF.js antes de download</text>
+  <text x="80" y="2968" fill="#1565C0" font-size="9">&#128161; Socket.IO: reconnect automático com backoff exponencial</text>
+  <text x="80" y="2984" fill="#1565C0" font-size="9">&#128161; Lazy loading de páginas backoffice (code splitting)</text>
+  <text x="80" y="3000" fill="#1565C0" font-size="9">&#128161; Testes E2E Playwright: fluxo completo cliente + fluxo gestor backoffice</text>
+  <text x="80" y="3016" fill="#1565C0" font-size="9">&#128161; Acessibilidade WCAG 2.1 AA em todos os formulários</text>
+  <text x="80" y="3032" fill="#1565C0" font-size="9">&#128161; Responsive design: simulador funciona em mobile, backoffice desktop-first</text>
+  <text x="80" y="3048" fill="#1565C0" font-size="9">&#128161; Error boundaries por página com fallback UI</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="700" y="3114" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; TAA Deep Dive &#8212; 2026-02-13</text>
+</svg>

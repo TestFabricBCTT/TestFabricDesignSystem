@@ -1,0 +1,114 @@
+{
+  "bdev_code": "BDEV00000016",
+  "agent": "fde",
+  "plan": {
+    "summary": "Implementação frontend completa do sistema de Crédito Habitação (BDEV00000016) com 8 páginas: 4 páginas client-facing (simulação, candidatura, estado, documentos) e 4 páginas backoffice (dashboard, lista de candidaturas, detalhe, equipas/relatórios). Inclui integração com BFF via 18 APIs REST, componentes do Design System @bctt/design-system, gestão de estado multi-step, upload de documentos, WebSocket para notificações em tempo real e autenticação JWT. NOTA CRÍTICA: Alguns componentes MUI ainda não estão disponíveis no DS (Button, TextField, Alert, Table, Chip, Dialog) — serão importados temporariamente de @mui/material até serem migrados para @bctt/design-system pelo DSLA.",
+    "files_to_create": [
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/MortgageSimulationPage.tsx",
+        "purpose": "Página de simulação de crédito habitação com formulário multi-step (parâmetros → resultados → amortização). Usa API POST /api/v1/mortgage/simulate. Componentes: Stepper (DS), Card (DS), Button (MUI temp), TextField (MUI temp), Alert (MUI temp). Validações: LTV ≤90%, DSTI ≤40%, valor entre €10k-€1M. Estado: simulationParams, simulationResult, amortizationSchedule."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/MortgageApplicationPage.tsx",
+        "purpose": "Página de candidatura a crédito habitação com multi-step form (dados pessoais → profissionais → propriedade → documentos → revisão). Usa APIs POST /api/v1/mortgage/applications, POST /api/v1/mortgage/applications/:id/documents. Componentes: Stepper (DS), Card (DS), Button (MUI temp), TextField (MUI temp), Alert (MUI temp). Upload de ficheiros com validação de tipo e tamanho. Guarda progresso em sessionStorage."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/MortgageStatusPage.tsx",
+        "purpose": "Página de acompanhamento de estado da candidatura com timeline vertical e updates em tempo real via WebSocket. Usa API GET /api/v1/mortgage/applications/:id. Componentes: Stepper vertical (DS), Card (DS), Chip (MUI temp). WebSocket: escuta eventos 'mortgage.application.status.updated'. Estados: pending_review → documents_requested → under_analysis → approved → rejected → signed → disbursed."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/MortgageDocumentsPage.tsx",
+        "purpose": "Página de gestão de documentos da candidatura com upload, visualização e estado de validação. Usa APIs GET /api/v1/mortgage/applications/:id/documents, POST /api/v1/mortgage/applications/:id/documents, DELETE /api/v1/mortgage/applications/:id/documents/:docId. Componentes: Card (DS), Button (MUI temp), Table (MUI temp), Chip (MUI temp), Alert (MUI temp). Tipos aceites: PDF, JPG, PNG ≤5MB."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/BackofficeDashboardPage.tsx",
+        "purpose": "Dashboard backoffice com KPIs (candidaturas pendentes, em análise, aprovadas, rejeitadas), gráfico de pipeline, notificações e acções rápidas. Usa API GET /api/v1/mortgage/backoffice/dashboard. Componentes: Card (DS), Button (MUI temp), Chip (MUI temp). Atualização automática a cada 30s. Requer role: 'mortgage_analyst' ou 'mortgage_manager'."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/BackofficeApplicationListPage.tsx",
+        "purpose": "Lista de candidaturas backoffice com filtros (status, priority, analyst, dateRange), pesquisa, ordenação e paginação. Usa API GET /api/v1/mortgage/backoffice/applications. Componentes: Card (DS), Button (MUI temp), TextField (MUI temp), Table (MUI temp), Chip (MUI temp). Filtros persistidos em sessionStorage. Click em linha → navega para BackofficeApplicationDetailPage."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/BackofficeApplicationDetailPage.tsx",
+        "purpose": "Detalhe completo de candidatura backoffice com tabs (overview, documentos, análise financeira, histórico). Acções: atribuir analista, alterar estado, solicitar documentos, adicionar notas, aprovar/rejeitar. Usa APIs GET /api/v1/mortgage/backoffice/applications/:id, PATCH /api/v1/mortgage/backoffice/applications/:id/assign, PATCH /api/v1/mortgage/backoffice/applications/:id/status, POST /api/v1/mortgage/backoffice/applications/:id/notes. Componentes: Card (DS), Button (MUI temp), TextField (MUI temp), Alert (MUI temp), Chip (MUI temp)."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/BackofficeTeamsPage.tsx",
+        "purpose": "Gestão de equipas backoffice com visualização de analistas, carga de trabalho (candidaturas por analista), performance (tempo médio de análise, taxa de aprovação). Usa API GET /api/v1/mortgage/backoffice/teams. Componentes: Card (DS), Table (MUI temp), Chip (MUI temp). Requer role: 'mortgage_manager'."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/BackofficeReportsPage.tsx",
+        "purpose": "Relatórios e analytics backoffice com gráficos de aprovações por mês, tempo médio de processamento, distribuição por finalidade (compra/construção/transferência), taxas de rejeição por motivo. Usa API GET /api/v1/mortgage/backoffice/reports. Componentes: Card (DS), Button (MUI temp). Filtros de período (last7days, last30days, custom). Requer role: 'mortgage_manager'."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/services/mortgageService.ts",
+        "purpose": "Serviço centralizado para todas as chamadas API de crédito habitação. Métodos: simulate(), getSimulation(), createApplication(), getApplications(), getApplicationById(), uploadDocument(), getDocuments(), deleteDocument(). Usa helper request() de api.ts para autenticação e tratamento de 401. Retorna tipos TypeScript tipados (Simulation, Application, Document)."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/services/mortgageBackofficeService.ts",
+        "purpose": "Serviço para APIs backoffice de crédito habitação. Métodos: getDashboard(), getApplications(), getApplicationDetail(), assignAnalyst(), updateStatus(), requestDocuments(), addNote(), approveApplication(), rejectApplication(), getTeams(), getReports(). Validação de roles no frontend antes de chamadas críticas."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/types/mortgage.ts",
+        "purpose": "Tipos TypeScript partilhados entre componentes de crédito habitação: SimulationParams, SimulationResult, AmortizationEntry, ApplicationData, ApplicationStatus, Document, DocumentType, BackofficeApplication, DashboardMetrics, TeamMember, ReportData. Alinhados com Interface Contract (shared_types do TAA)."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/hooks/useMortgageWebSocket.ts",
+        "purpose": "Hook customizado para WebSocket de notificações de crédito habitação. Escuta eventos: 'mortgage.application.status.updated', 'mortgage.document.validated', 'mortgage.application.assigned'. Retorna { connected, lastEvent, subscribe, unsubscribe }. Usa socket.io-client (já instalado em package.json). Conecta a ws://localhost:4020/mortgage-notifications com token JWT."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/utils/mortgageValidations.ts",
+        "purpose": "Validações específicas de crédito habitação: validateLTV(propertyValue, loanAmount), validateDSTI(monthlyPayment, monthlyIncome), validateAmount(value), validateTerm(months), validateDocumentFile(file). Retorna { valid: boolean, error?: string }. LTV máximo: 90%, DSTI máximo: 40%, montante: €10k-€1M, prazo: 12-480 meses."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/utils/mortgageFormatters.ts",
+        "purpose": "Formatadores para dados de crédito habitação: formatCurrency(value), formatPercentage(value), formatDate(date), formatApplicationStatus(status), formatDocumentType(type), formatRateType(type). Usa Intl.NumberFormat e Intl.DateTimeFormat com locale 'pt-PT'."
+      }
+    ],
+    "files_to_modify": [
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/App.tsx",
+        "changes": "Adicionar rotas para as 8 páginas de crédito habitação: /mortgage/simulation (pública), /mortgage/application (pública), /mortgage/status/:id (protegida), /mortgage/documents/:id (protegida), /mortgage/backoffice/dashboard (protegida + role), /mortgage/backoffice/applications (protegida + role), /mortgage/backoffice/applications/:id (protegida + role), /mortgage/backoffice/teams (protegida + role manager), /mortgage/backoffice/reports (protegida + role manager). Criar novo componente RoleProtectedRoute que valida token + role do utilizador (lê de localStorage.user.roles). Importar as 8 novas páginas."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/pages/LandingPage.tsx",
+        "changes": "Adicionar card de acesso rápido 'Crédito Habitação' com ícones Home/Savings. Links: 'Simular Crédito' → /mortgage/simulation, 'Minhas Candidaturas' → /mortgage/applications (lista de candidaturas do utilizador). Usar Card variant='action' do DS. Posicionar após o card de Depósitos a Prazo existente."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/vite.config.ts",
+        "changes": "NENHUMA ALTERAÇÃO NECESSÁRIA — o proxy '/api' → 'http://localhost:4020' já está configurado correctamente. Todas as chamadas fetch('/api/v1/mortgage/...') serão correctamente proxy para o BFF."
+      },
+      {
+        "project": "TestAgentFactoryDigitalChannels",
+        "path": "frontend/src/services/api.ts",
+        "changes": "NENHUMA ALTERAÇÃO NECESSÁRIA — o helper request() já trata autenticação (header Authorization: Bearer) e HTTP 401 (redirect para /login). Os novos serviços mortgageService.ts e mortgageBackofficeService.ts importarão este helper."
+      }
+    ],
+    "function_changes": [],
+    "tables_to_add": [],
+    "tables_to_modify": []
+  },
+  "warnings": [],
+  "submitted_at": "2026-02-13T16:55:46.574Z",
+  "status": "approved",
+  "approval_comments": "Plan approved. Proceed with implementation.",
+  "approved_at": "2026-02-13T16:58:00.919Z"
+}

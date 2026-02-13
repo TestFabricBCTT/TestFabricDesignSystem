@@ -54,3 +54,6 @@ export { ResultCard, type ResultCardProps } from './ResultCard';
 
 // Timeline
 export { Timeline, type TimelineProps } from './Timeline';
+
+// Stepper
+export { Stepper, type StepperProps } from './Stepper';

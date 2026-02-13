@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interface Contract — BDEV00000016</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f5f6fa; color: #2c3e50; line-height: 1.65; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+    .header { background: linear-gradient(135deg, #1a237e 0%, #0d47a1 60%, #1565c0 100%); color: #fff; padding: 48px 0 40px; }
+    .header h1 { font-size: 2.2rem; font-weight: 700; }
+    .header .sub { font-size: 1.1rem; opacity: 0.85; margin-top: 8px; }
+    section { margin: 32px 0; }
+    section h2 { font-size: 1.45rem; font-weight: 700; color: #1a237e; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid #1565c0; }
+    .footer { background: #263238; color: #b0bec5; text-align: center; padding: 24px; margin-top: 48px; }
+    @media print { body { background: #fff; } .header { background: #1a237e !important; -webkit-print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <h1>Interface Contract — BDEV00000016</h1>
+    <p class="sub">Documentação técnica gerada automaticamente pelo TAA</p>
+    <div style="margin-top:16px;display:flex;gap:12px;">
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.2);font-size:0.8rem;font-weight:600;">v2.1</span>
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.12);font-size:0.82rem;">2026-02-13</span>
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.12);font-size:0.82rem;">39 APIs | 19 Events | 12 Types</span>
+      <span style="padding:4px 14px;border-radius:20px;background:rgba(255,255,255,0.12);font-size:0.82rem;">3 Deep Dives</span>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="margin-top:32px;">
+
+  <section>
+    <h2>APIs REST (39 endpoints)</h2>
+    
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/simulate</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Simular condições de crédito habitação — calcula prestação, TAEG, mapa de amortização</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">propertyValue</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">rateType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (fixed|variable|mixed)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">spreadPercentage</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">purpose</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (purchase|construction|transfer)</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">simulationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">monthlyPayment</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">taeg</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalInterest</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalCost</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amortizationSchedule</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">AmortizationEntry[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dsti</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">ltv</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400_INVALID_PARAMS</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">422_LTV_EXCEEDED</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">422_DSTI_EXCEEDED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/simulations/:simulationId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Obter simulação anterior por ID</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">simulationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">monthlyPayment</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">taeg</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">params</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">SimulationParams</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Criar novo pedido de crédito habitação (draft)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">simulationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">coApplicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">property</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PropertyData</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">purpose</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">draft</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400_INVALID_DATA</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_DUPLICATE</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Obter detalhes completos do pedido</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">coApplicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">property</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PropertyData</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documents</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">Document[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">timeline</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">TimelineEntry[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#9C27B0;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">PATCH</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Actualizar pedido em estado draft</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">coApplicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">property</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PropertyData?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">draft</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">updatedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400_INVALID_DATA</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_NOT_DRAFT</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/submit</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Submeter pedido para análise — valida documentos obrigatórios</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">submitted</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">submittedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400_MISSING_DOCUMENTS</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_NOT_DRAFT</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/documents</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Upload de documento para o pedido (multipart/form-data)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">file</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">binary</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (irs|payslip|id|property_deed|other)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">description</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">fileName</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">uploadedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400_INVALID_FILE</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">413_FILE_TOO_LARGE</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/crc-check</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Consultar CRC — MOCK: retorna score simulado após 3s</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">checkId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">processing</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">estimatedTime</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">3s</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">429_RATE_LIMITED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/crc-result</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Obter resultado CRC (mock: score 600-850)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">checkId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">completed</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">score</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number (600-850)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">recommendation</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (approve|reject|conditional)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">checkedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">202_STILL_PROCESSING</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/property-valuation</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Solicitar avaliação de imóvel — sistema interno (24-48h)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">propertyAddress</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">propertyType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">declaredValue</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">pending</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">estimatedCompletion</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (24-48h)</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_ALREADY_REQUESTED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/property-valuation</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Obter resultado da avaliação de imóvel</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (pending|completed)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuatedAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">report</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">object?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">completedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/generate-documentation</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Gerar documentação regulamentar FIN/FINE</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentTypes</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string[] (fin|fine)</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documents</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "documentId": "string",
+    "type": "string",
+    "status": "generated",
+    "generatedAt": "string"
+  }
+]</pre></td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_NOT_APPROVED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/documents/:documentId/download</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Download de documento (PDF)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">type</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">binary/pdf</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/approval-workflow</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Iniciar workflow de aprovação multinível (L1≤400k, L2 400k-1M, L3&gt;1M)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">workflowId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">requiredLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (L1|L2|L3)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">pending</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_ALREADY_STARTED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/approval-workflow</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Estado do workflow de aprovação</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">workflowId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">requiredLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">currentLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvals</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "level": "string",
+    "approvedBy": "string",
+    "approvedAt": "string"
+  }
+]</pre></td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (pending|approved|rejected)</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/approve</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Aprovar pedido (gestor L1/L2/L3 conforme montante)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">comments</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">conditions</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string[]?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_INSUFFICIENT_LEVEL</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_ALREADY_DECIDED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/applications/:applicationId/reject</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Rejeitar pedido (gestor)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">reason</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">comments</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">rejected</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">rejectedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_ALREADY_DECIDED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/contracts</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Gerar contrato de crédito habitação</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">generated</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentUrl</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_NOT_APPROVED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/contracts/:contractId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Obter contrato gerado</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentUrl</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">signedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/contracts/:contractId/sign</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Assinar contrato via CMD — MOCK: aceita qualquer OTP</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">phoneNumber</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">otp</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">signed</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">signedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">signatureId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400_INVALID_OTP</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_ALREADY_SIGNED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/contracts/:contractId/disburse</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Executar desembolso — integração real Core Banking (retry + idempotency)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">disbursementId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">disbursementId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (completed|pending)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">transactionId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">disbursedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_NOT_SIGNED</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">502_CORE_BANKING_ERROR</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">504_TIMEOUT</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/loans/:loanId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Detalhes do empréstimo activo</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">outstandingBalance</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">monthlyPayment</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">nextPaymentDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interestRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">taeg</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">startDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">endDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/loans/:loanId/payments</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Histórico de pagamentos do empréstimo</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">payments</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "paymentId": "string",
+    "amount": "number",
+    "principal": "number",
+    "interest": "number",
+    "paidAt": "string",
+    "status": "string"
+  }
+]</pre></td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">pagination</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PaginationMeta</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/loans/:loanId/amortization</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Simular amortização antecipada</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">type</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (partial|total)</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">simulationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">currentBalance</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newBalance</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">savedInterest</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newMonthlyPayment</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newEndDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">earlyRepaymentFee</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">400_INVALID_AMOUNT</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/loans/:loanId/amortization/confirm</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Confirmar amortização antecipada</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">simulationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amortizationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">completed</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newBalance</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">confirmedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_SIMULATION_EXPIRED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/notifications</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Listar notificações do utilizador</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">notifications</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "notificationId": "string",
+    "type": "string",
+    "title": "string",
+    "message": "string",
+    "read": "boolean",
+    "createdAt": "string"
+  }
+]</pre></td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">pagination</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PaginationMeta</td></tr></table>
+        </div>
+      </div>
+      
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#9C27B0;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">PATCH</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/notifications/:notificationId/read</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Marcar notificação como lida</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">notificationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">read</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">true</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">readAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/dashboard/kpis</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Dashboard KPIs — total pedidos, pendentes aprovação, aprovados/rejeitados mês, tempo médio processamento, total desembolsado, avaliações pendentes</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalApplications</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">pendingApproval</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvedThisMonth</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">rejectedThisMonth</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">avgProcessingTimeDays</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalDisbursed</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">pendingValuations</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">conversionRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/applications</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Lista de pedidos para backoffice com filtros avançados</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dateFrom</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dateTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">search</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">page</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">limit</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applications</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">BackofficeApplication[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">pagination</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PaginationMeta</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">filters</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ActiveFilters</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/applications/:applicationId</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Detalhe completo de pedido para backoffice — inclui dados cliente, CRC, avaliação, timeline, docs, notas internas</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">coApplicant</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ApplicantData?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">property</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PropertyData</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">crcResult</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">CRCResult?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationResult</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">ValuationResult?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documents</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">Document[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">timeline</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">TimelineEntry[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">notes</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">InternalNote[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/applications/:applicationId/assign</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Atribuir pedido a gestor L1/L2/L3 conforme montante</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (userId do gestor)</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_ALREADY_ASSIGNED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/applications/:applicationId/request-info</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Solicitar informações adicionais ao cliente — gera notificação</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">requestedDocuments</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">message</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">requestId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">info_requested</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">sentAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#9C27B0;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">PATCH</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/applications/:applicationId/notes</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Adicionar nota interna ao pedido (visível só para gestores)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">note</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">noteId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">note</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/valuations/pending</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Fila de avaliações de imóvel pendentes (ordenadas por data)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <em style="color:#90a4ae;">—</em>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuations</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "valuationId": "string",
+    "applicationId": "string",
+    "propertyAddress": "string",
+    "propertyType": "string",
+    "declaredValue": "number",
+    "assignedTo": "string?",
+    "createdAt": "string"
+  }
+]</pre></td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">pagination</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PaginationMeta</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/valuations/:valuationId/assign-appraiser</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Atribuir avaliador interno a uma avaliação de imóvel</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">appraiserId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">appraiserId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#2196F3;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">POST</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/valuations/:valuationId/submit</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Submeter resultado de avaliação de imóvel</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuatedAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">report</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">{
+  "condition": "string",
+  "location_score": "number",
+  "market_comparison": "number",
+  "notes": "string"
+}</pre></td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">completed</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuatedAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">completedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">404_NOT_FOUND</span><span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">409_ALREADY_COMPLETED</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/audit-logs</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Log de todas as operações críticas — aprovações, rejeições, desembolsos, atribuições</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">action</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dateFrom</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dateTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">page</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">limit</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">logs</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;"><pre style="margin:0;font-size:0.85rem;">[
+  {
+    "logId": "string",
+    "action": "string",
+    "userId": "string",
+    "targetId": "string",
+    "details": "object",
+    "createdAt": "string"
+  }
+]</pre></td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">pagination</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">PaginationMeta</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/reports/monthly</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Relatório mensal — volume, taxa aprovação, ticket médio, tempo médio</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">month</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">year</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">month</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">year</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalApplications</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvedCount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">rejectedCount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalRate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">avgTicket</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalDisbursed</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">avgProcessingDays</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px 24px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="display:inline-block;padding:2px 10px;border-radius:4px;background:#4CAF50;color:#fff;font-weight:700;font-size:0.8rem;letter-spacing:0.5px;">GET</span>
+        <code style="font-size:1.05rem;font-weight:600;color:#1a237e;">/api/v1/mortgage/backoffice/reports/export</code>
+      </div>
+      <p style="color:#546e7a;margin-bottom:16px;">Exportar relatório para Excel (XLSX)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Request Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">reportType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (monthly|applications|audit)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dateFrom</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dateTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr></table>
+        </div>
+        <div>
+          <h4 style="color:#37474f;font-size:0.9rem;margin-bottom:6px;">Response Body</h4>
+          <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">type</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">binary/xlsx</td></tr></table>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;">
+        <h4 style="color:#c62828;font-size:0.85rem;margin-bottom:4px;">Error Codes</h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="padding:2px 8px;border-radius:4px;background:#ffebee;color:#c62828;font-size:0.8rem;font-weight:600;">403_FORBIDDEN</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Eventos Socket.IO (19)</h2>
+    
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.simulation.created</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">simulationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.application.created</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.application.submitted</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.application.statusChanged</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">oldStatus</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">newStatus</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.crc.completed</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">score</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">recommendation</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.valuation.completed</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuatedAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.documentation.generated</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentIds</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">types</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string[]</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.approval.levelCompleted</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">level</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvedBy</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.approval.completed</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">finalStatus</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.contract.created</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.contract.signed</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">signedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.disbursement.completed</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">contractId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">transactionId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.payment.due</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dueDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.payment.received</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">paymentId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">amount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.notification.sent</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">notificationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">type</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">title</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.backoffice.newApplication</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">requiredLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.backoffice.applicationAssigned</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedBy</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.backoffice.valuationPending</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">propertyAddress</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">&#9889;</span>
+        <code style="font-weight:700;color:#6a1b9a;">mortgage.backoffice.actionRequired</code>
+        <span style="color:#78909c;font-size:0.85rem;">core &#8594; digitalChannels</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">reason</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">daysPending</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tipos Partilhados (12)</h2>
+    
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>SimulationParams</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">propertyValue</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">termMonths</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">rateType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">spreadPercentage</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">purpose</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>AmortizationEntry</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">month</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">payment</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">principal</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">interest</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">balance</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>ApplicantData</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">fullName</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">nif</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">birthDate</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">email</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">phone</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">address</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">employmentType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">monthlyIncome</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">employerName</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>PropertyData</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">address</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">type</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string (apartment|house|land)</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">area</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">yearBuilt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">energyClass</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">registryNumber</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>Document</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">fileName</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">documentType</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">uploadedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">size</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>TimelineEntry</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">event</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">timestamp</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">description</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>CRCResult</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">checkId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">score</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">recommendation</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">checkedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>ValuationResult</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">valuatedAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">report</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">object</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">completedAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>InternalNote</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">noteId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">userName</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">note</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>BackofficeApplication</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicationId</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">applicantName</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">loanAmount</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalLevel</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">assignedTo</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string?</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">createdAt</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">daysPending</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>PaginationMeta</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">page</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">limit</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">total</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">totalPages</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">number</td></tr></table>
+    </div>
+    <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px 20px;margin-bottom:12px;">
+      <h4 style="color:#1a237e;margin-bottom:8px;"><code>ActiveFilters</code></h4>
+      <table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">status</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">approvalLevels</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">string[]</td></tr><tr><td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:600;background:#fafafa;width:30%;font-family:monospace;font-size:0.85rem;">dateRange</td><td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85rem;">object</td></tr></table>
+    </div>
+  </section>
+
+  
+    <section style="margin-bottom:36px;">
+      <h2 style="font-size:1.45rem;font-weight:700;color:#1a237e;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #1565c0;">Deep Dive — Core</h2>
+      <p style="color:#37474f;margin-bottom:12px;">Core backend gere todas as tabelas de crédito habitação (15 tabelas + 2 backoffice), motor de cálculo TAEG (biblioteca financeira standard), mock CRC (score 600-850, delay 3s), sistema interno de avaliação (24-48h), motor de aprovação multinível (L1≤400k, L2 400k-1M, L3&gt;1M), mock CMD (aceita qualquer OTP), integração real Core Banking para desembolso (retry + idempotency), geração FIN/FINE via templates, sistema de notificações multicanal, e módulo de backoffice completo (KPIs, atribuição, notas internas, auditoria, relatórios XLSX).</p>
+      <p style="color:#546e7a;margin-bottom:12px;font-style:italic;">Modelo de dados normalizado com 15 tabelas core + 2 tabelas backoffice (mortgage_application_assignments, mortgage_internal_notes). Motor de aprovação baseado em state machine (draft→submitted→crc_check→valuation→approval→contract→signed→disbursed→active). Auditoria em tabela audit_logs para compliance. RGPD: soft delete com retenção 2 anos. Desembolso: idempotency key (disbursementId), timeout 30s, circuit breaker. Backoffice: atribuição automática por montante, alertas &gt;5 dias sem acção, exportação XLSX via exceljs.</p>
+      
+      <h4 style="color:#c62828;margin-bottom:6px;">Lacunas Identificadas</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#c62828;">Motor TAEG — validar com especialista financeiro antes de produção</li><li style="color:#c62828;">Mock CRC — definir timeline para integração real com Banco de Portugal</li><li style="color:#c62828;">Mock CMD — definir timeline para integração real com AMA</li><li style="color:#c62828;">Integração Core Banking — obter documentação API interna de transferências</li><li style="color:#c62828;">Templates FIN/FINE — obter templates oficiais do departamento jurídico</li><li style="color:#c62828;">Regras DSTI — confirmar limites regulatórios actualizados (Banco de Portugal)</li><li style="color:#c62828;">Backoffice — definir SLA por nível de aprovação (ex: L1 2 dias, L2 5 dias, L3 10 dias)</li><li style="color:#c62828;">Exportação XLSX — definir campos obrigatórios para relatórios regulatórios</li></ul>
+      
+      <h4 style="color:#1565c0;margin-bottom:6px;">Recomendações</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#1565c0;">Implementar auditoria completa (audit_logs) para compliance regulamentar</li><li style="color:#1565c0;">Políticas RGPD: soft delete, retenção 2 anos para pedidos rejeitados</li><li style="color:#1565c0;">Dashboard backoffice com KPIs real-time via Socket.IO</li><li style="color:#1565c0;">Alertas automáticos para pedidos &gt;5 dias sem acção (event actionRequired)</li><li style="color:#1565c0;">Sistema de atribuição automática de gestores por montante do empréstimo</li><li style="color:#1565c0;">Circuit breaker para Core Banking: timeout 30s, max retries 3, fallback status=pending</li><li style="color:#1565c0;">Cron job diário para alertas de pagamento (7 dias antes do vencimento)</li><li style="color:#1565c0;">Índices DB: applicationId, userId, status, createdAt em todas tabelas principais</li></ul>
+      
+      <h4 style="color:#37474f;margin-bottom:6px;">Tarefas de Implementação (49)</h4>
+      <ul><li>Criar tabela mortgage_simulations e API POST /api/v1/mortgage/simulate com motor TAEG (biblioteca financeira standard) <span style="color:#78909c;font-size:0.85em;">(BCTT-537)</span></li><li>Criar tabela mortgage_simulations — GET /api/v1/mortgage/simulations/:simulationId <span style="color:#78909c;font-size:0.85em;">(BCTT-537)</span></li><li>Implementar cálculo TAEG, LTV, DSTI com validação de limites regulatórios <span style="color:#78909c;font-size:0.85em;">(BCTT-537)</span></li><li>Criar tabela mortgage_applications e API POST /api/v1/mortgage/applications (draft) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar API PATCH /api/v1/mortgage/applications/:applicationId (update draft) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar tabela mortgage_applicants (1:N com applications — titular + co-titular) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar tabela mortgage_properties e validação de dados imóvel <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar tabela mortgage_documents e API POST upload documentos (multipart, max 5MB PDF, 2MB imagens) <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Criar API POST /api/v1/mortgage/applications/:applicationId/submit com validação docs obrigatórios <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Criar API GET /api/v1/mortgage/applications/:applicationId/documents/:documentId/download <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Criar tabela mortgage_crc_checks e API POST CRC check (mock — score 600-850, delay 3s) <span style="color:#78909c;font-size:0.85em;">(BCTT-541)</span></li><li>Criar API GET CRC result com recomendação baseada em score (approve&gt;750, conditional 650-750, reject&lt;650) <span style="color:#78909c;font-size:0.85em;">(BCTT-541)</span></li><li>Criar tabela mortgage_valuations e API POST solicitar avaliação (sistema interno) <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar API GET resultado avaliação com relatório (valuatedAmount ±5% do declaredValue) <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar API POST generate-documentation para gerar FIN/FINE via templates <span style="color:#78909c;font-size:0.85em;">(BCTT-543)</span></li><li>Criar tabela mortgage_approval_workflows e API POST iniciar workflow (determinar nível por montante L1/L2/L3) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API GET estado workflow de aprovação com histórico por nível <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API POST approve com validação de role/nível (gestor_L1≤400k, L2≤1M, L3 sem limite) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API POST reject com motivo obrigatório e registo em audit_logs <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar tabela mortgage_contracts e API POST gerar contrato <span style="color:#78909c;font-size:0.85em;">(BCTT-546)</span></li><li>Criar tabela mortgage_signatures e API POST sign (mock CMD — aceita qualquer OTP) <span style="color:#78909c;font-size:0.85em;">(BCTT-546)</span></li><li>Criar API POST disburse com integração real Core Banking (idempotency key, timeout 30s, circuit breaker) <span style="color:#78909c;font-size:0.85em;">(BCTT-545)</span></li><li>Criar tabela mortgage_loans e API GET detalhes empréstimo activo <span style="color:#78909c;font-size:0.85em;">(BCTT-547)</span></li><li>Criar tabela mortgage_payments e API GET histórico pagamentos (paginado) <span style="color:#78909c;font-size:0.85em;">(BCTT-547)</span></li><li>Criar tabela mortgage_amortizations e API POST simular amortização antecipada <span style="color:#78909c;font-size:0.85em;">(BCTT-548)</span></li><li>Criar API POST confirmar amortização (debitar conta, actualizar saldo empréstimo) <span style="color:#78909c;font-size:0.85em;">(BCTT-548)</span></li><li>Criar tabela mortgage_notifications e API GET listar notificações (paginado) <span style="color:#78909c;font-size:0.85em;">(BCTT-549)</span></li><li>Criar API PATCH marcar notificação como lida <span style="color:#78909c;font-size:0.85em;">(BCTT-549)</span></li><li>Implementar emissão de 15 eventos Socket.IO (simulation.created → notification.sent) <span style="color:#78909c;font-size:0.85em;">(BCTT-550)</span></li><li>Criar cron job alertas de pagamento (7 dias antes vencimento — evento payment.due) <span style="color:#78909c;font-size:0.85em;">(BCTT-549)</span></li><li>Criar tabela audit_logs e logging de todas operações críticas <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Implementar soft delete e políticas RGPD (retenção 2 anos pedidos rejeitados) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar API GET /api/v1/mortgage/backoffice/dashboard/kpis — KPIs agregados <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API GET /api/v1/mortgage/backoffice/applications — lista com filtros avançados (status, nível, gestor, datas) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API GET /api/v1/mortgage/backoffice/applications/:applicationId — detalhe completo com notas, CRC, avaliação <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar tabela mortgage_application_assignments e API POST assign gestor (auto por montante) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API POST request-info — solicitar documentos adicionais ao cliente (gera notificação) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar tabela mortgage_internal_notes e API PATCH notes — notas internas visíveis só para gestores <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API GET /api/v1/mortgage/backoffice/valuations/pending — fila de avaliações <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar API POST assign-appraiser — atribuir avaliador interno <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar API POST valuations/:valuationId/submit — submeter resultado avaliação <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar API GET audit-logs — log de operações filtráveis (acção, user, datas) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API GET reports/monthly — relatório mensal (volume, aprovação, ticket médio) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar API GET reports/export — exportar XLSX via exceljs <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Implementar emissão de 4 eventos backoffice Socket.IO (newApplication, assigned, valuationPending, actionRequired) <span style="color:#78909c;font-size:0.85em;">(BCTT-550)</span></li><li>Criar cron job diário para alertas backoffice — pedidos &gt;5 dias sem acção (evento actionRequired) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar sistema de atribuição automática de gestores por montante (L1≤400k, L2≤1M, L3&gt;1M) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar índices DB: applicationId, userId, status, createdAt em todas tabelas principais <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Implementar state machine para ciclo de vida do pedido (draft→submitted→…→active→closed) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li></ul>
+    </section>
+    <section style="margin-bottom:36px;">
+      <h2 style="font-size:1.45rem;font-weight:700;color:#1a237e;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #1565c0;">Deep Dive — Middleware</h2>
+      <p style="color:#37474f;margin-bottom:12px;">Middleware actua como proxy entre Digital Channels e Core. Gere autenticação JWT, validação de roles (gestor_L1/L2/L3, avaliador, admin), rate limiting (global 100 req/min, CRC 1/dia, backoffice 200/min), circuit breaker para Core Banking (timeout 30s), e logging estruturado JSON. Rotas backoffice protegidas por role-based access control.</p>
+      <p style="color:#546e7a;margin-bottom:12px;font-style:italic;">Todas as rotas /api/v1/mortgage/* passam pelo middleware com validação JWT. Rotas backoffice requerem roles específicos. Rate limiting implementado com Redis (sliding window). Circuit breaker pattern com estados: closed→open→half-open. Métricas Prometheus para latência P50/P95/P99 e taxa de erro por endpoint.</p>
+      
+      <h4 style="color:#c62828;margin-bottom:6px;">Lacunas Identificadas</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#c62828;">Definir política de rate limiting exacta para CRC (1 req/dia por userId ou por applicationId?)</li><li style="color:#c62828;">Validação CORS para backoffice — confirmar domínios permitidos</li><li style="color:#c62828;">Política de timeout para uploads de documentos (ficheiros grandes)</li></ul>
+      
+      <h4 style="color:#1565c0;margin-bottom:6px;">Recomendações</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#1565c0;">Circuit breaker para Core Banking: timeout 30s, max retries 3, fallback status=pending</li><li style="color:#1565c0;">Redis para rate limiting (sliding window) — key por userId + endpoint</li><li style="color:#1565c0;">Métricas Prometheus: latência, taxa erro, rate limit hits</li><li style="color:#1565c0;">Logs estruturados JSON para auditoria (correlationId em todos requests)</li><li style="color:#1565c0;">Validação de roles granular: gestor_L1 só vê e opera até 400k</li><li style="color:#1565c0;">Upload: timeout 60s, max size 5MB PDF / 2MB imagens</li></ul>
+      
+      <h4 style="color:#37474f;margin-bottom:6px;">Tarefas de Implementação (10)</h4>
+      <ul><li>Configurar proxy routes para 39 endpoints mortgage (27 cliente + 12 backoffice) no middleware <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Implementar validação JWT e extracção de roles para rotas mortgage <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Implementar rate limiting Redis: global 100 req/min, CRC 1/dia por userId, backoffice 200/min <span style="color:#78909c;font-size:0.85em;">(BCTT-541)</span></li><li>Implementar role-based access control para backoffice (gestor_L1/L2/L3, avaliador, admin) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Implementar circuit breaker para endpoint disburse (Core Banking): timeout 30s, retries 3, fallback pending <span style="color:#78909c;font-size:0.85em;">(BCTT-545)</span></li><li>Configurar upload proxy: timeout 60s, max 5MB PDF / 2MB imagens, multipart/form-data <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Implementar métricas Prometheus e logging estruturado JSON com correlationId <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Configurar CORS para backoffice (domínios específicos) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Implementar validação granular: gestor_L1 só pode approve se loanAmount ≤ 400000 <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Configurar Socket.IO namespace /backoffice com filtro por role no middleware <span style="color:#78909c;font-size:0.85em;">(BCTT-550)</span></li></ul>
+    </section>
+    <section style="margin-bottom:36px;">
+      <h2 style="font-size:1.45rem;font-weight:700;color:#1a237e;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #1565c0;">Deep Dive — Digital Channels</h2>
+      <p style="color:#37474f;margin-bottom:12px;">Frontend React com 11 páginas (6 cliente + 5 backoffice), 1 microserviço BFF (mortgage-service porta 4005), 39 rotas proxy, Socket.IO client para 13 eventos consumidos (9 cliente + 4 backoffice). Wizard multi-step para pedido, mock CMD com UI realista, gráficos Chart.js, DataTable backoffice, exportação XLSX. Cache strategy mista (sessionStorage, localStorage 7d, memory). Design system Banco CTT com componentes acessíveis WCAG 2.1 AA.</p>
+      <p style="color:#546e7a;margin-bottom:12px;font-style:italic;">Microserviço mortgage-service (Express + TypeScript) monta em /api/mortgage e faz proxy para core-api:3000. Frontend organizado em: /src/pages/mortgage/ (6 páginas cliente), /src/pages/backoffice/mortgage/ (5 páginas backoffice), /src/components/mortgage/ (componentes partilhados), /src/services/mortgageApi.ts (API client), /src/hooks/useMortgageSocket.ts (Socket.IO). Backoffice usa react-table para DataTable, Chart.js para gráficos, exceljs para XLSX client-side. Auto-save draft a cada 30s via localStorage.</p>
+      
+      <h4 style="color:#c62828;margin-bottom:6px;">Lacunas Identificadas</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#c62828;">Componente CMDSignatureWidget — UI mock precisa de design UX aprovado</li><li style="color:#c62828;">DocumentUploader — validação client-side de tipos MIME e tamanhos</li><li style="color:#c62828;">ApplicationTimeline — design UX da linha temporal vertical</li><li style="color:#c62828;">Chart.js gráficos — cores e estilo alinhados com Design System Banco CTT</li><li style="color:#c62828;">Backoffice DataTable — definir colunas exactas e filtros por página</li><li style="color:#c62828;">Backoffice layout — sidebar vs top-nav para backoffice</li></ul>
+      
+      <h4 style="color:#1565c0;margin-bottom:6px;">Recomendações</h4>
+      <ul style="margin-bottom:12px;"><li style="color:#1565c0;">Wizard multi-step (4 steps): Dados Pessoais → Co-Titular → Imóvel → Documentos</li><li style="color:#1565c0;">Tooltips para termos técnicos (TAEG, DSTI, LTV) com react-tooltip</li><li style="color:#1565c0;">Auto-save draft a cada 30s em localStorage (TTL 7 dias)</li><li style="color:#1565c0;">Preview documentos com PDF.js antes de download</li><li style="color:#1565c0;">Socket.IO: reconnect automático com backoff exponencial</li><li style="color:#1565c0;">Lazy loading de páginas backoffice (code splitting)</li><li style="color:#1565c0;">Testes E2E Playwright: fluxo completo cliente + fluxo gestor backoffice</li><li style="color:#1565c0;">Acessibilidade WCAG 2.1 AA em todos os formulários</li><li style="color:#1565c0;">Responsive design: simulador funciona em mobile, backoffice desktop-first</li><li style="color:#1565c0;">Error boundaries por página com fallback UI</li></ul>
+      
+      <h4 style="color:#37474f;margin-bottom:6px;">Tarefas de Implementação (42)</h4>
+      <ul><li>Criar microserviço mortgage-service (Express + TypeScript, porta 4005, mount /api/mortgage) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Configurar 39 rotas proxy no mortgage-service (27 cliente + 12 backoffice) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar mortgageApi.ts — API client com Axios (interceptors, error handling, auth header) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar useMortgageSocket.ts — hook Socket.IO para 13 eventos consumidos <span style="color:#78909c;font-size:0.85em;">(BCTT-550)</span></li><li>Criar MortgageSimulatorPage — formulário de simulação com cálculo TAEG, LTV, DSTI <span style="color:#78909c;font-size:0.85em;">(BCTT-537)</span></li><li>Criar componentes MortgageSimulatorForm, AmortizationTable, TAEGDisplay, LTVIndicator <span style="color:#78909c;font-size:0.85em;">(BCTT-537)</span></li><li>Criar MortgageApplicationPage — wizard 4 steps (Pessoais → Co-Titular → Imóvel → Docs) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar componentes ApplicantForm, CoApplicantForm, PropertyForm, ProgressStepper <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar DocumentUploader — drag&amp;drop, validação tipos/tamanhos, preview <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Implementar auto-save draft a cada 30s (localStorage, TTL 7d) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar MortgageApplicationDetailPage — timeline, status, CRC, avaliação, workflow <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Criar componentes ApplicationTimeline, ApplicationStatusBadge, ApprovalWorkflowTracker <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar componentes CRCResultCard, ValuationResultCard <span style="color:#78909c;font-size:0.85em;">(BCTT-541)</span></li><li>Criar MortgageContractPage — visualizador PDF + widget assinatura CMD mock <span style="color:#78909c;font-size:0.85em;">(BCTT-546)</span></li><li>Criar CMDSignatureWidget — UI realista (input telefone, envio SMS simulado, input OTP) <span style="color:#78909c;font-size:0.85em;">(BCTT-546)</span></li><li>Criar MortgageLoanDashboardPage — overview, pagamentos, gráficos Chart.js <span style="color:#78909c;font-size:0.85em;">(BCTT-547)</span></li><li>Criar componentes LoanOverview, PaymentHistory, NextPaymentCard, LoanProgressChart <span style="color:#78909c;font-size:0.85em;">(BCTT-547)</span></li><li>Criar MortgageAmortizationPage — simulador interactivo com gráfico comparativo <span style="color:#78909c;font-size:0.85em;">(BCTT-548)</span></li><li>Criar componentes AmortizationSimulator, InteractiveSavingsChart, ComparisonTable <span style="color:#78909c;font-size:0.85em;">(BCTT-548)</span></li><li>Criar tooltips para termos técnicos (TAEG, DSTI, LTV, spread) com react-tooltip <span style="color:#78909c;font-size:0.85em;">(BCTT-537)</span></li><li>Implementar cache strategy (sessionStorage, localStorage 7d, memory) com clearing automático <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Criar MortgageBackofficeDashboardPage — KPIs, gráficos, actividade recente, alertas <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar componentes KPICardsGrid, ApplicationsQueueChart, MonthlyVolumeChart, RecentActivityFeed <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar MortgageBackofficeApplicationsPage — DataTable com filtros (status, nível, gestor, datas) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar componentes ApplicationsDataTable (react-table), ApplicationFilters, BulkActionToolbar <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar MortgageBackofficeApplicationDetailPage — painel completo com acções (aprovar, rejeitar, atribuir, solicitar info, notas) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar componentes ApprovalActionButtons, InternalNotesPanel, AssignGestorDialog, RequestInfoDialog <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Criar componente DocumentViewer (PDF.js para preview inline) <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Criar MortgageBackofficeValuationsPage — fila de avaliações com atribuição <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar componentes ValuationsQueue, ValuationFilters, AssignAppraiserDialog <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar MortgageBackofficeValuationDetailPage — formulário de avaliação + preview relatório <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar componentes PropertyValuationForm, PropertyDetailsCard, ValuationReportPreview, SubmitValuationDialog <span style="color:#78909c;font-size:0.85em;">(BCTT-542)</span></li><li>Criar ExportButton com download XLSX (exceljs client-side) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Implementar Socket.IO backoffice — subscrever eventos em namespace /backoffice <span style="color:#78909c;font-size:0.85em;">(BCTT-550)</span></li><li>Implementar PendingActionsAlert — alertas visuais para pedidos &gt;5 dias sem acção <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Configurar lazy loading (code splitting) para páginas backoffice <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Configurar React Router: 6 rotas cliente (/mortgage/*) + 5 rotas backoffice (/backoffice/mortgage/*) <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Implementar error boundaries por página com fallback UI <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li><li>Implementar responsive design: simulador mobile-friendly, backoffice desktop-first <span style="color:#78909c;font-size:0.85em;">(BCTT-537)</span></li><li>Testes E2E Playwright: fluxo completo simulação → pedido → aprovação → contrato → desembolso <span style="color:#78909c;font-size:0.85em;">(BCTT-540)</span></li><li>Testes E2E Playwright: fluxo backoffice (login gestor → dashboard → detalhe → aprovar → avaliação) <span style="color:#78909c;font-size:0.85em;">(BCTT-544)</span></li><li>Acessibilidade WCAG 2.1 AA: aria-labels, keyboard navigation, screen reader, contrast <span style="color:#78909c;font-size:0.85em;">(BCTT-539)</span></li></ul>
+    </section>
+
+</div>
+
+<footer class="footer">
+  <p><strong>Gerado automaticamente pelo TAA (Technical Architecture Agent)</strong></p>
+  <p style="margin-top:6px;">2026-02-13 — <code style="background:rgba(255,255,255,0.15);color:#fff;padding:2px 8px;border-radius:4px;">BDEV00000016.json</code> v2.1</p>
+</footer>
+</body>
+</html>

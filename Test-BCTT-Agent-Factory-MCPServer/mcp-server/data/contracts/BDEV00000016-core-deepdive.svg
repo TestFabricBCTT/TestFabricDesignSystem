@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 2088" width="1400" height="2088" font-family="Arial, Helvetica, sans-serif">
+  
+  <defs>
+    <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2196F3"/><stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+    <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9800"/><stop offset="100%" stop-color="#F57C00"/>
+    </linearGradient>
+    <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#388E3C"/>
+    </linearGradient>
+    <linearGradient id="gradGrey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#607D8B"/><stop offset="100%" stop-color="#455A64"/>
+    </linearGradient>
+    <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9C27B0"/><stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFBFC"/><stop offset="100%" stop-color="#F0F2F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000022"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+    <marker id="arrowRest" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#37474F"/>
+    </marker>
+    <marker id="arrowSocket" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B1FA2"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="2088" fill="url(#bgGrad)"/>
+
+  <!-- Title -->
+  <rect x="0" y="0" width="1400" height="72" fill="#263238" opacity="0.95"/>
+  <text x="700" y="32" text-anchor="middle" fill="#FFF" font-size="20" font-weight="700">BDEV00000016 &#8212; Core Deep Dive</text>
+  <text x="700" y="54" text-anchor="middle" fill="#B0BEC5" font-size="12">Análise detalhada &#8212; 2026-02-13</text>
+  <rect x="520" y="62" width="360" height="2" rx="1" fill="#2196F3" opacity="0.7"/>
+
+  
+  
+  
+  <!-- Events Panel -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="200" width="640" height="460" rx="10" fill="#FFF" stroke="#CE93D8" stroke-width="1" stroke-dasharray="6 3"/>
+    <text x="60" y="224" fill="#6A1B9A" font-size="13" font-weight="700">&#9889; Socket.IO Events</text>
+    
+    <text x="80" y="260" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.simulation.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="280" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.application.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="300" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.application.submitted — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="320" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.application.statusChanged — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="340" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.crc.completed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="360" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.valuation.completed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="380" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.documentation.generated — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="400" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.approval.levelCompleted — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="420" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.approval.completed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="440" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.contract.created — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="460" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.contract.signed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="480" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.disbursement.completed — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="500" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.payment.due — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="520" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.payment.received — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="540" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.notification.sent — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="560" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.backoffice.newApplication — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="580" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.backoffice.applicationAssigned — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="600" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.backoffice.valuationPending — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="620" fill="#37474F" font-size="10"><tspan fill="#C62828" font-weight="700">&#10008;</tspan> mortgage.backoffice.actionRequired — <tspan fill="#78909C" font-size="9">N&#195;O CONSUMIDO</tspan></text>
+    <text x="80" y="650" fill="#C62828" font-size="9" font-weight="600">Padrão: API-ONLY</text>
+  </g>
+  
+  
+  <!-- Implementation Tasks -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="700" width="1320" height="932" rx="10" fill="#FFF" stroke="#B0BEC5" stroke-width="1"/>
+    <text x="60" y="724" fill="#37474F" font-size="13" font-weight="700">&#9776; Tarefas de Implementação (49)</text>
+    <text x="80" y="750" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_simulations e API POST /api/v1/mortgage/simulate com motor TAEG (biblioteca financeira standard) <tspan fill="#78909C" font-size="8">(BCTT-537)</tspan></text>
+  <text x="80" y="768" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_simulations — GET /api/v1/mortgage/simulations/:simulationId <tspan fill="#78909C" font-size="8">(BCTT-537)</tspan></text>
+  <text x="80" y="786" fill="#37474F" font-size="10">&#9654; Implementar cálculo TAEG, LTV, DSTI com validação de limites regulatórios <tspan fill="#78909C" font-size="8">(BCTT-537)</tspan></text>
+  <text x="80" y="804" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_applications e API POST /api/v1/mortgage/applications (draft) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="822" fill="#37474F" font-size="10">&#9654; Criar API PATCH /api/v1/mortgage/applications/:applicationId (update draft) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="840" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_applicants (1:N com applications — titular + co-titular) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="858" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_properties e validação de dados imóvel <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="876" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_documents e API POST upload documentos (multipart, max 5MB PDF, 2MB imagens) <tspan fill="#78909C" font-size="8">(BCTT-540)</tspan></text>
+  <text x="80" y="894" fill="#37474F" font-size="10">&#9654; Criar API POST /api/v1/mortgage/applications/:applicationId/submit com validação docs obrigatórios <tspan fill="#78909C" font-size="8">(BCTT-540)</tspan></text>
+  <text x="80" y="912" fill="#37474F" font-size="10">&#9654; Criar API GET /api/v1/mortgage/applications/:applicationId/documents/:documentId/download <tspan fill="#78909C" font-size="8">(BCTT-540)</tspan></text>
+  <text x="80" y="930" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_crc_checks e API POST CRC check (mock — score 600-850, delay 3s) <tspan fill="#78909C" font-size="8">(BCTT-541)</tspan></text>
+  <text x="80" y="948" fill="#37474F" font-size="10">&#9654; Criar API GET CRC result com recomendação baseada em score (approve&gt;750, conditional 650-750, reject&lt;650) <tspan fill="#78909C" font-size="8">(BCTT-541)</tspan></text>
+  <text x="80" y="966" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_valuations e API POST solicitar avaliação (sistema interno) <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="984" fill="#37474F" font-size="10">&#9654; Criar API GET resultado avaliação com relatório (valuatedAmount ±5% do declaredValue) <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="1002" fill="#37474F" font-size="10">&#9654; Criar API POST generate-documentation para gerar FIN/FINE via templates <tspan fill="#78909C" font-size="8">(BCTT-543)</tspan></text>
+  <text x="80" y="1020" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_approval_workflows e API POST iniciar workflow (determinar nível por montante L1/L2/L3) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1038" fill="#37474F" font-size="10">&#9654; Criar API GET estado workflow de aprovação com histórico por nível <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1056" fill="#37474F" font-size="10">&#9654; Criar API POST approve com validação de role/nível (gestor_L1≤400k, L2≤1M, L3 sem limite) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1074" fill="#37474F" font-size="10">&#9654; Criar API POST reject com motivo obrigatório e registo em audit_logs <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1092" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_contracts e API POST gerar contrato <tspan fill="#78909C" font-size="8">(BCTT-546)</tspan></text>
+  <text x="80" y="1110" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_signatures e API POST sign (mock CMD — aceita qualquer OTP) <tspan fill="#78909C" font-size="8">(BCTT-546)</tspan></text>
+  <text x="80" y="1128" fill="#37474F" font-size="10">&#9654; Criar API POST disburse com integração real Core Banking (idempotency key, timeout 30s, circuit breaker) <tspan fill="#78909C" font-size="8">(BCTT-545)</tspan></text>
+  <text x="80" y="1146" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_loans e API GET detalhes empréstimo activo <tspan fill="#78909C" font-size="8">(BCTT-547)</tspan></text>
+  <text x="80" y="1164" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_payments e API GET histórico pagamentos (paginado) <tspan fill="#78909C" font-size="8">(BCTT-547)</tspan></text>
+  <text x="80" y="1182" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_amortizations e API POST simular amortização antecipada <tspan fill="#78909C" font-size="8">(BCTT-548)</tspan></text>
+  <text x="80" y="1200" fill="#37474F" font-size="10">&#9654; Criar API POST confirmar amortização (debitar conta, actualizar saldo empréstimo) <tspan fill="#78909C" font-size="8">(BCTT-548)</tspan></text>
+  <text x="80" y="1218" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_notifications e API GET listar notificações (paginado) <tspan fill="#78909C" font-size="8">(BCTT-549)</tspan></text>
+  <text x="80" y="1236" fill="#37474F" font-size="10">&#9654; Criar API PATCH marcar notificação como lida <tspan fill="#78909C" font-size="8">(BCTT-549)</tspan></text>
+  <text x="80" y="1254" fill="#37474F" font-size="10">&#9654; Implementar emissão de 15 eventos Socket.IO (simulation.created → notification.sent) <tspan fill="#78909C" font-size="8">(BCTT-550)</tspan></text>
+  <text x="80" y="1272" fill="#37474F" font-size="10">&#9654; Criar cron job alertas de pagamento (7 dias antes vencimento — evento payment.due) <tspan fill="#78909C" font-size="8">(BCTT-549)</tspan></text>
+  <text x="80" y="1290" fill="#37474F" font-size="10">&#9654; Criar tabela audit_logs e logging de todas operações críticas <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1308" fill="#37474F" font-size="10">&#9654; Implementar soft delete e políticas RGPD (retenção 2 anos pedidos rejeitados) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="1326" fill="#37474F" font-size="10">&#9654; Criar API GET /api/v1/mortgage/backoffice/dashboard/kpis — KPIs agregados <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1344" fill="#37474F" font-size="10">&#9654; Criar API GET /api/v1/mortgage/backoffice/applications — lista com filtros avançados (status, nível, gestor, datas) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1362" fill="#37474F" font-size="10">&#9654; Criar API GET /api/v1/mortgage/backoffice/applications/:applicationId — detalhe completo com notas, CRC, avaliação <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1380" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_application_assignments e API POST assign gestor (auto por montante) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1398" fill="#37474F" font-size="10">&#9654; Criar API POST request-info — solicitar documentos adicionais ao cliente (gera notificação) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1416" fill="#37474F" font-size="10">&#9654; Criar tabela mortgage_internal_notes e API PATCH notes — notas internas visíveis só para gestores <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1434" fill="#37474F" font-size="10">&#9654; Criar API GET /api/v1/mortgage/backoffice/valuations/pending — fila de avaliações <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="1452" fill="#37474F" font-size="10">&#9654; Criar API POST assign-appraiser — atribuir avaliador interno <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="1470" fill="#37474F" font-size="10">&#9654; Criar API POST valuations/:valuationId/submit — submeter resultado avaliação <tspan fill="#78909C" font-size="8">(BCTT-542)</tspan></text>
+  <text x="80" y="1488" fill="#37474F" font-size="10">&#9654; Criar API GET audit-logs — log de operações filtráveis (acção, user, datas) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1506" fill="#37474F" font-size="10">&#9654; Criar API GET reports/monthly — relatório mensal (volume, aprovação, ticket médio) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1524" fill="#37474F" font-size="10">&#9654; Criar API GET reports/export — exportar XLSX via exceljs <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1542" fill="#37474F" font-size="10">&#9654; Implementar emissão de 4 eventos backoffice Socket.IO (newApplication, assigned, valuationPending, actionRequired) <tspan fill="#78909C" font-size="8">(BCTT-550)</tspan></text>
+  <text x="80" y="1560" fill="#37474F" font-size="10">&#9654; Criar cron job diário para alertas backoffice — pedidos &gt;5 dias sem acção (evento actionRequired) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1578" fill="#37474F" font-size="10">&#9654; Criar sistema de atribuição automática de gestores por montante (L1≤400k, L2≤1M, L3&gt;1M) <tspan fill="#78909C" font-size="8">(BCTT-544)</tspan></text>
+  <text x="80" y="1596" fill="#37474F" font-size="10">&#9654; Criar índices DB: applicationId, userId, status, createdAt em todas tabelas principais <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  <text x="80" y="1614" fill="#37474F" font-size="10">&#9654; Implementar state machine para ciclo de vida do pedido (draft→submitted→…→active→closed) <tspan fill="#78909C" font-size="8">(BCTT-539)</tspan></text>
+  </g>
+  
+  <!-- Strategy + Gaps -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="1652" width="1320" height="396" rx="10" fill="#FFF" stroke="#CFD8DC" stroke-width="1"/>
+    <text x="60" y="1676" fill="#37474F" font-size="13" font-weight="700">&#128260; Análise</text>
+    
+    <text x="80" y="1712" fill="#37474F" font-size="10">Core backend gere todas as tabelas de crédito habitação (15 tabelas + 2 backoffice), motor de cálculo TAEG (biblioteca financeira standard), mock CRC (score 600-850, delay 3s), sistema interno de avaliação (24-48h), motor de aprovação multinível (L1≤400k, L2 400k-1M, L3&gt;1M), mock CMD (aceita qualquer OTP), integração real Core Banking para desembolso (retry + idempotency), geração FIN/FINE via templates, sistema de notificações multicanal, e módulo de backoffice completo (KPIs, atribuição, notas internas, auditoria, relatórios XLSX).</text>
+    <text x="80" y="1752" fill="#C62828" font-size="9">&#9888; Motor TAEG — validar com especialista financeiro antes de produção</text>
+  <text x="80" y="1768" fill="#C62828" font-size="9">&#9888; Mock CRC — definir timeline para integração real com Banco de Portugal</text>
+  <text x="80" y="1784" fill="#C62828" font-size="9">&#9888; Mock CMD — definir timeline para integração real com AMA</text>
+  <text x="80" y="1800" fill="#C62828" font-size="9">&#9888; Integração Core Banking — obter documentação API interna de transferências</text>
+  <text x="80" y="1816" fill="#C62828" font-size="9">&#9888; Templates FIN/FINE — obter templates oficiais do departamento jurídico</text>
+  <text x="80" y="1832" fill="#C62828" font-size="9">&#9888; Regras DSTI — confirmar limites regulatórios actualizados (Banco de Portugal)</text>
+  <text x="80" y="1848" fill="#C62828" font-size="9">&#9888; Backoffice — definir SLA por nível de aprovação (ex: L1 2 dias, L2 5 dias, L3 10 dias)</text>
+  <text x="80" y="1864" fill="#C62828" font-size="9">&#9888; Exportação XLSX — definir campos obrigatórios para relatórios regulatórios</text>
+    <text x="80" y="1900" fill="#1565C0" font-size="9">&#128161; Implementar auditoria completa (audit_logs) para compliance regulamentar</text>
+  <text x="80" y="1916" fill="#1565C0" font-size="9">&#128161; Políticas RGPD: soft delete, retenção 2 anos para pedidos rejeitados</text>
+  <text x="80" y="1932" fill="#1565C0" font-size="9">&#128161; Dashboard backoffice com KPIs real-time via Socket.IO</text>
+  <text x="80" y="1948" fill="#1565C0" font-size="9">&#128161; Alertas automáticos para pedidos &gt;5 dias sem acção (event actionRequired)</text>
+  <text x="80" y="1964" fill="#1565C0" font-size="9">&#128161; Sistema de atribuição automática de gestores por montante do empréstimo</text>
+  <text x="80" y="1980" fill="#1565C0" font-size="9">&#128161; Circuit breaker para Core Banking: timeout 30s, max retries 3, fallback status=pending</text>
+  <text x="80" y="1996" fill="#1565C0" font-size="9">&#128161; Cron job diário para alertas de pagamento (7 dias antes do vencimento)</text>
+  <text x="80" y="2012" fill="#1565C0" font-size="9">&#128161; Índices DB: applicationId, userId, status, createdAt em todas tabelas principais</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="700" y="2078" text-anchor="middle" fill="#90A4AE" font-size="8">BCTT Agent Factory &#8212; TAA Deep Dive &#8212; 2026-02-13</text>
+</svg>

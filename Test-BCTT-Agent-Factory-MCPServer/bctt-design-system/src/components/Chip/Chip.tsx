@@ -4,8 +4,8 @@ import { Chip as MuiChip, type ChipProps as MuiChipProps } from '@mui/material';
 export interface ChipProps extends Omit<MuiChipProps, 'variant'> {
   /** Texto do chip */
   label: string;
-  /** Variante de cor */
-  variant?: 'success' | 'warning' | 'error' | 'default';
+  /** Variante visual: filled (default) ou outlined */
+  variant?: 'filled' | 'outlined';
   /** Callback ao clicar no X */
   onDelete?: () => void;
   /** Ícone do chip */
@@ -13,9 +13,9 @@ export interface ChipProps extends Omit<MuiChipProps, 'variant'> {
 }
 
 export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
-  ({ variant = 'success', children, ...props }, ref) => {
+  ({ variant = 'filled', children, ...props }, ref) => {
     return (
-      <MuiChip ref={ref} {...props}>
+      <MuiChip ref={ref} variant={variant} {...props}>
         {children}
       </MuiChip>
     );
