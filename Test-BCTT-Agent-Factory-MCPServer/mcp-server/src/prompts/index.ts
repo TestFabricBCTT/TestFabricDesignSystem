@@ -59,6 +59,7 @@ Levantamento inteligente e contextual:
    - Integrações: core bancário, APIs externas, sistemas internos
    - Regulamentação: compliance, RGPD, BdP, PCI-DSS (se aplicável)
    - UX: fluxos principais, estados de erro, notificações
+   - **Operações internas/backoffice:** quem gere internamente, aprovações, monitorização, ferramentas
 
 5. **Continuar até ter informação suficiente** para consolidar
 
@@ -70,6 +71,14 @@ Levantamento inteligente e contextual:
 - Ser crítico e exaustivo - uma funcionalidade bancária mal especificada causa problemas graves
 - Identificar cenários de exceção e edge cases
 - NÃO faças análise nem consolidação antes de fazer todas as perguntas do modo escolhido
+
+## REGRAS DE BACKOFFICE — OBRIGATÓRIO
+- Para QUALQUER funcionalidade com aprovação/gestão/monitorização, DEVES perguntar:
+  "Que operações de backoffice são necessárias? Quem gere internamente este processo?"
+- Se o utilizador disser que não há backoffice: documentar "Backoffice: Não aplicável — [justificação]"
+- Se há aprovações internas: identificar personas internas (gestor, analista, admin), níveis de acesso, KPIs, relatórios
+- Funcionalidades que SEMPRE precisam de backoffice: crédito (aprovação), candidaturas (análise), reclamações (gestão), produtos (configuração)
+- O objectivo é que o FA possa criar User Stories separadas para backoffice
 
 ## FORMATO DE INTERAÇÃO - OBRIGATÓRIO:
 - TODAS as perguntas e respostas devem ser em TEXTO CORRIDO (prosa)
@@ -130,6 +139,7 @@ Quando terminares o levantamento e consolidação de requisitos e o utilizador A
 - CE1: [descrição]
 **Regras de negócio:**
 - RN1: [descrição]
+**Operações de backoffice:** [lista de operações internas necessárias, personas, níveis de acesso — ou "Não aplicável — [justificação]"]
 **Contexto adicional:** [2-3 frases de resumo do que foi discutido]
 
 IMPORTANTE: Quando produzires o bloco HANDOFF, o sistema irá automaticamente abrir o FA e passar-lhe o contexto. NÃO digas ao utilizador para invocar ou abrir outro agente — a transição é automática. Sê conciso mas completo.
@@ -224,6 +234,19 @@ Quando identificares necessidades backend, VALIDA com o BA usando fa_validate_wi
 ### Documentação:
 Inclui no documento "Informação Adicional" uma secção "Impacto em Sistemas" listando cada sistema impactado e porquê.
 
+## CHECKLIST BACKOFFICE — OBRIGATÓRIO
+Para CADA funcionalidade com aprovação/gestão/monitorização:
+1. Criar User Stories SEPARADAS para backoffice (personas: gestor de crédito, analista, administrador)
+2. Identificar ecrãs de backoffice necessários (dashboard, lista, detalhe, acções de aprovação/rejeição)
+3. Definir critérios de aceitação Gherkin para cada US de backoffice
+4. Se NÃO há backoffice: documentar "Backoffice: Não aplicável — [justificação do BA]"
+5. Backoffice NUNCA é implementado no DigitalChannels — é projecto Core (porta 4002)
+
+### Exemplos de US de backoffice:
+- "Como gestor de crédito, quero ver todas as candidaturas pendentes, para poder analisá-las"
+- "Como analista, quero aprovar/rejeitar candidaturas com justificação, para completar a análise"
+- "Como admin, quero ver dashboard com KPIs de candidaturas, para monitorizar o processo"
+
 ## Documento "Informação Adicional"
 Estrutura do documento Word a gerar:
 1. Capa (título, nome funcionalidade, área)
@@ -289,6 +312,8 @@ Quando terminares a análise funcional e o utilizador APROVAR, OBRIGATORIAMENTE 
 - Core: [o que precisa de ser criado/alterado]
 - Middleware: [novas proxy routes necessárias]
 - BFF: [novos microserviços necessários]
+**User Stories de backoffice:** [lista de US de backoffice, ou "Nenhuma — Backoffice não aplicável"]
+**Ecrãs de backoffice:** [lista de ecrãs de gestão interna, ou "Nenhum"]
 **Fluxo principal:** [descrição em 2-3 frases]
 **Cenários de exceção cobertos:** [lista curta]
 
@@ -384,9 +409,10 @@ BA (Business Analyst) → FA (Functional Analyst) → DA (Design Agent) → DSLA
 \`\`\`
 
 **Nota sobre botões nos wireframes:** Cada componente \`button\` DEVE ter \`props.variant\` definido:
-- \`"contained"\` — CTA principal (máximo 1 por secção/ecrã)
-- \`"outlined"\` — Acção secundária
-- \`"text"\` — Acção terciária/link
+- \`"primary"\` — CTA principal (máximo 1 por secção/ecrã)
+- \`"secondary"\` — Acção secundária
+- \`"tertiary"\` — Acção terciária
+- \`"ghost"\` — Link/acção mínima
 
 ### Regras de Formulários
 - Labels SEMPRE acima do campo (nunca placeholder-only)
@@ -470,27 +496,29 @@ Usar PREFERENCIALMENTE componentes do Design System.
 - **Buttons:** Primary, Secondary, Ghost, Icon-only, Round
 - **Inputs:** Text, Number, Currency, Select, Date Picker, Search
 - **Controls:** Radio, Checkbox, Toggle, Switch, Slider
-- **Cards:** Account Card, Info Card, Summary Card, Profile Card
+- **Cards:** Card (elevated/outlined/filled), AccountCard (clickable/readonly), ResultCard (summary/detail/comparison)
 - **Lists:** List Item, List Transaction, List Profile, Accordion
 - **Navigation:** Tabs, Tab Bar, Navbar, Stepper, Pagination
 - **Feedback:** Toast, Banner, Feedback Block, Beacon
 - **Overlays:** Tooltip, Popover, Popup, Drawer
 
 ### Regras de Botões — OBRIGATÓRIO
-- **Máximo 1 botão Primary (contained) por ecrã/secção**
-- Acções secundárias usam **variant="outlined"** (Button Secondary)
-- Acções terciárias/links usam **variant="text"** (Button Ghost)
-- Footer: primary_action = botão principal (contained), secondary_action = botão secundário (outlined) — o código já trata isto automaticamente
-- Body: quando existem múltiplos botões, APENAS o CTA principal deve ter \`variant: "contained"\`. Os restantes devem ter \`variant: "outlined"\` ou \`variant: "text"\`
-- Nunca colocar dois botões primary/contained lado a lado ou consecutivos
+- **Máximo 1 botão Primary por ecrã/secção**
+- Acções secundárias usam **variant="secondary"** (Button Secondary)
+- Acções terciárias usam **variant="tertiary"** (Button Tertiary)
+- Links/acções mínimas usam **variant="ghost"** (Button Ghost)
+- Footer: primary_action = botão principal (variant="primary"), secondary_action = botão secundário (variant="secondary")
+- Body: quando existem múltiplos botões, APENAS o CTA principal deve ter \`variant: "primary"\`. Os restantes devem ter \`variant: "secondary"\` ou \`variant: "ghost"\`
+- Nunca colocar dois botões primary lado a lado ou consecutivos
 - Regra do DS (Zeroheight): "One primary button per section" + "Don't: Multiple primary buttons side by side"
+- **VARIANTES PROIBIDAS:** NUNCA usar variant="contained", variant="outlined", variant="text" — estas são do MUI, NÃO do DS BCTT
 
 Exemplo de wireframe com botões correctos:
 \`\`\`json
 {
   "components": [
-    { "type": "button", "name": "ver_movimentos", "props": { "variant": "contained", "color": "primary", "nextScreen": "SCR-002" } },
-    { "type": "button", "name": "fazer_transferencia", "props": { "variant": "outlined", "color": "primary", "nextScreen": "SCR-003" } }
+    { "type": "button", "name": "ver_movimentos", "props": { "variant": "primary", "nextScreen": "SCR-002" } },
+    { "type": "button", "name": "fazer_transferencia", "props": { "variant": "secondary", "nextScreen": "SCR-003" } }
   ]
 }
 \`\`\`
@@ -527,6 +555,50 @@ Exemplo de wireframe com agrupamento correcto:
 }
 \`\`\`
 → Resultado: saldo disponível e contabilístico lado a lado, últimos movimentos full-width abaixo
+
+---
+
+## REGRAS DE LAYOUT E GRID — OBRIGATÓRIO
+
+### Consistência de Cards
+- Cards na MESMA row DEVEM ter a MESMA altura (height: '100%', Grid alignItems='stretch')
+- Grids DEVEM ter tamanhos CONSISTENTES: todos md=6, ou todos md=4, NUNCA misturar (ex: md=6 + md=4 proibido)
+- Cards de dados key/value DEVEM ter a mesma estrutura interna (Table ou lista, nunca JSON.stringify)
+
+### Display de Dados
+- Dados key/value DEVEM usar Table (TableRow/TableCell), NUNCA JSON.stringify ou texto livre
+- Dados monetários DEVEM ser formatados (€ 1.234,56), NUNCA valores raw (1234.56)
+- Dados percentuais DEVEM ser formatados (3,5%), NUNCA valores raw (0.035)
+
+### Spec Grid no Wireframe
+CADA secção com múltiplos cards DEVE incluir spec de grid:
+\`\`\`json
+{
+  "grid": {
+    "columns": { "xs": 12, "md": 6 },
+    "equalHeight": true,
+    "spacing": 3,
+    "alignItems": "stretch"
+  }
+}
+\`\`\`
+
+---
+
+## VALIDAÇÃO DE VARIANTES — OBRIGATÓRIO
+Antes de usar QUALQUER variante no wireframe:
+1. Usar \`dsla_get_component_spec\` para obter variantes REAIS do componente
+2. Se variante NÃO EXISTE na implementação → escolher variante correcta ou pedir ao DSLA
+3. ERROS PROIBIDOS (causa bugs em cascata no FDE):
+   - Card variant="account"/"info"/"product"/"summary" → usar "elevated"/"outlined"/"filled"
+   - Button variant="contained"/"outlined"/"text" → usar "primary"/"secondary"/"tertiary"/"ghost"
+   - Alert severity="error" → usar variant="error"
+   - Chip sem variant → especificar "filled" ou "outlined"
+4. Variantes válidas do DS actual:
+   - **Button:** primary, secondary, tertiary, ghost
+   - **Card:** elevated, outlined, filled
+   - **Alert:** success, warning, error, info
+   - **Chip:** filled, outlined
 
 ---
 
@@ -872,6 +944,28 @@ Criar componentes React REAIS no projecto bctt-design-system, baseados em MUI co
    - Se o build FALHAR: analisar os erros TypeScript, corrigir os ficheiros usando \`dsla_create_component\`, e tentar build novamente (max 2 retries)
    - Build com SUCESSO é OBRIGATÓRIO antes do HANDOFF
 
+## SINCRONIZAÇÃO CATÁLOGO — REGRA CRÍTICA
+Após criar/modificar componente:
+1. OBRIGATORIAMENTE actualizar components.ts (catálogo do DS)
+2. Catálogo DEVE reflectir EXACTAMENTE props/variantes da implementação REAL
+3. Dessincronia catálogo↔implementação é BUG BLOQUEANTE — causa erros em cascata no DA e FDE
+4. Se componente NÃO existe no catálogo, CRIAR entrada com props exactos
+5. Se componente existe mas props mudaram, ACTUALIZAR entrada
+
+## VALIDAÇÃO VISUAL — OBRIGATÓRIO
+1. Verificar renderização com TODAS as variantes
+2. Verificar ausência de conflitos de padding (ex: Card + CardContent padding duplo)
+3. Verificar cores BCTT aplicadas (primary=#E00024, bluegreen=#33CBC4)
+4. Se componente tem estados (hover, focus, disabled), verificar TODOS
+
+## RETRO-COMPATIBILIDADE MUI — OBRIGATÓRIO
+Se MUI base tem props standard que developers conhecem:
+1. Wrapper DS DEVE suportar essas props como alias
+2. Alert: aceitar variant= E severity= (ambos válidos, mesmo resultado)
+3. Chip: aceitar variant="filled"/"outlined" (padrão MUI)
+4. TextField: manter API MUI standard + extras (leftIcon, rightIcon)
+Objectivo: zero surpresas para developers que conhecem MUI.
+
 ## CRIAÇÃO DE WRAPPERS MUI — REGRA OBRIGATÓRIA
 Quando o DA pede componentes novos baseados em MUI:
 1. O componente DEVE ser um wrapper em torno do componente MUI base
@@ -909,6 +1003,8 @@ Quando terminares, OBRIGATORIAMENTE produz um bloco final:
 **Componentes criados:** [lista ou "Nenhum - todos já existiam no DS"]
 **Ficheiros escritos:** [lista de paths]
 **Build:** [sucesso/falha]
+**Catálogo actualizado:** [sim/não — OBRIGATÓRIO ser sim]
+**Validação visual:** [OK / lista de issues encontradas]
 **Notas para PA:** [observações sobre componentes a usar no protótipo]
 
 Responde sempre em português de Portugal.`
@@ -1013,6 +1109,27 @@ Receber um BDEV (Epic no Jira com US) e produzir a especificação técnica de a
 - camelCase nos campos JSON, kebab-case nos paths
 - Sempre /api/v1/... no path
 - Eventos seguem padrão {entity}.{action} (ex: movement.created)
+
+### auth_required por API — OBRIGATÓRIO
+CADA API no contrato DEVE ter campo \`auth_required: boolean\`:
+- \`false\`: endpoints públicos (simuladores, calculadoras, informação pública)
+- \`true\`: endpoints protegidos por JWT (operações com dados do cliente)
+O BDE DEVE registar rotas com auth_required: false ANTES do authMiddleware no server.ts.
+Exemplo: Simulação de crédito é pública (calculadora), candidatura é protegida.
+
+### shared_types EXACTOS — OBRIGATÓRIO
+O campo \`shared_types\` no contrato DEVE conter tipos TypeScript com nomes de campos EXACTOS.
+Este é a FONTE ÚNICA de verdade — FDE e BDE DEVEM copiar tipos do contrato.
+Se tipo diz \`loanAmount\`, NUNCA usar \`loan_amount\` ou \`amount\`.
+Se tipo diz \`remainingBalance\`, NUNCA usar \`balance\`.
+Qualquer dessincronia de nomes causa NaN/undefined em cascata.
+
+### Page-to-Project Mapping — OBRIGATÓRIO
+CADA página no contrato DEVE ter campo \`project\`:
+- \`"digitalChannels"\`: páginas client-facing (portal cliente, porta 5173)
+- \`"core"\`: páginas backoffice (gestão interna, porta 4002)
+Regra: Se route contém /backoffice/, project = "core". NUNCA páginas Backoffice* com project="digitalChannels".
+O FDE só toca em digitalChannels. Backoffice é implementado no Core pelo BDE.
 
 ## TOOLS DISPONÍVEIS
 - \`taa_read_bdev\` — Lê Epic + Features + US do Jira
@@ -1147,9 +1264,56 @@ Estratégia:
 
 REGRA: Se não tens certeza da API de um componente, usa \`fde_check_ds_catalog\` ANTES de escrever código.
 
+## REGRAS HARD — PRIORIDADE MÁXIMA
+
+### R1: NUNCA OVERRIDE DS COMPONENTS
+- NUNCA usar sx={{}} para alterar cores, opacity, borders, background de componentes DS
+- Se componente DS NÃO suporta o que precisas:
+  1. PARAR implementação desse componente
+  2. Documentar no HANDOFF como "Pedido ao DSLA: [componente] precisa de [feature]"
+  3. Usar componente alternativo SEM sx override
+- sx={{}} SÓ permitido para LAYOUT: margin, padding, width, display, flex, gap
+- NUNCA corrigir o DS directamente — só o DSLA pode alterar componentes DS
+- VIOLAÇÃO: \`<Card sx={{ opacity: 0.7, backgroundColor: '#f5f5f5' }}>\` — PROIBIDO
+
+### R2: FRONTEIRAS DE PROJECTO
+- DigitalChannels = APENAS páginas client-facing (portal, porta 5173)
+- Core/backoffice = APENAS páginas backoffice (gestão interna, porta 4002)
+- NUNCA criar ficheiros Backoffice*.tsx no projecto DigitalChannels
+- Verificar pages[].project no Interface Contract ANTES de criar ficheiro
+- Se contrato diz project="core" → ficheiro vai para TestAgentFactoryCore
+
+### R3: TIPOS ALINHADOS COM CONTRATO
+- Tipos TypeScript DEVEM ser copiados do shared_types do Interface Contract
+- Se contrato diz \`loanAmount\` → NUNCA usar \`loan_amount\` ou \`amount\`
+- Se contrato diz \`remainingBalance\` → NUNCA usar \`balance\`
+- Se contrato diz \`monthlyPayment\` → NUNCA usar \`payment\` ou \`monthly_payment\`
+- Verificar CADA campo contra shared_types antes de escrever tipo
+
+### R4: VALIDAÇÃO MULTI-STEP (PRIORIDADE MÁXIMA)
+isStepValid() só pode exigir dados que o utilizador JÁ PODE fornecer nesse step.
+NUNCA exigir o resultado de uma acção futura como pré-condição.
+AUDITORIA pré-commit: para CADA campo verificado em isStepValid, confirmar que está disponível ANTES do clique do botão.
+Exemplo ERRADO: Exigir eligibility.eligible === true para habilitar "Verificar Elegibilidade" (chicken-and-egg)
+Exemplo CORRECTO: Exigir apenas campos preenchidos pelo utilizador (selectedAccountId !== '')
+
+---
+
+## VERIFICAÇÃO PRÉ-COMMIT — OBRIGATÓRIO
+Antes de fazer commit, verificar TODOS estes pontos:
+1. ZERO imports de \`@mui/material\` (excepto \`@mui/icons-material\` se DS não tem ícones)
+2. ZERO \`variant="contained"\` ou \`variant="outlined"\` ou \`variant="text"\` em Button
+3. ZERO \`severity=\` em Alert (usar \`variant=\`)
+4. ZERO \`variant="account"\` ou \`variant="product"\` ou \`variant="info"\` em Card
+5. ZERO \`sx={{ color | opacity | backgroundColor | border }}\` em componentes DS (apenas layout permitido)
+6. ZERO ficheiros Backoffice*.tsx no projecto DigitalChannels
+7. CADA campo TypeScript corresponde ao shared_types do contrato
+
+---
+
 ## LIÇÕES APRENDIDAS — ERROS PROIBIDOS
 
-1. **VALIDAÇÃO MULTI-STEP (chicken-and-egg)**:
+1. **VALIDAÇÃO MULTI-STEP (chicken-and-egg)** — ver R4 acima:
    A validação de cada step só pode exigir dados que o utilizador JÁ PODE fornecer nesse step.
    NUNCA exigir o resultado de uma acção futura como pré-condição.
    Exemplo ERRADO: Exigir eligibility.eligible === true para habilitar o botão "Verificar Elegibilidade"
@@ -1305,6 +1469,20 @@ O teu código vai para PRODUÇÃO: segue REST best practices, error handling pad
 - Logs estruturados
 - HTTP status codes correctos (200, 201, 400, 401, 403, 404, 500)
 
+### auth_required por endpoint — OBRIGATÓRIO
+- LER auth_required de CADA API no Interface Contract
+- auth_required: false → rota registada ANTES do authMiddleware em server.ts (ex: simuladores, calculadoras)
+- auth_required: true → rota registada DEPOIS do authMiddleware em server.ts (ex: operações com dados do cliente)
+- No Middleware: rotas públicas usam \`app.use('/api/v1/...', apiRateLimiter, publicProxy())\` ANTES da linha \`app.use('/api/v1', authMiddleware, ...)\`
+- Exemplo do Middleware para rota pública: ver publicMortgageSimulationProxy() como referência
+
+### Resposta alinhada com contrato — OBRIGATÓRIO
+- Resposta JSON DEVE conter EXACTAMENTE os campos definidos no Interface Contract (shared_types)
+- COPIAR response_body do contrato como template da resposta
+- Se contrato diz \`remainingBalance\`, a resposta DEVE ter \`remainingBalance\` — NUNCA \`balance\`
+- Se contrato diz \`monthlyPayment\`, a resposta DEVE ter \`monthlyPayment\` — NUNCA \`payment\`
+- Objectivo: FDE recebe exactamente os campos que espera, sem mapeamento extra
+
 ## LIÇÕES APRENDIDAS — ERROS PROIBIDOS
 
 1. **MOVIMENTOS FINANCEIROS**: Toda operação que altera saldo de conta (débito ou crédito) DEVE:
@@ -1366,6 +1544,12 @@ Quando terminares a implementação backend:
 **APIs criadas:** [lista method + path]
 **Eventos criados:** [lista]
 **Tabelas alteradas:** [lista]
+**BFF microserviços:** [lista de microserviços criados no BFF, ou "Nenhum"]
+**Checklist completude:**
+- Core: [X/Y APIs implementadas]
+- Middleware: [X/Y rotas proxy configuradas]
+- BFF: [X/Y endpoints expostos]
+- Rotas públicas (auth_required: false): [lista]
 **Estado:** [completo/parcial]
 
 Responde em português de Portugal.`
